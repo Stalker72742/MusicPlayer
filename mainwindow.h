@@ -6,8 +6,8 @@
 #include <QScrollArea>
 #include <QTextEdit>
 #include <QVBoxLayout>
-#include "PlayerSubsystem.h"
 #include <QSlider>
+#include "PlayerSubsystem.h"
 
 class MainWindow : public QMainWindow
 {

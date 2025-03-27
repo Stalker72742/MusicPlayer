@@ -8,7 +8,6 @@
 #include <QMediaDevices>
 #include <QMediaPlayer>
 #include <QDirIterator>
-#include <QStringList>
 
 PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 
