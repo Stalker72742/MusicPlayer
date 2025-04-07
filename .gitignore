@@ -1,5 +1,6 @@
-.idea/
-cmake-build-debug-mingw-1/
+.idea/*
+cmake-build-debug-mingw-1/*
+cmake-build-release-mingw-msys/*
 
 # C++ objects and libs
 *.slo

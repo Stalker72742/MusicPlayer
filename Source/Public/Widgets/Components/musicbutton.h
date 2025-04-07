@@ -13,15 +13,14 @@ class MusicButton : public QWidget {
 Q_OBJECT
 
 public:
-    explicit MusicButton(QWidget *parent = nullptr);
-    explicit MusicButton(QWidget *parent, QJsonObject video);
+    explicit MusicButton(QWidget *parent);
     explicit MusicButton(QWidget *parent, QString musicPathLoc);
+    explicit MusicButton(QWidget *parent, QJsonObject video);
     ~MusicButton() override;
 
 signals:
 
     void SignalClicked(SongPath song);
-
 
 private:
 
@@ -29,7 +28,9 @@ private:
 
     QJsonObject videoInfo;
 
-    bool hasLocalFile = false;
+    bool bHasLocalFile = false;
+
+    bool bInited = false;
 
     SongPath musicPath;
 

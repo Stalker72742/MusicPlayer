@@ -65,7 +65,6 @@ void ytSearcherSub::parseResults(const QByteArray &data) {
             qWarning() << "Invalid JSON:" << line;
             continue;
         }
-
         QJsonObject video = doc.object();
 
         QString title = video["title"].toString();
@@ -83,5 +82,6 @@ void ytSearcherSub::parseResults(const QByteArray &data) {
         filtredVideo["title"] = title;
         filtredVideo["url"] = url;
 
+        emit searchResults(filtredVideo);
     }
 }

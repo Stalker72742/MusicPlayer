@@ -9,6 +9,8 @@
 #include <QDir>
 #include <QMediaPlayer>
 
+#include "songPath.h"
+
 class PlayerSubsystem : public QObject {
     Q_OBJECT
 public:
@@ -33,10 +35,15 @@ public:
 
     void PreviousSong();
 
-    QStringList getSongNames() const{ return Songs;};
+    QList<SongPath> getSongNames() const{ return songs;};
+
+    void addSong(SongPath Song);
 
 public slots:
     static void PlayerError(QMediaPlayer::Error Error, const QString &error);
+
+signals:
+    void playlistUpdated();
 
 private:
 
@@ -51,6 +58,8 @@ private:
     QString CurrentSong;
 
     QStringList Songs;
+
+    QList<SongPath> songs;
 
     qint32 CurrentSongIndex;
 };

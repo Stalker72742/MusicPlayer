@@ -10,6 +10,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets QMultimedia)
 
+# Добавляем заголовочные файлы FFmpeg
+include_directories(${FFMPEG_INCLUDE_DIR})
+
+find_library(AVCODEC_LIBRARY NAMES avcodec PATHS ${FFMPEG_LIB_DIR})
+find_library(AVFORMAT_LIBRARY NAMES avformat PATHS ${FFMPEG_LIB_DIR})
+find_library(AVUTIL_LIBRARY NAMES avutil PATHS ${FFMPEG_LIB_DIR})
+find_library(SWSCALE_LIBRARY NAMES swscale PATHS ${FFMPEG_LIB_DIR})
+find_library(SWRESAMPLE_LIBRARY NAMES swresample PATHS ${FFMPEG_LIB_DIR})
+
+if(NOT AVCODEC_LIBRARY OR NOT AVFORMAT_LIBRARY OR NOT AVUTIL_LIBRARY)
+    message(FATAL_ERROR "FFmpeg libraries not found. Please check the FFMPEG_DIR path.")
+endif()
 
 set(PROJECT_SOURCES
         main.cpp
@@ -22,6 +34,11 @@ set(PROJECT_SOURCES
         Source/Public/Data/songPath.h
         Source/Private/Subsystems/ytSearcherSub.cpp
         Source/Public/Subsystems/ytSearcherSub.h
+        Source/Private/Widgets/Components/foundedSongButton.cpp
+        Source/Public/Widgets/Components/foundedSongButton.h
+        Source/mainwindow.cpp
+        Source/mainwindow.h
+        Source/mainwindow.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -47,7 +64,13 @@ target_include_directories(untitled2 PRIVATE
         Source/Public/Data
 )
 
-target_link_libraries(untitled2 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia)
+target_link_libraries(untitled2 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia
+        ${AVCODEC_LIBRARY}
+        ${AVFORMAT_LIBRARY}
+        ${AVUTIL_LIBRARY}
+        ${SWSCALE_LIBRARY}
+        ${SWRESAMPLE_LIBRARY}
+)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
     set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.untitled2)

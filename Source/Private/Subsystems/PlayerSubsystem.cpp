@@ -8,6 +8,9 @@
 #include <QMediaDevices>
 #include <QMediaPlayer>
 #include <QDirIterator>
+#include <QProcess>
+
+#include "songPath.h"
 
 PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 
@@ -35,8 +38,6 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
     });
 
     LoadSongs();
-
-    //PlayCurrentSong();
 }
 
 PlayerSubsystem::~PlayerSubsystem() {
@@ -60,6 +61,8 @@ void PlayerSubsystem::LoadSongs() {
 
         Songs.append(filePath);
 
+        songs.append(SongPath(filePath, ""));
+
         index++;
 
         qDebug() << "Loaded song: " << filePath.split('/').last();
@@ -77,7 +80,7 @@ void PlayerSubsystem::LoadSongs() {
 }
 
 void PlayerSubsystem::PlayCurrentSong() const {
-    player->setSource(QUrl::fromLocalFile(CurrentSong));
+    player->setSource(QUrl::fromLocalFile(songs[CurrentSongIndex].LocalPath));
     player->play();
 }
 
@@ -105,10 +108,11 @@ void PlayerSubsystem::SetVolume(const float volume) const {
 void PlayerSubsystem::NextSong() {
     CurrentSongIndex++;
 
-    if (CurrentSongIndex >= Songs.size()) {
+    if (CurrentSongIndex >= songs.size()) {
         CurrentSongIndex = 0;
     }
-    player->setSource(QUrl::fromLocalFile(Songs[CurrentSongIndex]));
+    qDebug() << "Trying to play: " << songs[CurrentSongIndex].GetUrl();
+    player->setSource(QUrl::fromLocalFile(songs[CurrentSongIndex].GetUrl()));
     player->play();
 }
 
@@ -118,8 +122,15 @@ void PlayerSubsystem::PreviousSong() {
     if (CurrentSongIndex <= 0) {
         CurrentSongIndex = Songs.size() - 1;
     }
-    player->setSource(QUrl::fromLocalFile(Songs[CurrentSongIndex]));
+    player->setSource(QUrl::fromLocalFile(songs[CurrentSongIndex].LocalPath));
     player->play();
+}
+
+void PlayerSubsystem::addSong(SongPath Song) {
+
+    songs.append(Song);
+
+    emit playlistUpdated();
 }
 
 void PlayerSubsystem::PlayerError(QMediaPlayer::Error Error, const QString &error) {

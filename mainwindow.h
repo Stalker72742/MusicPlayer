@@ -8,6 +8,7 @@
 #include <QVBoxLayout>
 #include <QSlider>
 #include "PlayerSubsystem.h"
+#include "ytSearcherSub.h"
 
 class MainWindow : public QMainWindow
 {
@@ -23,6 +24,8 @@ private:
     bool bIsPaused = false;
 
     PlayerSubsystem* player;
+
+    ytSearcherSub* ytSearcher;
 
     QScrollArea *scrollArea;
 
@@ -73,6 +76,12 @@ private slots:
     void previousSong() const;
 
     void setVolume() const;
+
+    void search() const;
+
+    void onSearchResults(QJsonObject json);
+
+    void OnFoundedButtonClicked(QJsonObject json);
 
 };
 #endif // MAINWINDOW_H

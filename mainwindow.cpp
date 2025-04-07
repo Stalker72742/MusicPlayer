@@ -2,13 +2,21 @@
 #include <QHBoxLayout>
 #include "musicbutton.h"
 #include "PlayerSubsystem.h"
+#include "foundedSongButton.h"
+#include "songPath.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setGeometry(0, 0, 800, 600);
 
-    player = new PlayerSubsystem(this);
+    player = new PlayerSubsystem(nullptr);
+
+    connect(player, &PlayerSubsystem::playlistUpdated, this , &MainWindow::updatePlaylist);
+
+    ytSearcher = new ytSearcherSub();
+
+    connect(ytSearcher, &ytSearcherSub::searchResults, this, &MainWindow::onSearchResults);
 
     centralWidget = new QWidget;
 
@@ -91,8 +99,6 @@ void MainWindow::SetupBottomPanel() {
 
     QWidget* test = new QWidget();
 
-    test->setStyleSheet("background-color: black;");
-
     test->setFixedWidth(80);
 
     bottomButtonsLayout->addWidget(test);
@@ -136,8 +142,6 @@ void MainWindow::SetupLeftPanel() {
 
     QWidget* leftPanel = new QWidget;
 
-    //leftPanel->setStyleSheet("background-color: black;");
-
     centralLayout->addWidget(leftPanel);
 
     QVBoxLayout* leftPanelLayout = new QVBoxLayout;
@@ -157,6 +161,8 @@ void MainWindow::SetupLeftPanel() {
     leftPanelLayout->addWidget(playListScrollArea);
 
     scrollArea = new QScrollArea;
+
+    scrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
 
     leftPanelLayout->addWidget(scrollArea);
 
@@ -184,6 +190,8 @@ void MainWindow::SetupLeftPanel() {
 
     searchWidget->setLayout(searchLayout);
 
+    scrollArea->setStyleSheet("color: black;");
+
     scrollLayout->addWidget(searchWidget);
 
     searchLayout->addWidget(textEdit);
@@ -200,23 +208,30 @@ void MainWindow::SetupLeftPanel() {
 
     searchButton->setMaximumWidth(20);
 
+    connect(searchButton, &QPushButton::clicked, this, &MainWindow::search);
+
     scrollLayout->addStretch();
 
     window->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
-
-    window->adjustSize();
 
     scrollArea->setWidget(window);
 }
 
 void MainWindow::updatePlaylist() {
 
-    QStringList Songs = player->getSongNames();
+    QList<SongPath> Songs = player->getSongNames();
 
-    for (const QString songName : Songs) {
+    while (playListLayout->count() > 0) {
+        QLayoutItem *item = playListLayout->takeAt(0);
+        if (item->widget()) {
+            delete item->widget();
+        }
+        delete item;
+    }
 
-        playListLayout->addWidget(new MusicButton(playListScrollArea, songName));
+    for (const SongPath songName : Songs) {
 
+        playListLayout->addWidget(new MusicButton(nullptr, songName.Name));
     }
 }
 
@@ -259,4 +274,25 @@ void MainWindow::previousSong() const {
 void MainWindow::setVolume() const {
 
     player->SetVolume(static_cast<float>(volumeSlider->value()) / 100);
+}
+
+void MainWindow::search() const {
+    ytSearcher->search(textEdit->toPlainText());
+}
+
+void MainWindow::onSearchResults(QJsonObject json) {
+
+    foundedSongButton *Button = new foundedSongButton(nullptr, json);
+
+    scrollLayout->addWidget(Button);
+    
+    qDebug() << json["title"].toString();
+
+    connect(Button, &foundedSongButton::clicked, this, &MainWindow::OnFoundedButtonClicked);
+}
+
+void MainWindow::OnFoundedButtonClicked(QJsonObject json) {
+
+    player->addSong(SongPath(json));
+    qDebug() << json["url"].toString();
 }

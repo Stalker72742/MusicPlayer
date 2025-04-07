@@ -6,7 +6,7 @@
 #define YTSEARCHERSUB_H
 
 #include <QProcess>
-
+#include <QJsonObject>
 
 class ytSearcherSub : public QObject{
     Q_OBJECT
@@ -18,6 +18,10 @@ public:
     void search(const QString &Text);
 
     void download(QUrl url);
+
+signals:
+
+    void searchResults(QJsonObject json);
 
 private slots:
 
