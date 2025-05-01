@@ -1,0 +1,56 @@
+//
+// Created by Stalker7274 on 25.04.2025.
+//
+
+#include "playlistitem.h"
+#include "ui_playListItem.h"
+
+#include <QJsonObject>
+#include <QMouseEvent>
+
+#include "PlayerSubsystem.h"
+#include "Public/Framework/AppInstance.h"
+#include "Public/Libs/AppInstanceLibs.h"
+
+
+playListItem::playListItem(QWidget *parent, QJsonObject info) :
+    QWidget(parent), ui(new Ui::playListItem) {
+    ui->setupUi(this);
+
+    int totalSeconds = info["duration"].toInt();
+    int minutes = totalSeconds / 60;
+    int seconds = totalSeconds % 60;
+
+    QString timeString = QString("%1:%2")
+        .arg(minutes, 2, 10, QChar('0'))
+        .arg(seconds, 2, 10, QChar('0'));
+
+    ui->time->setText(timeString);
+    ui->songName->setText(info["title"].toString());
+
+    bInPlaylist = false;
+
+    data = info;
+}
+
+playListItem::~playListItem() {
+    delete ui;
+}
+
+void playListItem::mousePressEvent(QMouseEvent *event) {
+    QWidget::mousePressEvent(event);
+
+    if (event->button() != Qt::LeftButton) {
+        return;
+    }
+
+    if (bInPlaylist) {
+
+
+    }else {
+
+        AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>()->addSongToQueue(SongPath(data));
+    }
+
+}
+

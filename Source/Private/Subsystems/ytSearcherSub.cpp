@@ -9,8 +9,8 @@
 #include <QUrl>
 
 ytSearcherSub::ytSearcherSub(QObject *parent) {
-    process = new QProcess();
 
+    process = new QProcess();
 
 }
 
@@ -20,9 +20,7 @@ ytSearcherSub::~ytSearcherSub() {
 
 void ytSearcherSub::search(const QString &Text) {
 
-    qDebug() << Text;
-
-    connect(process, &QProcess::finished, this, &ytSearcherSub::processFinished);
+    connect(process, &QProcess::finished, this, &ytSearcherSub::searchFinished);
 
     QStringList arguments;
 
@@ -42,20 +40,26 @@ void ytSearcherSub::download(QUrl url) {
 
 }
 
-void ytSearcherSub::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+void ytSearcherSub::searchFinished(int exitCode, QProcess::ExitStatus exitStatus) {
 
     if (exitStatus == QProcess::NormalExit && exitCode == 0) {
         QByteArray output = process->readAllStandardOutput();
-        parseResults(output);
+        parseSearchResults(output);
     } else {
         qCritical() << "yt-dlp failed with exit code:" << exitCode;
         qCritical() << "Error:" << process->readAllStandardError();
     }
 }
 
-void ytSearcherSub::parseResults(const QByteArray &data) {
+void ytSearcherSub::parseSearchResults(const QByteArray &data) {
 
     QList<QByteArray> lines = data.split('\n');
+
+    if (data.isEmpty()) {
+        return;
+    }
+
+    emit searchResults(QJsonObject(), startParsing);
 
     for (const QByteArray& line : lines) {
         if (line.trimmed().isEmpty()) continue;
@@ -67,9 +71,9 @@ void ytSearcherSub::parseResults(const QByteArray &data) {
         }
         QJsonObject video = doc.object();
 
-        QString title = video["title"].toString();
-        QString url = video["webpage_url"].toString();
-        QString id = video["id"].toString();
+        const QString title = video["title"].toString();
+        const QString url = video["webpage_url"].toString();
+        const QString id = video["id"].toString();
         const int duration = video["duration"].toInt();
 
         qDebug() << "Title:" << title;
@@ -81,7 +85,10 @@ void ytSearcherSub::parseResults(const QByteArray &data) {
         QJsonObject filtredVideo;
         filtredVideo["title"] = title;
         filtredVideo["url"] = url;
+        filtredVideo["duration"] = duration;
 
-        emit searchResults(filtredVideo);
+        emit searchResults(filtredVideo, pending);
     }
+
+    emit searchResults(QJsonObject(), finishParsing);
 }

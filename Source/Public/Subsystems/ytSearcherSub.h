@@ -8,6 +8,15 @@
 #include <QProcess>
 #include <QJsonObject>
 
+
+enum ESearchResultsState {
+
+    startParsing,
+    pending,
+    finishParsing
+};
+
+
 class ytSearcherSub : public QObject{
     Q_OBJECT
 public:
@@ -21,15 +30,15 @@ public:
 
 signals:
 
-    void searchResults(QJsonObject json);
+    void searchResults(QJsonObject json, ESearchResultsState searchState);
 
 private slots:
 
-    void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void searchFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
 
-    void parseResults(const QByteArray &data);
+    void parseSearchResults(const QByteArray &data);
 
     QProcess *process;
 

@@ -4,6 +4,7 @@
 
 #ifndef PLAYERSUBSYSTEM_H
 #define PLAYERSUBSYSTEM_H
+
 #include <QAudioOutput>
 #include <QObject>
 #include <QDir>
@@ -15,15 +16,15 @@ class PlayerSubsystem : public QObject {
     Q_OBJECT
 public:
 
-    explicit PlayerSubsystem(QObject* parent);
+    explicit PlayerSubsystem(QObject* parent = nullptr);
 
     ~PlayerSubsystem() override;
 
     void LoadSongs();
 
-    void PlayCurrentSong() const;
+    void PlayCurrentSong();
 
-    void Resume() const;
+    void Resume();
 
     void Pause() const;
 
@@ -39,6 +40,8 @@ public:
 
     void addSong(SongPath Song);
 
+    void addSongToQueue(SongPath Song);
+
 public slots:
     static void PlayerError(QMediaPlayer::Error Error, const QString &error);
 
@@ -46,6 +49,8 @@ signals:
     void playlistUpdated();
 
 private:
+
+    inline QList<SongPath> getSongs();
 
     QAudioOutput *audioOutput;
 
@@ -62,6 +67,10 @@ private:
     QList<SongPath> songs;
 
     qint32 CurrentSongIndex;
+
+    bool bUseQueue = false;
+
+    QList<SongPath> queueSongs;
 };
 
 #endif

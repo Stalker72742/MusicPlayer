@@ -38,6 +38,8 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
     });
 
     LoadSongs();
+
+    bUseQueue = true;
 }
 
 PlayerSubsystem::~PlayerSubsystem() {
@@ -79,12 +81,13 @@ void PlayerSubsystem::LoadSongs() {
     }
 }
 
-void PlayerSubsystem::PlayCurrentSong() const {
-    player->setSource(QUrl::fromLocalFile(songs[CurrentSongIndex].LocalPath));
+void PlayerSubsystem::PlayCurrentSong() {
+
+    player->setSource(QUrl::fromLocalFile(getSongs()[CurrentSongIndex].GetUrl()));
     player->play();
 }
 
-void PlayerSubsystem::Resume() const {
+void PlayerSubsystem::Resume() {
 
     if (player->source().isValid()) {
 
@@ -93,7 +96,6 @@ void PlayerSubsystem::Resume() const {
     }else {
 
         PlayCurrentSong();
-
     }
 }
 
@@ -108,11 +110,11 @@ void PlayerSubsystem::SetVolume(const float volume) const {
 void PlayerSubsystem::NextSong() {
     CurrentSongIndex++;
 
-    if (CurrentSongIndex >= songs.size()) {
+    if (CurrentSongIndex >= getSongs().size()) {
         CurrentSongIndex = 0;
     }
-    qDebug() << "Trying to play: " << songs[CurrentSongIndex].GetUrl();
-    player->setSource(QUrl::fromLocalFile(songs[CurrentSongIndex].GetUrl()));
+    qDebug() << "Trying to play: " << getSongs()[CurrentSongIndex].GetUrl();
+    player->setSource(QUrl::fromLocalFile(getSongs()[CurrentSongIndex].GetUrl()));
     player->play();
 }
 
@@ -120,9 +122,9 @@ void PlayerSubsystem::PreviousSong() {
     CurrentSongIndex--;
 
     if (CurrentSongIndex <= 0) {
-        CurrentSongIndex = Songs.size() - 1;
+        CurrentSongIndex = getSongs().size() - 1;
     }
-    player->setSource(QUrl::fromLocalFile(songs[CurrentSongIndex].LocalPath));
+    player->setSource(QUrl::fromLocalFile(getSongs()[CurrentSongIndex].LocalPath));
     player->play();
 }
 
@@ -135,4 +137,15 @@ void PlayerSubsystem::addSong(SongPath Song) {
 
 void PlayerSubsystem::PlayerError(QMediaPlayer::Error Error, const QString &error) {
     qDebug() << "Player: " + error;
+}
+
+QList<SongPath> PlayerSubsystem::getSongs() {
+    return bUseQueue ? queueSongs : songs;
+}
+
+void PlayerSubsystem::addSongToQueue(SongPath Song) {
+
+    qDebug() << "Adding song to queue: " << Song.Name;
+
+    queueSongs.append(Song);
 }
