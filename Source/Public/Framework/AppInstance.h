@@ -7,7 +7,7 @@
 #ifndef APPINSTANCE_H
 #define APPINSTANCE_H
 
-#include "mainwindow.h"
+#include "Widgets/MainWindow/mainwindow.h"
 #include "PlayerSubsystem.h"
 
 class AppInstance : public QObject {

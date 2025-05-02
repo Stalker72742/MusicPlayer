@@ -5,7 +5,7 @@
 #include "AppInstanceLibs.h"
 
 #include "mainwindow.h"
-#include "Public/Framework/AppInstance.h"
+#include "AppInstance.h"
 
 AppInstance* AppInstanceLibs::getAppInstance(QObject *Object) {
 

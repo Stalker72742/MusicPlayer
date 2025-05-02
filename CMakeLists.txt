@@ -1,80 +1,45 @@
 cmake_minimum_required(VERSION 3.16)
+set(PROJECT_NAME "untitled2")
+project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 
-project(untitled2 VERSION 0.1 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets QMultimedia)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets QMultimedia)
+# === Автоматический сбор исходников ===
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.ui
+)
 
-include_directories(${FFMPEG_INCLUDE_DIR})
+# === Вытаскиваем include директории ===
+file(GLOB_RECURSE HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/**/Public/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/**/Widgets/*.h"
+)
 
-find_library(AVCODEC_LIBRARY NAMES avcodec PATHS ${FFMPEG_LIB_DIR})
-find_library(AVFORMAT_LIBRARY NAMES avformat PATHS ${FFMPEG_LIB_DIR})
-find_library(AVUTIL_LIBRARY NAMES avutil PATHS ${FFMPEG_LIB_DIR})
-find_library(SWSCALE_LIBRARY NAMES swscale PATHS ${FFMPEG_LIB_DIR})
-find_library(SWRESAMPLE_LIBRARY NAMES swresample PATHS ${FFMPEG_LIB_DIR})
+foreach(header ${HEADERS})
+    get_filename_component(dir ${header} DIRECTORY)
+    list(APPEND INCLUDE_DIRS ${dir})
+endforeach()
+list(REMOVE_DUPLICATES INCLUDE_DIRS)
 
-if(NOT AVCODEC_LIBRARY OR NOT AVFORMAT_LIBRARY OR NOT AVUTIL_LIBRARY)
-    message(FATAL_ERROR "FFmpeg libraries not found. Please check the FFMPEG_DIR path.")
-endif()
-
-set(PROJECT_SOURCES
+# === Qt executable ===
+qt_add_executable(${PROJECT_NAME} ${SOURCES}
         main.cpp
-        Source/Private/Widgets/Components/musicbutton.cpp
-        Source/Public/Widgets/Components/musicbutton.h
-        Source/Private/Subsystems/PlayerSubsystem.cpp
-        Source/Public/Subsystems/PlayerSubsystem.h
-        Source/Public/Data/songPath.h
-        Source/Private/Subsystems/ytSearcherSub.cpp
-        Source/Public/Subsystems/ytSearcherSub.h
-        Source/Private/Widgets/Components/foundedSongButton.cpp
-        Source/Public/Widgets/Components/foundedSongButton.h
-        Source/Widgets/MainWindow/mainwindow.cpp
-        Source/Widgets/MainWindow/mainwindow.h
-        Source/Widgets/MainWindow/mainwindow.ui
-        Source/Widgets/titlebar.cpp
-        Source/Widgets/titlebar.h
-        Source/Widgets/titlebar.ui
-        Source/Public/Framework/AppInstance.cpp
-        Source/Public/Framework/AppInstance.h
-        Source/Public/Libs/AppInstanceLibs.cpp
-        Source/Public/Libs/AppInstanceLibs.h
-        Source/Public/Widgets/Playlist/playlistitem.cpp
-        Source/Public/Widgets/Playlist/playlistitem.h
-        Source/Public/Widgets/Playlist/playlistitem.ui
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(untitled2
-            MANUAL_FINALIZATION
-            ${PROJECT_SOURCES}
-    )
-else()
-    if(ANDROID)
-        add_library(untitled2 SHARED
-                ${PROJECT_SOURCES}
-        )
-    else()
-        add_executable(untitled2
-                ${PROJECT_SOURCES}
-        )
-    endif()
-endif()
+target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS} Source/)
 
-target_include_directories(untitled2 PRIVATE
-        Source/Public/Widgets/Components/
-        Source/Public/Subsystems
-        Source/Public/Data
-        Source/
-)
-
-target_link_libraries(untitled2 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        Qt6::Widgets Qt6::Multimedia
         ${AVCODEC_LIBRARY}
         ${AVFORMAT_LIBRARY}
         ${AVUTIL_LIBRARY}
@@ -82,80 +47,52 @@ target_link_libraries(untitled2 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VE
         ${SWRESAMPLE_LIBRARY}
 )
 
-if(${QT_VERSION} VERSION_LESS 6.1.0)
-    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.untitled2)
-endif()
-set_target_properties(untitled2 PROPERTIES
-        ${BUNDLE_ID_OPTION}
-        MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-        MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-        MACOSX_BUNDLE TRUE
-)
-
+# Установка
 include(GNUInstallDirs)
-install(TARGETS untitled2
+install(TARGETS ${PROJECT_NAME}
         BUNDLE DESTINATION .
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+# === Платформенно-зависимый деплой ===
 if(WIN32)
-    # Определяем путь к windeployqt
-    get_target_property(QMAKE_EXECUTABLE Qt${QT_VERSION_MAJOR}::qmake IMPORTED_LOCATION)
+    get_target_property(QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
     get_filename_component(QT_BIN_DIR "${QMAKE_EXECUTABLE}" DIRECTORY)
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${QT_BIN_DIR}")
 
-    # Создаем подпапку libs в папке сборки
     set(DEPLOY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Release/libs")
     file(MAKE_DIRECTORY ${DEPLOY_DIR})
-
-    # Добавляем кастомную команду для копирования зависимостей
-    add_custom_command(TARGET untitled2 POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}" # Очистка перед копированием
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
             COMMAND ${CMAKE_COMMAND} -E make_directory "${DEPLOY_DIR}"
             COMMAND "${CMAKE_COMMAND}" -E env PATH="${QT_BIN_DIR}" "${WINDEPLOYQT_EXECUTABLE}"
-            "$<TARGET_FILE:untitled2>"
-            --dir "${DEPLOY_DIR}" # Копируем зависимости в libs
-            --no-translations # Исключаем переводы, если не нужны
-            --no-compiler-runtime # Исключаем runtime компилятора
-            --release # Только релизные библиотеки
+            "$<TARGET_FILE:${PROJECT_NAME}>"
+            --dir "${DEPLOY_DIR}"
+            --no-translations
+            --no-compiler-runtime
+            --release
             --verbose 1
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:untitled2>"
-            "${CMAKE_CURRENT_BINARY_DIR}/Release" # Копируем сам исполняемый файл в корень
+            "$<TARGET_FILE:${PROJECT_NAME}>" "${CMAKE_CURRENT_BINARY_DIR}/Release"
             COMMENT "Deploying Qt dependencies to Release/libs..."
     )
 elseif(UNIX AND NOT APPLE)
-    # Для Linux (аналогично, но с linuxdeployqt)
     find_program(LINUXDEPLOYQT_EXECUTABLE linuxdeployqt)
     if(LINUXDEPLOYQT_EXECUTABLE)
         set(DEPLOY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Release/libs")
         file(MAKE_DIRECTORY ${DEPLOY_DIR})
-        add_custom_command(TARGET untitled2 POST_BUILD
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${DEPLOY_DIR}"
                 COMMAND "${LINUXDEPLOYQT_EXECUTABLE}"
-                "$<TARGET_FILE:untitled2>"
+                "$<TARGET_FILE:${PROJECT_NAME}>"
                 -bundle-non-qt-libs
                 -extra-libs="${DEPLOY_DIR}"
                 -verbose=1
                 COMMENT "Deploying Qt dependencies to Release/libs..."
         )
     endif()
-elseif(APPLE)
-    # Для macOS (оставляем бандл как есть, так как это стандарт)
-    get_target_property(QMAKE_EXECUTABLE Qt${QT_VERSION_MAJOR}::qmake IMPORTED_LOCATION)
-    get_filename_component(QT_BIN_DIR "${QMAKE_EXECUTABLE}" DIRECTORY)
-    find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${QT_BIN_DIR}")
-
-    add_custom_command(TARGET untitled2 POST_BUILD
-            COMMAND "${MACDEPLOYQT_EXECUTABLE}"
-            "$<TARGET_BUNDLE_DIR:untitled2>"
-            -verbose=1
-            COMMENT "Running macdeployqt to copy Qt dependencies..."
-    )
 endif()
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(untitled2)
-endif()
+qt_finalize_executable(${PROJECT_NAME})

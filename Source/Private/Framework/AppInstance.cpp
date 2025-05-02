@@ -6,7 +6,6 @@
 
 #include "mainwindow.h"
 
-
 AppInstance::AppInstance(QObject *parent) {
 
     createApp();
