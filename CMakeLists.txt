@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-set(PROJECT_NAME "untitled2")
+set(PROJECT_NAME "MusicPlayer")
 project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -12,14 +12,12 @@ set(CMAKE_AUTOUIC ON)
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Widgets QMultimedia)
 
-# === Автоматический сбор исходников ===
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.h
         ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.ui
 )
 
-# === Вытаскиваем include директории ===
 file(GLOB_RECURSE HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/**/Public/*.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/**/Widgets/*.h"
@@ -31,10 +29,7 @@ foreach(header ${HEADERS})
 endforeach()
 list(REMOVE_DUPLICATES INCLUDE_DIRS)
 
-# === Qt executable ===
-qt_add_executable(${PROJECT_NAME} ${SOURCES}
-        main.cpp
-)
+qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS} Source/)
 
@@ -47,7 +42,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         ${SWRESAMPLE_LIBRARY}
 )
 
-# Установка
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
         BUNDLE DESTINATION .
@@ -55,7 +49,6 @@ install(TARGETS ${PROJECT_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# === Платформенно-зависимый деплой ===
 if(WIN32)
     get_target_property(QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
     get_filename_component(QT_BIN_DIR "${QMAKE_EXECUTABLE}" DIRECTORY)

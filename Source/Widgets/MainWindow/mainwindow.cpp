@@ -7,10 +7,12 @@
 
 #include <QMouseEvent>
 #include "ytSearcherSub.h"
-#include "Public/Framework/AppInstance.h"
-#include "Widgets/titlebar.h"
-#include "Public/Libs/AppInstanceLibs.h"
-#include "Public/Widgets/Playlist/playlistitem.h"
+#include "AppInstance.h"
+#include "titlebar.h"
+#include "AppInstanceLibs.h"
+#include "playlistitem.h"
+#include "playlistlist.h"
+#include <QTimer>
 
 mainWindow::mainWindow(QObject *Parent) :
     QMainWindow(nullptr), ui(new Ui::mainWindow) {
@@ -36,6 +38,10 @@ mainWindow::mainWindow(QObject *Parent) :
     connect(ui->mixButton, &QPushButton::clicked, this, &mainWindow::mixPlaylist);
     connect(ui->loopButton, &QPushButton::clicked, this, &mainWindow::enableLoop);
 
+    sideMenu = new playlistList(this);
+
+    ui->mediateka->setLayout(new QVBoxLayout());
+    ui->mediateka->layout()->addWidget(sideMenu);
 }
 
 mainWindow::~mainWindow() {
@@ -45,7 +51,7 @@ mainWindow::~mainWindow() {
 
 AppInstance* mainWindow::getAppInstance() const {
 
-    return qobject_cast<AppInstance *>(parent);
+    return qobject_cast<AppInstance*>(parent);
 }
 
 void mainWindow::addItemToPlaylist(QJsonObject Json, ESearchResultsState searchResultsState) {
