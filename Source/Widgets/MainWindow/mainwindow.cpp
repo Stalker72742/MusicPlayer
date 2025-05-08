@@ -112,7 +112,9 @@ void mainWindow::playPrevious() const {
 }
 
 void mainWindow::enableLoop() {
+
 }
 
 void mainWindow::mixPlaylist() {
+
 }

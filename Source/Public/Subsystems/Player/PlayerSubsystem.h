@@ -9,8 +9,9 @@
 #include <QObject>
 #include <QDir>
 #include <QMediaPlayer>
-
 #include "songPath.h"
+
+class song;
 
 class PlayerSubsystem : public QObject {
     Q_OBJECT
@@ -42,29 +43,35 @@ public:
 
     void addSongToQueue(SongPath Song);
 
+    void savePlaylist() const;
+
 public slots:
+
     static void PlayerError(QMediaPlayer::Error Error, const QString &error);
 
 signals:
+
     void playlistUpdated();
 
 private:
 
-    inline QList<SongPath> getSongs();
+    QList<SongPath> getSongs();
 
     QAudioOutput *audioOutput;
-
     QMediaPlayer *player;
 
     QObject* Parent;
 
     const QString DefaultMusicFolder = QDir::currentPath() + "/Music";
+    const QString DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
 
     QString CurrentSong;
 
     QStringList Songs;
 
     QList<SongPath> songs;
+
+    QList<song> currentPlaylist;
 
     qint32 CurrentSongIndex;
 

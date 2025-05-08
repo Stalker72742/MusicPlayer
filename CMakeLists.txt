@@ -54,7 +54,7 @@ if(WIN32)
     get_filename_component(QT_BIN_DIR "${QMAKE_EXECUTABLE}" DIRECTORY)
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${QT_BIN_DIR}")
 
-    set(DEPLOY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Release/libs")
+    set(DEPLOY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Release/bin")
     file(MAKE_DIRECTORY ${DEPLOY_DIR})
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
@@ -68,12 +68,12 @@ if(WIN32)
             --verbose 1
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:${PROJECT_NAME}>" "${CMAKE_CURRENT_BINARY_DIR}/Release"
-            COMMENT "Deploying Qt dependencies to Release/libs..."
+            COMMENT "Deploying Qt dependencies to Release/bin..."
     )
 elseif(UNIX AND NOT APPLE)
     find_program(LINUXDEPLOYQT_EXECUTABLE linuxdeployqt)
     if(LINUXDEPLOYQT_EXECUTABLE)
-        set(DEPLOY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Release/libs")
+        set(DEPLOY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Release/bin")
         file(MAKE_DIRECTORY ${DEPLOY_DIR})
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
@@ -83,7 +83,7 @@ elseif(UNIX AND NOT APPLE)
                 -bundle-non-qt-libs
                 -extra-libs="${DEPLOY_DIR}"
                 -verbose=1
-                COMMENT "Deploying Qt dependencies to Release/libs..."
+                COMMENT "Deploying Qt dependencies to Release/bin..."
         )
     endif()
 endif()

@@ -8,7 +8,6 @@
 #include <QMediaDevices>
 #include <QMediaPlayer>
 #include <QDirIterator>
-#include <QProcess>
 
 #include "songPath.h"
 
@@ -45,11 +44,24 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 PlayerSubsystem::~PlayerSubsystem() {
 
     player->stop();
+
     delete audioOutput;
     delete player;
 }
 
+void PlayerSubsystem::savePlaylist() const {
+
+    QJsonObject playlist;
+
+    foreach(SongPath x, songs) {
+
+
+        //playlist[]
+    }
+}
+
 void PlayerSubsystem::LoadSongs() {
+
     const QDir dir(QDir::currentPath() + "/Music");
     QStringList filters;
     filters << "*.mp3" << "*.mp4"<< "*.webm";

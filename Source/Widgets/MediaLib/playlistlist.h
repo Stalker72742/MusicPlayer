@@ -20,10 +20,21 @@ public:
     explicit playlistList(QWidget *parent = nullptr);
     ~playlistList() override;
 
-    QPushButton *OpenPlaylistsButton;
+    QPushButton *openCloseMediaLib;
+
+
+public slots:
+
+    void openClose();
 
 private:
     Ui::playlistList *ui;
+
+    bool bClosed = true;
+
+    const int closedWidth = 100;
+
+    const int openedWidth = 350;
 };
 
 

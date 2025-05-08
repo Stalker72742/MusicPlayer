@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+   <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -23,7 +23,7 @@
    <string>playlistList</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(255, 0, 0);</string>
+   <string notr="true"/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="leftMargin">
@@ -41,7 +41,7 @@
    <item>
     <widget class="QWidget" name="widget" native="true">
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(255, 255, 255);</string>
+      <string notr="true">background-color: rgb(18, 18, 18);</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>

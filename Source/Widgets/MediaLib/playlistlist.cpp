@@ -10,13 +10,27 @@ playlistList::playlistList(QWidget *parent) :
     QWidget(parent), ui(new Ui::playlistList) {
     ui->setupUi(this);
 
-    OpenPlaylistsButton= new QPushButton("b");
+    openCloseMediaLib = new QPushButton();
 
-    ui->layoutItems->addWidget(OpenPlaylistsButton);
+    openCloseMediaLib->setStyleSheet("background-color: rgb(0, 0, 0);");
+
+    openCloseMediaLib->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    openCloseMediaLib->setFixedSize(50, 30);
+
+    ui->layoutItems->addWidget(openCloseMediaLib);
 
     ui->layoutItems->addStretch();
+
+    connect(openCloseMediaLib, SIGNAL(clicked()), this, SLOT(openClose()));
 }
 
 playlistList::~playlistList() {
     delete ui;
+}
+
+void playlistList::openClose() {
+
+    bClosed = !bClosed;
+
+    setFixedWidth(bClosed ? closedWidth : openedWidth);
 }
