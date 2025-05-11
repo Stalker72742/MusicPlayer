@@ -9,6 +9,7 @@
 #include <QMouseEvent>
 
 #include "PlayerSubsystem.h"
+#include "song.h"
 #include "Public/Framework/AppInstance.h"
 #include "Public/Libs/AppInstanceLibs.h"
 
@@ -49,7 +50,7 @@ void playListItem::mousePressEvent(QMouseEvent *event) {
 
     }else {
 
-        AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>()->addSongToQueue(SongPath(data));
+        AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>()->addSong(new song(data));
     }
 
 }

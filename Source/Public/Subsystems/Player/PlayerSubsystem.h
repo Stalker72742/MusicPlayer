@@ -37,13 +37,11 @@ public:
 
     void PreviousSong();
 
-    QList<SongPath> getSongNames() const{ return songs;};
+    void addSong(song* Song);
 
-    void addSong(SongPath Song);
+    void addSongToQueue(song* Song);
 
-    void addSongToQueue(SongPath Song);
-
-    void savePlaylist() const;
+    void savePlaylist();
 
 public slots:
 
@@ -55,7 +53,7 @@ signals:
 
 private:
 
-    QList<SongPath> getSongs();
+    QList<song*> getSongs();
 
     QAudioOutput *audioOutput;
     QMediaPlayer *player;
@@ -65,19 +63,13 @@ private:
     const QString DefaultMusicFolder = QDir::currentPath() + "/Music";
     const QString DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
 
-    QString CurrentSong;
-
-    QStringList Songs;
-
-    QList<SongPath> songs;
-
-    QList<song> currentPlaylist;
+    QList<song*> currentPlaylist;
 
     qint32 CurrentSongIndex;
 
     bool bUseQueue = false;
 
-    QList<SongPath> queueSongs;
+    QList<song*> queueSongs;
 };
 
 #endif

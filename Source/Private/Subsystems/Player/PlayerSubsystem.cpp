@@ -8,7 +8,9 @@
 #include <QMediaDevices>
 #include <QMediaPlayer>
 #include <QDirIterator>
+#include <QJsonDocument>
 
+#include "song.h"
 #include "songPath.h"
 
 PlayerSubsystem::PlayerSubsystem(QObject *parent) {
@@ -38,7 +40,7 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 
     LoadSongs();
 
-    bUseQueue = true;
+    bUseQueue = false;
 }
 
 PlayerSubsystem::~PlayerSubsystem() {
@@ -49,22 +51,42 @@ PlayerSubsystem::~PlayerSubsystem() {
     delete player;
 }
 
-void PlayerSubsystem::savePlaylist() const {
+void PlayerSubsystem::savePlaylist(){
 
     QJsonObject playlist;
 
-    foreach(SongPath x, songs) {
+    foreach(song* Song, currentPlaylist) {
 
-
-        //playlist[]
+        playlist[Song->getName()] = Song->getSongPath();
     }
+
+    QFile file(DefaultMediaLibFolder + "/" + "playlist" + ".json");
+
+    QFileInfo fileInfo(file);
+    QDir dir = fileInfo.absoluteDir();
+
+    if (!dir.exists()) {
+        if (!dir.mkpath(".")) {
+            qDebug() << "Unable to make directory:" << dir.path();
+            return;
+        }
+    }
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Fail to save file:" << file.errorString();
+        return;
+    }
+
+    const QJsonDocument doc(playlist);
+    file.write(doc.toJson(QJsonDocument::Indented));
+    file.close();
 }
 
 void PlayerSubsystem::LoadSongs() {
 
-    const QDir dir(QDir::currentPath() + "/Music");
+    const QDir dir(DefaultMediaLibFolder);
     QStringList filters;
-    filters << "*.mp3" << "*.mp4"<< "*.webm";
+    filters << "*.json";
 
     QDirIterator it(dir.absolutePath(), filters, QDir::Files);
     int index = 0;
@@ -73,18 +95,23 @@ void PlayerSubsystem::LoadSongs() {
         it.next();
         QString filePath = it.filePath();
 
-        Songs.append(filePath);
+        QFile configFile(filePath);
+        if (!configFile.open(QIODevice::ReadOnly)) return;
 
-        songs.append(SongPath(filePath, ""));
+        QJsonObject json = QJsonDocument::fromJson(configFile.readAll()).object();
+
+        foreach(QString key, json.keys()) {
+
+            currentPlaylist.append(new song(json[key].toString()));
+
+            qDebug() << "Loaded song: " << key;
+        }
 
         index++;
-
-        qDebug() << "Loaded song: " << filePath.split('/').last();
     }
 
-    if (!Songs.empty()) {
+    if (!currentPlaylist.empty()) {
 
-        CurrentSong = Songs[0];
         CurrentSongIndex = 0;
 
     }else {
@@ -95,7 +122,7 @@ void PlayerSubsystem::LoadSongs() {
 
 void PlayerSubsystem::PlayCurrentSong() {
 
-    player->setSource(QUrl::fromLocalFile(getSongs()[CurrentSongIndex].GetUrl()));
+    player->setSource(getSongs()[CurrentSongIndex]->getPlayerUrl());
     player->play();
 }
 
@@ -125,8 +152,8 @@ void PlayerSubsystem::NextSong() {
     if (CurrentSongIndex >= getSongs().size()) {
         CurrentSongIndex = 0;
     }
-    qDebug() << "Trying to play: " << getSongs()[CurrentSongIndex].GetUrl();
-    player->setSource(QUrl::fromLocalFile(getSongs()[CurrentSongIndex].GetUrl()));
+    qDebug() << "Trying to play: " << getSongs()[CurrentSongIndex]->getPlayerUrl();
+    player->setSource(getSongs()[CurrentSongIndex]->getPlayerUrl());
     player->play();
 }
 
@@ -136,28 +163,30 @@ void PlayerSubsystem::PreviousSong() {
     if (CurrentSongIndex <= 0) {
         CurrentSongIndex = getSongs().size() - 1;
     }
-    player->setSource(QUrl::fromLocalFile(getSongs()[CurrentSongIndex].LocalPath));
+    player->setSource(getSongs()[CurrentSongIndex]->getPlayerUrl());
     player->play();
 }
 
-void PlayerSubsystem::addSong(SongPath Song) {
+void PlayerSubsystem::addSong(song* Song) {
 
-    songs.append(Song);
+    currentPlaylist.append(Song);
 
     emit playlistUpdated();
+
+    savePlaylist();
 }
 
 void PlayerSubsystem::PlayerError(QMediaPlayer::Error Error, const QString &error) {
     qDebug() << "Player: " + error;
 }
 
-QList<SongPath> PlayerSubsystem::getSongs() {
-    return bUseQueue ? queueSongs : songs;
+QList<song*> PlayerSubsystem::getSongs() {
+    return bUseQueue ? queueSongs : currentPlaylist;
 }
 
-void PlayerSubsystem::addSongToQueue(SongPath Song) {
+void PlayerSubsystem::addSongToQueue(song* Song) {
 
-    qDebug() << "Adding song to queue: " << Song.Name;
+    qDebug() << "Adding song to queue: " << Song->getName();
 
     queueSongs.append(Song);
 }

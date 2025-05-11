@@ -9,8 +9,15 @@
 #include <QJsonObject>
 #include <QUrl>
 
-song::song(QObject *parent) {
+song::song(QJsonObject JsonObj) {
 
+    songPathOrUrl = JsonObj["url"].toString();
+
+    songName = JsonObj["title"].toString();
+
+    bLocalSong = false;
+
+    getAudioStream();
 }
 
 song::song(const QString &fileName) {
@@ -27,7 +34,17 @@ song::song(const QString &fileName) {
         songName = json["name"].toString();
 
         bLocalSong = false;
+
+        getAudioStream();
+    }else if (fileName.split(':').first() == "https") {
+
+        songPathOrUrl = fileName;
+
+        bLocalSong = false;
+
+        getAudioStream();
     }else {
+
 
         songPathOrUrl = fileName;
 
@@ -42,9 +59,43 @@ QString song::getName() {
 }
 
 QUrl song::getPlayerUrl() {
-    return bLocalSong? QUrl(songPathOrUrl) : QUrl(getAudioStream());
+    return bLocalSong? QUrl::fromLocalFile(songPathOrUrl) : QUrl(getAudioStream());
 }
 
 QString song::getAudioStream() {
-    
+
+    if (!songAudioStream.isEmpty()) {
+        return songAudioStream;
+    }
+
+    process = new QProcess();
+
+    QStringList args;
+
+    args << "--get-url"
+     << "--no-playlist"
+     << "--no-warnings"
+     << "--ignore-no-formats"
+     << "--no-warnings"
+     << "-f"
+     << "bestaudio"
+     << "--user-agent"
+     << "Mozilla/5.0"
+     << songPathOrUrl;
+
+    process->setProcessChannelMode(QProcess::MergedChannels);
+
+    process->start("yt-dlp", args);
+
+    connect(process, &QProcess::finished, this, [this](int exitCode) {
+        if (exitCode == 0) {
+            songAudioStream = QString(process->readAllStandardOutput()).trimmed();
+
+            qDebug() << "Done";
+        }
+
+        process->deleteLater();
+    });
+
+    return songAudioStream;
 }

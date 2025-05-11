@@ -1,10 +1,10 @@
 //
 // Created by Stalker7274 on 07.05.2025.
 //
-
 #pragma once
 
 #include <QObject>
+#include <QProcess>
 
 #ifndef SONG_H
 #define SONG_H
@@ -13,13 +13,15 @@ class song : public QObject {
     Q_OBJECT
 public:
 
-    explicit song(QObject *parent = nullptr);
+    explicit song(QJsonObject JsonObj);
 
     explicit song(const QString &fileName);
 
     QString getName();
 
     QUrl getPlayerUrl();
+
+    QString getSongPath() { return songPathOrUrl;};
 
 private:
 
@@ -28,9 +30,11 @@ private:
     QString songName;
     QString songPathOrUrl;
 
-    QString songAudioStream;
+    QString songAudioStream = "";
 
     bool bLocalSong;
+
+    QProcess *process;
 };
 
 
