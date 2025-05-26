@@ -5,7 +5,6 @@
 #ifndef MUSICBUTTON_H
 #define MUSICBUTTON_H
 
-#include <QJsonObject>
 #include <QPushButton>
 #include "songPath.h"
 

@@ -55,3 +55,11 @@ void playListItem::mousePressEvent(QMouseEvent *event) {
 
 }
 
+playListItem::playListItem(song *song, QWidget *parent) :
+    QWidget(parent), ui(new Ui::playListItem){
+    ui->setupUi(this);
+
+    bInPlaylist = true;
+
+    ui->songName->setText(song->getName());
+}

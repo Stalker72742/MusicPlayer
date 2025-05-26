@@ -8,6 +8,8 @@
 #include <QJsonObject>
 #include <QWidget>
 
+#include "song.h"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class playListItem; }
@@ -18,6 +20,7 @@ Q_OBJECT
 
 public:
     explicit playListItem(QWidget *parent = nullptr, QJsonObject info = QJsonObject());
+    explicit playListItem(song* song, QWidget* parent = nullptr);
     ~playListItem() override;
 
 

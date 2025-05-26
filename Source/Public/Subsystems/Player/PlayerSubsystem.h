@@ -43,6 +43,8 @@ public:
 
     void savePlaylist();
 
+    QList<song*> getSongs();
+
 public slots:
 
     static void PlayerError(QMediaPlayer::Error Error, const QString &error);
@@ -52,8 +54,6 @@ signals:
     void playlistUpdated();
 
 private:
-
-    QList<song*> getSongs();
 
     QAudioOutput *audioOutput;
     QMediaPlayer *player;

@@ -42,6 +42,23 @@ mainWindow::mainWindow(QObject *Parent) :
 
     ui->mediateka->setLayout(new QVBoxLayout());
     ui->mediateka->layout()->addWidget(sideMenu);
+
+    playListItem* playlistItem;
+
+    QLayoutItem* item;
+
+    while ((item = ui->playlistLayout->takeAt(0)) != nullptr) {
+        if (item->widget()) {
+            delete item->widget();
+        }
+        delete item;
+    }
+
+    foreach(song* x, playerSubsystem->getSongs()) {
+
+        playlistItem = new playListItem(x, this);
+        ui->playlistLayout->addWidget(playlistItem);
+    }
 }
 
 mainWindow::~mainWindow() {

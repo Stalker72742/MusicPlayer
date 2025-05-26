@@ -19,6 +19,8 @@ public:
 
     QString getName();
 
+    void setName(QString NewName);
+
     QUrl getPlayerUrl();
 
     QString getSongPath() { return songPathOrUrl;};

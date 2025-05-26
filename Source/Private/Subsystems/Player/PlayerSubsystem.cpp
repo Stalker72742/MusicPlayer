@@ -104,6 +104,8 @@ void PlayerSubsystem::LoadSongs() {
 
             currentPlaylist.append(new song(json[key].toString()));
 
+            currentPlaylist.last()->setName(key);
+
             qDebug() << "Loaded song: " << key;
         }
 

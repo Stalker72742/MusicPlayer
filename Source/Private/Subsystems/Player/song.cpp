@@ -45,7 +45,6 @@ song::song(const QString &fileName) {
         getAudioStream();
     }else {
 
-
         songPathOrUrl = fileName;
 
         songName = fileName.split('/').last();
@@ -56,6 +55,10 @@ song::song(const QString &fileName) {
 
 QString song::getName() {
     return songName;
+}
+
+void song::setName(QString NewName) {
+    songName = NewName;
 }
 
 QUrl song::getPlayerUrl() {
