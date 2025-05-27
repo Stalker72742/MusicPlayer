@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>853</width>
-    <height>613</height>
+    <height>637</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -108,18 +108,7 @@ border : 5px;</string>
            <property name="styleSheet">
             <string notr="true">background-color: rgb(12, 12, 12);</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
-            <item>
-             <widget class="QPushButton" name="pushButton">
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(255, 255, 255);</string>
-              </property>
-              <property name="text">
-               <string>PushButton</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <layout class="QHBoxLayout" name="horizontalLayout_8"/>
           </widget>
          </item>
         </layout>
@@ -138,13 +127,37 @@ border : 5px;</string>
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>45</height>
+        <height>80</height>
        </size>
       </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(0, 0, 0);</string>
+       <string notr="true">QWidget {
+	background-color: rgb(33, 33, 33);
+}
+
+QWidget#BottomPanel {
+	border-top: 1px solid white;
+	border-left: none;
+    border-right: none;
+    border-bottom: none;
+}</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
@@ -160,6 +173,12 @@ border : 5px;</string>
              <width>150</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">	border-top: 1px solid white;
+	border-left: none;
+    border-right: none;
+    border-bottom: none;</string>
            </property>
           </widget>
          </item>
@@ -196,6 +215,14 @@ border : 5px;</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QWidget#widget{
+	border-top: 1px solid white;
+	border-left: none;
+    border-right: none;
+    border-bottom: none;
+}</string>
+           </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <property name="spacing">
              <number>0</number>
@@ -204,7 +231,7 @@ border : 5px;</string>
              <number>0</number>
             </property>
             <property name="topMargin">
-             <number>0</number>
+             <number>5</number>
             </property>
             <property name="rightMargin">
              <number>0</number>
@@ -358,6 +385,14 @@ border : 5px;</string>
              <height>0</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QWidget#widget_4{	
+border-top: 1px solid white;
+	border-left: none;
+    border-right: none;
+    border-bottom: none;
+}</string>
+           </property>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
             <item>
              <widget class="QSlider" name="horizontalSlider_2">
@@ -390,7 +425,6 @@ border : 5px;</string>
    <zorder>BottomPanel</zorder>
    <zorder>MiddlePanel</zorder>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
  <connections/>
