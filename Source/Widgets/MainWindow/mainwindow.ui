@@ -175,10 +175,7 @@ QWidget#BottomPanel {
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">	border-top: 1px solid white;
-	border-left: none;
-    border-right: none;
-    border-bottom: none;</string>
+            <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
            </property>
           </widget>
          </item>
@@ -244,16 +241,6 @@ QWidget#BottomPanel {
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_5">
                 <item>
-                 <widget class="QPushButton" name="mixButton">
-                  <property name="styleSheet">
-                   <string notr="true">background-color: rgb(255, 255, 255);</string>
-                  </property>
-                  <property name="text">
-                   <string>Mix</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
                  <widget class="QPushButton" name="previousButton">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -286,16 +273,6 @@ QWidget#BottomPanel {
                   </property>
                   <property name="text">
                    <string>Next</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="loopButton">
-                  <property name="styleSheet">
-                   <string notr="true">background-color: rgb(255, 255, 255);</string>
-                  </property>
-                  <property name="text">
-                   <string>Loop</string>
                   </property>
                  </widget>
                 </item>
@@ -332,6 +309,24 @@ QWidget#BottomPanel {
                     <width>16777215</width>
                     <height>16777215</height>
                    </size>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QSlider::groove:horizontal {
+    border: 1px solid #999999;
+    height: 3px;
+    background: rgb(255,255,255);
+    margin: 2px 0;
+	border-radius: 5px;
+}
+
+QSlider::handle:horizontal {
+    	 background-color: #ffffff;
+        border: 1px solid #ffffff;
+        width: 15px;
+        height: 15px;
+        margin: -7px 0; 
+        border-radius: 7px;
+}</string>
                   </property>
                   <property name="maximum">
                    <number>100</number>
@@ -387,10 +382,7 @@ QWidget#BottomPanel {
            </property>
            <property name="styleSheet">
             <string notr="true">QWidget#widget_4{	
-border-top: 1px solid white;
-	border-left: none;
-    border-right: none;
-    border-bottom: none;
+background-color: rgba(0,0,0,0);
 }</string>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
