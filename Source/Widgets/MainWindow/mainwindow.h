@@ -41,10 +41,6 @@ public slots:
 
     void playPrevious() const;
 
-    void enableLoop();
-
-    void mixPlaylist();
-
 private:
     Ui::mainWindow *ui;
 

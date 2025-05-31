@@ -11,7 +11,6 @@
 #include "titlebar.h"
 #include "AppInstanceLibs.h"
 #include "playlistitem.h"
-#include "playlistlist.h"
 #include <QTimer>
 
 mainWindow::mainWindow(QObject *Parent) :
@@ -22,7 +21,28 @@ mainWindow::mainWindow(QObject *Parent) :
 
     setWindowFlags(Qt::FramelessWindowHint);
 
-    setMenuWidget(new TitleBar(this));
+    QWidget* titleBar = new TitleBar(this);
+
+    setMenuWidget(titleBar);
+
+    titleBar->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+
+    titleBar->setFixedHeight(60);
+
+    titleBar->setObjectName("TitleBar");
+
+    QTimer::singleShot(500,[titleBar] {
+
+        titleBar->setStyleSheet("QWidget#TitleBar {"
+        "border-top: none;"
+        "border-left: none;"
+        "border-right: none;"
+        "border-bottom: 15px solid white;"
+        "background-color: rgba(33, 33, 33, 255);"
+        "}"
+    );
+
+    });
 
     AppInstance* AppInstance = AppInstanceLibs::getAppInstance(this);
 
@@ -35,14 +55,7 @@ mainWindow::mainWindow(QObject *Parent) :
     connect(ui->playButton, &QPushButton::clicked, this, &mainWindow::playPause);
     connect(ui->nextButton, &QPushButton::clicked, this, &mainWindow::playNext);
     connect(ui->previousButton, &QPushButton::clicked, this, &mainWindow::playPrevious);
-    connect(ui->mixButton, &QPushButton::clicked, this, &mainWindow::mixPlaylist);
-    connect(ui->loopButton, &QPushButton::clicked, this, &mainWindow::enableLoop);
-
-    sideMenu = new playlistList(this);
-
-    ui->mediateka->setLayout(new QVBoxLayout());
-    ui->mediateka->layout()->addWidget(sideMenu);
-
+    
     playListItem* playlistItem;
 
     QLayoutItem* item;
@@ -126,12 +139,4 @@ void mainWindow::playNext() const {
 void mainWindow::playPrevious() const {
 
     playerSubsystem->PreviousSong();
-}
-
-void mainWindow::enableLoop() {
-
-}
-
-void mainWindow::mixPlaylist() {
-
 }
