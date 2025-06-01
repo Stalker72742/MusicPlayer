@@ -60,7 +60,9 @@ mainWindow::mainWindow(QObject *Parent) :
 
     QLayoutItem* item;
 
-    while ((item = ui->playlistLayout->takeAt(0)) != nullptr) {
+    ui->playlistScrollArea->setLayout(new QVBoxLayout());
+
+    while ((item = ui->playlistScrollArea->layout()->takeAt(0)) != nullptr) {
         if (item->widget()) {
             delete item->widget();
         }
@@ -70,8 +72,12 @@ mainWindow::mainWindow(QObject *Parent) :
     foreach(song* x, playerSubsystem->getSongs()) {
 
         playlistItem = new playListItem(x, this);
-        ui->playlistLayout->addWidget(playlistItem);
+        ui->playlistScrollArea->layout()->addWidget(playlistItem);
     }
+
+    qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->addStretch();
+
+    qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->setSpacing(0);
 }
 
 mainWindow::~mainWindow() {
@@ -95,14 +101,16 @@ void mainWindow::addItemToPlaylist(QJsonObject Json, ESearchResultsState searchR
         case pending:
 
             playlistItem = new playListItem(this, Json);
-            ui->playlistLayout->addWidget(playlistItem);
+            ui->playlistScrollArea->layout()->addWidget(playlistItem);
+
+            qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->addStretch();
 
             qDebug() << "playlist item created";
             break;
 
         case startParsing:
 
-            while ((item = ui->playlistLayout->takeAt(0)) != nullptr) {
+            while ((item = ui->playlistScrollArea->layout()->takeAt(0)) != nullptr) {
                 if (item->widget()) {
                     delete item->widget();
                 }
