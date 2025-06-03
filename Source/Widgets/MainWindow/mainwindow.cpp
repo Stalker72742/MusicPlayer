@@ -56,6 +56,7 @@ mainWindow::mainWindow(QObject *Parent) :
     connect(ui->playButton, &QPushButton::clicked, this, &mainWindow::playPause);
     connect(ui->nextButton, &QPushButton::clicked, this, &mainWindow::playNext);
     connect(ui->previousButton, &QPushButton::clicked, this, &mainWindow::playPrevious);
+    connect(ui->createPlaylistButton, &QPushButton::clicked, this, &mainWindow::createPlaylist);
     
     playListItem* playlistItem;
 
@@ -83,12 +84,6 @@ mainWindow::mainWindow(QObject *Parent) :
     ui->mediatekaScrollArea->setLayout(new QVBoxLayout());
 
     qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->setContentsMargins(30, 0, 0, 0);
-
-    ui->mediatekaScrollArea->layout()->addWidget(new mediaLibItem());
-
-    qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->addStretch(0);
-
-    qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->setSpacing(0);
 
 }
 
@@ -159,4 +154,17 @@ void mainWindow::playNext() const {
 void mainWindow::playPrevious() const {
 
     playerSubsystem->PreviousSong();
+}
+
+void mainWindow::createPlaylist() {
+
+    auto playlist = new mediaLibItem();
+
+    playlist->setFixedHeight(45);
+
+    playlist->setFocus();
+
+    ui->mediatekaScrollArea->layout()->addWidget(playlist);
+
+    qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->addStretch();
 }

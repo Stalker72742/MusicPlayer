@@ -45,6 +45,16 @@ public:
 
     QList<song*> getSongs();
 
+    void createPlaylist(QString playlistName);
+
+    void setCurrentPlaylist(QString playlistPath);
+
+    void removePlaylist(QString playlistPath);
+
+    /// playlist maybe name = QString or path = QDir
+    template <typename P>
+    void addSongToPlaylist(song* Song, P playlist);
+
 public slots:
 
     static void PlayerError(QMediaPlayer::Error Error, const QString &error);

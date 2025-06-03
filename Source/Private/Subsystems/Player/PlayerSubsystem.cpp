@@ -186,6 +186,31 @@ QList<song*> PlayerSubsystem::getSongs() {
     return bUseQueue ? queueSongs : currentPlaylist;
 }
 
+void PlayerSubsystem::createPlaylist(QString playlistName) {
+
+    QFile file(DefaultMediaLibFolder + "/" + playlistName + ".json");
+
+    QFileInfo fileInfo(file);
+    QDir dir = fileInfo.absoluteDir();
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Fail to save file:" << file.errorString();
+    }
+}
+
+void PlayerSubsystem::setCurrentPlaylist(QString playlistPath) {
+
+}
+
+void PlayerSubsystem::removePlaylist(QString playlistPath) {
+
+}
+
+template<typename P>
+void PlayerSubsystem::addSongToPlaylist(song *Song, P playlist) {
+
+}
+
 void PlayerSubsystem::addSongToQueue(song* Song) {
 
     qDebug() << "Adding song to queue: " << Song->getName();

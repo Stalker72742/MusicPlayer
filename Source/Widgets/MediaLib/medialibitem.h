@@ -5,9 +5,11 @@
 #ifndef MEDIALIBITEM_H
 #define MEDIALIBITEM_H
 
+#include <QPushButton>
 #include <QWidget>
 
 
+class QLabel;
 QT_BEGIN_NAMESPACE
 namespace Ui { class mediaLibItem; }
 QT_END_NAMESPACE
@@ -19,12 +21,20 @@ public:
     explicit mediaLibItem(QString playlistPath = "", QWidget *parent = nullptr);
     ~mediaLibItem() override;
 
+    void setFocus();
+
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
     Ui::mediaLibItem *ui;
 
     QString playlistPath;
 
     QString playlistName;
+
+    QLabel* playlistLabel;
+
+    QPushButton* playlistMenu;
 };
 
 

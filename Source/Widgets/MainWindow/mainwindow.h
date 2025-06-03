@@ -38,6 +38,8 @@ public slots:
 
     void playPrevious() const;
 
+    void createPlaylist();
+
 private:
     Ui::mainWindow *ui;
 
