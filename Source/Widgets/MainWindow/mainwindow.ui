@@ -140,25 +140,17 @@ stop:1 #424242);</string>
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>230</width>
-                   <height>40</height>
-                  </size>
+                <widget class="QLabel" name="label_5">
+                 <property name="font">
+                  <font>
+                   <pointsize>18</pointsize>
+                   <bold>true</bold>
+                  </font>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">color: rgb(255, 255, 255);
-background-color: rgb(97, 97, 97);
-
-border: 1px solid rgb(97, 97, 97);
-border-radius: 5px;</string>
+background-color: rgba(255, 255, 255, 0);
+border-bottom: 1px solid #333;</string>
                  </property>
                  <property name="text">
                   <string>Библиотека</string>
@@ -206,7 +198,7 @@ border-radius: 5px;</string>
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>20</width>
-                   <height>25</height>
+                   <height>20</height>
                   </size>
                  </property>
                 </spacer>
@@ -216,15 +208,76 @@ border-radius: 5px;</string>
                  <property name="font">
                   <font>
                    <pointsize>12</pointsize>
+                   <bold>false</bold>
                   </font>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">color: rgb(189, 189, 189);</string>
+                  <string notr="true">color: #b3b3b3;</string>
                  </property>
                  <property name="text">
                   <string>ПЛЕЙЛИСТЫ</string>
                  </property>
                 </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_8">
+                 <property name="leftMargin">
+                  <number>10</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QPushButton" name="pushButton">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>35</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>11</pointsize>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">QPushButton:hover {
+   background-color: #282828;
+   color: #ffffff;
+}
+
+QPushButton:default {
+    background-color: rgba(255, 255, 255, 0);
+	color: rgb(179, 179, 179);
+	border: px1 solid #b3b3b3;
+	border-radius: 4px;
+}
+
+QPushButton {
+    background-color: rgba(255, 255, 255, 0);
+	color: rgb(179, 179, 179);
+	border: px1 solid #b3b3b3;
+	border-radius: 4px;
+}</string>
+                   </property>
+                   <property name="text">
+                    <string>Создать Плейлист</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
               </layout>
              </widget>
@@ -234,13 +287,16 @@ border-radius: 5px;</string>
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
               <widget class="QWidget" name="scrollAreaWidgetContents">
                <property name="geometry">
                 <rect>
                  <x>0</x>
                  <y>0</y>
                  <width>248</width>
-                 <height>600</height>
+                 <height>569</height>
                 </rect>
                </property>
               </widget>

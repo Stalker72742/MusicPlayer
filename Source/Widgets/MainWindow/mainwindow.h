@@ -7,7 +7,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <playlistlist.h>
 #include <QMainWindow>
 
 #include "ytSearcherSub.h"
@@ -28,8 +27,6 @@ public:
     ~mainWindow() override;
 
     AppInstance *getAppInstance() const;
-
-    playlistList* sideMenu;
 
 public slots:
 

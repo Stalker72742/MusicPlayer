@@ -12,6 +12,7 @@
 #include "AppInstanceLibs.h"
 #include "playlistitem.h"
 #include <QTimer>
+#include "medialibitem.h"
 
 mainWindow::mainWindow(QObject *Parent) :
     QMainWindow(nullptr), ui(new Ui::mainWindow) {
@@ -75,9 +76,20 @@ mainWindow::mainWindow(QObject *Parent) :
         ui->playlistScrollArea->layout()->addWidget(playlistItem);
     }
 
-    qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->addStretch();
+    qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->addStretch(0);
 
     qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->setSpacing(0);
+
+    ui->mediatekaScrollArea->setLayout(new QVBoxLayout());
+
+    qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->setContentsMargins(30, 0, 0, 0);
+
+    ui->mediatekaScrollArea->layout()->addWidget(new mediaLibItem());
+
+    qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->addStretch(0);
+
+    qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->setSpacing(0);
+
 }
 
 mainWindow::~mainWindow() {
