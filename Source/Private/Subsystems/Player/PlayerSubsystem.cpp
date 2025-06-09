@@ -10,6 +10,7 @@
 #include <QDirIterator>
 #include <QJsonDocument>
 
+#include "AppInstance.h"
 #include "song.h"
 #include "songPath.h"
 
@@ -40,7 +41,7 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 
     LoadSongs();
 
-    bUseQueue = false;
+    setCurrentPlaylist(getPlaylists()[0]);
 }
 
 PlayerSubsystem::~PlayerSubsystem() {
@@ -186,19 +187,54 @@ QList<song*> PlayerSubsystem::getSongs() {
     return bUseQueue ? queueSongs : currentPlaylist;
 }
 
-void PlayerSubsystem::createPlaylist(QString playlistName) {
+QString PlayerSubsystem::createPlaylist(QString playlistName) {
 
     QFile file(DefaultMediaLibFolder + "/" + playlistName + ".json");
 
     QFileInfo fileInfo(file);
     QDir dir = fileInfo.absoluteDir();
 
+    bool bSuccess = true;
+
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qDebug() << "Fail to save file:" << file.errorString();
+
+        bSuccess = false;
     }
+
+    return bSuccess ? DefaultMediaLibFolder + "/" + playlistName + ".json" : "";
 }
 
-void PlayerSubsystem::setCurrentPlaylist(QString playlistPath) {
+void PlayerSubsystem::setCurrentPlaylist(QString playlistPathLocal) {
+
+    QFile configFile(playlistPathLocal);
+    if (!configFile.open(QIODevice::ReadOnly)) return;
+
+    currentPlaylist.clear();
+
+    playlistPath = playlistPathLocal;
+
+    QJsonObject json = QJsonDocument::fromJson(configFile.readAll()).object();
+
+    foreach(QString key, json.keys()) {
+
+        currentPlaylist.append(new song(json[key].toString()));
+
+        currentPlaylist.last()->setName(key);
+
+        qDebug() << "Loaded song: " << key;
+    }
+
+    emit playlistChanged();
+
+    if (!currentPlaylist.empty()) {
+
+        CurrentSongIndex = 0;
+
+    }else {
+
+        qDebug() << "No songs found";
+    }
 
 }
 
@@ -206,8 +242,36 @@ void PlayerSubsystem::removePlaylist(QString playlistPath) {
 
 }
 
+QList<QString> PlayerSubsystem::getPlaylists() {
+
+    QList<QString> playlists;
+
+    const QDir dir(DefaultMediaLibFolder);
+    QStringList filters;
+    filters << "*.json";
+
+    QDirIterator it(dir.absolutePath(), filters, QDir::Files);
+    int index = 0;
+
+    while (it.hasNext()) {
+        it.next();
+        QString filePath = it.filePath();
+
+        QFile configFile(filePath);
+        if (!configFile.open(QIODevice::ReadOnly)) return playlists;
+
+        playlists.append(filePath);
+
+        index++;
+    }
+
+    return playlists;
+}
+
 template<typename P>
 void PlayerSubsystem::addSongToPlaylist(song *Song, P playlist) {
+
+
 
 }
 

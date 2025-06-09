@@ -28,6 +28,8 @@ public:
 
     AppInstance *getAppInstance() const;
 
+    bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result) override;
+
 public slots:
 
     void addItemToPlaylist(QJsonObject Json, ESearchResultsState searchResultsState);
@@ -39,6 +41,8 @@ public slots:
     void playPrevious() const;
 
     void createPlaylist();
+
+    void updatePlaylistItems();
 
 private:
     Ui::mainWindow *ui;

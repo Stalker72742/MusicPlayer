@@ -27,6 +27,7 @@ foreach(header ${HEADERS})
     get_filename_component(dir ${header} DIRECTORY)
     list(APPEND INCLUDE_DIRS ${dir})
 endforeach()
+
 list(REMOVE_DUPLICATES INCLUDE_DIRS)
 
 qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION ${SOURCES})

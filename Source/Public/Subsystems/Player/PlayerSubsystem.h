@@ -45,11 +45,13 @@ public:
 
     QList<song*> getSongs();
 
-    void createPlaylist(QString playlistName);
+    QString createPlaylist(QString playlistName);
 
-    void setCurrentPlaylist(QString playlistPath);
+    void setCurrentPlaylist(QString playlistPathLocal);
 
     void removePlaylist(QString playlistPath);
+
+    QList<QString> getPlaylists();
 
     /// playlist maybe name = QString or path = QDir
     template <typename P>
@@ -63,6 +65,8 @@ signals:
 
     void playlistUpdated();
 
+    void playlistChanged();
+
 private:
 
     QAudioOutput *audioOutput;
@@ -74,6 +78,8 @@ private:
     const QString DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
 
     QList<song*> currentPlaylist;
+
+    QString playlistPath;
 
     qint32 CurrentSongIndex;
 

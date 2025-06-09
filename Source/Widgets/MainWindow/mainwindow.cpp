@@ -14,6 +14,10 @@
 #include <QTimer>
 #include "medialibitem.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 mainWindow::mainWindow(QObject *Parent) :
     QMainWindow(nullptr), ui(new Ui::mainWindow) {
     ui->setupUi(this);
@@ -53,38 +57,38 @@ mainWindow::mainWindow(QObject *Parent) :
 
     playerSubsystem = AppInstance->getSubsystem<PlayerSubsystem>();
 
+    connect(playerSubsystem, &PlayerSubsystem::playlistChanged, this, &mainWindow::updatePlaylistItems);
+
+    updatePlaylistItems();
+
     connect(ui->playButton, &QPushButton::clicked, this, &mainWindow::playPause);
     connect(ui->nextButton, &QPushButton::clicked, this, &mainWindow::playNext);
     connect(ui->previousButton, &QPushButton::clicked, this, &mainWindow::playPrevious);
     connect(ui->createPlaylistButton, &QPushButton::clicked, this, &mainWindow::createPlaylist);
-    
-    playListItem* playlistItem;
-
-    QLayoutItem* item;
-
-    ui->playlistScrollArea->setLayout(new QVBoxLayout());
-
-    while ((item = ui->playlistScrollArea->layout()->takeAt(0)) != nullptr) {
-        if (item->widget()) {
-            delete item->widget();
-        }
-        delete item;
-    }
-
-    foreach(song* x, playerSubsystem->getSongs()) {
-
-        playlistItem = new playListItem(x, this);
-        ui->playlistScrollArea->layout()->addWidget(playlistItem);
-    }
-
-    qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->addStretch(0);
-
-    qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->setSpacing(0);
 
     ui->mediatekaScrollArea->setLayout(new QVBoxLayout());
 
     qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->setContentsMargins(30, 0, 0, 0);
 
+    foreach(QString x, playerSubsystem->getPlaylists()) {
+
+        auto playlist = new mediaLibItem(this, x);
+
+        playlist->setFixedHeight(45);
+        playlist->setFocus();
+
+        ui->mediatekaScrollArea->layout()->addWidget(playlist);
+    }
+
+    qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->addStretch();
+
+#ifdef Q_OS_WIN
+
+    RegisterHotKey((HWND)winId(), 1, MOD_NOREPEAT, VK_MEDIA_PLAY_PAUSE);
+    RegisterHotKey((HWND)winId(), 2, MOD_NOREPEAT, VK_MEDIA_NEXT_TRACK);
+    RegisterHotKey((HWND)winId(), 3, MOD_NOREPEAT, VK_MEDIA_PREV_TRACK);
+
+#endif
 }
 
 mainWindow::~mainWindow() {
@@ -95,6 +99,41 @@ mainWindow::~mainWindow() {
 AppInstance* mainWindow::getAppInstance() const {
 
     return qobject_cast<AppInstance*>(parent);
+}
+
+bool mainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result) {
+
+#ifdef Q_OS_WIN
+    if (eventType == "windows_generic_MSG") {
+        MSG* msg = static_cast<MSG*>(message);
+
+        if (msg->message == WM_HOTKEY) {
+            int id = msg->wParam;
+
+            switch (id) {
+                case 1:
+
+                    playPause();
+                    break;
+                case 2:
+
+                    playNext();
+                    break;
+
+                case 3:
+
+                    playPrevious();
+                    break;
+
+                default:
+
+                    break;
+            }
+            return true;
+        }
+    }
+#endif
+    return QMainWindow::nativeEvent(eventType, message, result);
 }
 
 void mainWindow::addItemToPlaylist(QJsonObject Json, ESearchResultsState searchResultsState) {
@@ -158,7 +197,7 @@ void mainWindow::playPrevious() const {
 
 void mainWindow::createPlaylist() {
 
-    auto playlist = new mediaLibItem();
+    auto playlist = new mediaLibItem(this);
 
     playlist->setFixedHeight(45);
 
@@ -167,4 +206,28 @@ void mainWindow::createPlaylist() {
     ui->mediatekaScrollArea->layout()->addWidget(playlist);
 
     qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->addStretch();
+}
+
+void mainWindow::updatePlaylistItems() {
+
+    playListItem* playlistItem;
+    QLayoutItem* item;
+
+    ui->playlistScrollArea->setLayout(new QVBoxLayout());
+
+    while ((item = ui->playlistScrollArea->layout()->takeAt(0)) != nullptr) {
+        if (item->widget()) {
+            delete item->widget();
+        }
+        delete item;
+    }
+
+    foreach(song* x, playerSubsystem->getSongs()) {
+
+        playlistItem = new playListItem(x, this);
+        ui->playlistScrollArea->layout()->addWidget(playlistItem);
+    }
+
+    qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->addStretch(0);
+    qobject_cast<QVBoxLayout*>(ui->playlistScrollArea->layout())->setSpacing(0);
 }
