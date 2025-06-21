@@ -9,38 +9,64 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets QMultimedia)
+if(ANDROID)
+    set(PLATFORM_ANDROID TRUE)
+    set(PLATFORM_WINDOWS FALSE)
+elseif(WIN32)
+    set(PLATFORM_WINDOWS TRUE)
+    set(PLATFORM_ANDROID FALSE)
+else()
+    set(PLATFORM_WINDOWS FALSE)
+    set(PLATFORM_ANDROID FALSE)
+endif()
 
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/Source/*.ui
+find_package(Qt6 REQUIRED COMPONENTS
+        Core
+        Widgets
+        Multimedia
 )
 
-file(GLOB_RECURSE HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/**/Public/*.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/**/Widgets/*.h"
-)
+if(PLATFORM_ANDROID)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/android-build/libs/${ANDROID_ABI})
+else()
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+endif()
 
-foreach(header ${HEADERS})
-    get_filename_component(dir ${header} DIRECTORY)
-    list(APPEND INCLUDE_DIRS ${dir})
-endforeach()
+if(PLATFORM_WINDOWS)
+    add_definitions(-DUNICODE -D_UNICODE)
+    if(MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
+        add_compile_options(/utf-8)
+    endif()
+endif()
 
-list(REMOVE_DUPLICATES INCLUDE_DIRS)
+if(PLATFORM_ANDROID)
+    set(ANDROID_PLATFORM android-24)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti -fexceptions")
 
-qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION ${SOURCES})
+    set_property(TARGET Qt6::Core PROPERTY INTERFACE_QT_ANDROID_DEPLOYMENT_DEPENDENCIES "")
+endif()
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS} Source/)
+add_subdirectory(Core)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
-        Qt6::Widgets Qt6::Multimedia
-        ${AVCODEC_LIBRARY}
-        ${AVFORMAT_LIBRARY}
-        ${AVUTIL_LIBRARY}
-        ${SWSCALE_LIBRARY}
-        ${SWRESAMPLE_LIBRARY}
+if(PLATFORM_ANDROID)
+
+    add_subdirectory(Platforms/Android)
+elseif(PLATFORM_WINDOWS)
+
+    add_subdirectory(Platforms/Desktop)
+else()
+    message("Update cmake code for new platform")
+endif ()
+
+qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp)
+
+target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+        MusicPlayerCore
+        DesktopMusicPlayerUI
 )
 
 include(GNUInstallDirs)
@@ -50,7 +76,10 @@ install(TARGETS ${PROJECT_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-if(WIN32)
+if(PLATFORM_ANDROID)
+
+elseif(PLATFORM_WINDOWS)
+
     get_target_property(QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
     get_filename_component(QT_BIN_DIR "${QMAKE_EXECUTABLE}" DIRECTORY)
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${QT_BIN_DIR}")
@@ -71,22 +100,8 @@ if(WIN32)
             "$<TARGET_FILE:${PROJECT_NAME}>" "${CMAKE_CURRENT_BINARY_DIR}/Release"
             COMMENT "Deploying Qt dependencies to Release/bin..."
     )
-elseif(UNIX AND NOT APPLE)
-    find_program(LINUXDEPLOYQT_EXECUTABLE linuxdeployqt)
-    if(LINUXDEPLOYQT_EXECUTABLE)
-        set(DEPLOY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Release/bin")
-        file(MAKE_DIRECTORY ${DEPLOY_DIR})
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${DEPLOY_DIR}"
-                COMMAND "${LINUXDEPLOYQT_EXECUTABLE}"
-                "$<TARGET_FILE:${PROJECT_NAME}>"
-                -bundle-non-qt-libs
-                -extra-libs="${DEPLOY_DIR}"
-                -verbose=1
-                COMMENT "Deploying Qt dependencies to Release/bin..."
-        )
-    endif()
-endif()
+else ()
+    message("Update cmake code for new platform")
+endif ()
 
 qt_finalize_executable(${PROJECT_NAME})
