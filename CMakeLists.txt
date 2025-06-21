@@ -26,14 +26,6 @@ find_package(Qt6 REQUIRED COMPONENTS
         Multimedia
 )
 
-if(PLATFORM_ANDROID)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/android-build/libs/${ANDROID_ABI})
-else()
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-endif()
-
 if(PLATFORM_WINDOWS)
     add_definitions(-DUNICODE -D_UNICODE)
     if(MSVC)
@@ -67,6 +59,7 @@ target_link_libraries(${PROJECT_NAME}
         PRIVATE
         MusicPlayerCore
         DesktopMusicPlayerUI
+        Qt6::Multimedia
 )
 
 include(GNUInstallDirs)
@@ -99,6 +92,19 @@ elseif(PLATFORM_WINDOWS)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:${PROJECT_NAME}>" "${CMAKE_CURRENT_BINARY_DIR}/Release"
             COMMENT "Deploying Qt dependencies to Release/bin..."
+    )
+
+    set(DLL_FILES
+            "D:/Qt/Tools/mingw1310_64/bin/libgcc_s_seh-1.dll"
+            "D:/Qt/Tools/mingw1310_64/bin/libstdc++-6.dll"
+            "D:/Qt/Tools/mingw1310_64/bin/libwinpthread-1.dll"
+            "${CMAKE_CURRENT_BINARY_DIR}/Core/libMusicPlayerCore.dll"
+            "${CMAKE_CURRENT_BINARY_DIR}/Platforms/Desktop/libDesktopMusicPlayerUI.dll"
+    )
+
+    add_custom_command(TARGET MusicPlayer POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_FILES} "${CMAKE_CURRENT_BINARY_DIR}"
+            COMMENT "Copying all required DLL files"
     )
 else ()
     message("Update cmake code for new platform")

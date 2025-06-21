@@ -16,7 +16,12 @@ public:
 
     ~AppInstance() override;
 
-    void createApp();
+    template <typename mw>
+    void createApp() {
+
+        mw *window = new mw();
+        window->show();
+    };
 
     template <typename T>
     T* getSubsystem() {

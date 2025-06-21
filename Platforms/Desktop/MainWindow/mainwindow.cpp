@@ -50,6 +50,8 @@ mainWindow::mainWindow(QObject *Parent) :
 
     });
 
+    return;
+
     AppInstance* AppInstance = AppInstanceLibs::getAppInstance(this);
 
     connect(AppInstance->getSubsystem<ytSearcherSub>(), Q_SIGNAL(&ytSearcherSub::searchResults), this, &mainWindow::addItemToPlaylist);
