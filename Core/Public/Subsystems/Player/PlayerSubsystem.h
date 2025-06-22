@@ -5,10 +5,10 @@
 #ifndef PLAYERSUBSYSTEM_H
 #define PLAYERSUBSYSTEM_H
 
-#include <QtMultimedia/QAudioOutput>
+#include <QAudioOutput>
 #include <QObject>
 #include <QDir>
-#include <QtMultimedia/QMediaPlayer>
+#include <QMediaPlayer>
 #include <QTimer>
 
 #include "songPath.h"

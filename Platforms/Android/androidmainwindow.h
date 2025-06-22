@@ -1,7 +1,7 @@
 #ifndef ANDROIDMAINWINDOW_H
 #define ANDROIDMAINWINDOW_H
 
-#include <QMainWindow>
+#include <QtWidgets/QMainWindow>
 
 namespace Ui {
 class androidMainWindow;

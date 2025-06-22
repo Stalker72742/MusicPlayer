@@ -8,7 +8,10 @@
 #include <QJsonObject>
 #include <QProcess>
 #include <QUrl>
+
+#ifdef Q_OS_WIN
 #include <windows.h>
+#endif
 
 ytSearcherSub::ytSearcherSub(QObject *parent) {
 

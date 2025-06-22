@@ -2,7 +2,7 @@
 // Created by Stalker7274 on 17.04.2025.
 //
 
-#include "Framework/AppInstance.h"
+#include "AppInstance.h"
 
 class QObject;
 

@@ -4,9 +4,9 @@
 
 #include "PlayerSubsystem.h"
 
-#include <QtMultimedia/QAudioDevice>
-#include <QtMultimedia/QMediaDevices>
-#include <QtMultimedia/QMediaPlayer>
+#include <QAudioDevice>
+#include <QMediaDevices>
+#include <QMediaPlayer>
 #include <QDirIterator>
 #include <QJsonDocument>
 

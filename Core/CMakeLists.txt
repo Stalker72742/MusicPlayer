@@ -5,7 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Multimedia)
+find_package(Qt6 REQUIRED COMPONENTS Core Multimedia)
 
 file(GLOB_RECURSE SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/Private/*.cpp
@@ -33,7 +33,6 @@ target_link_libraries(MusicPlayerCore
 target_include_directories(MusicPlayerCore
         PUBLIC
         ${INCLUDE_DIRS}
-        Public/
 )
 
 if(PLATFORM_WINDOWS)
@@ -46,10 +45,10 @@ if(PLATFORM_WINDOWS)
 
     target_compile_definitions(MusicPlayerCore
             PRIVATE
-            MYAPPCORE_EXPORTS
+            MusicPlayerCore_EXPORTS
             QT_WIDGETS_LIB
             INTERFACE
-            MYAPPCORE_IMPORTS
+            MusicPlayerCore_IMPORTS
     )
 
     set_target_properties(MusicPlayerCore PROPERTIES
