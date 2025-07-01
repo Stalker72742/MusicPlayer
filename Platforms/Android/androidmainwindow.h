@@ -15,6 +15,11 @@ public:
     explicit androidMainWindow(QWidget *parent = nullptr);
     ~androidMainWindow();
 
+public slots:
+
+    void searchButtonClicked(bool checked);
+    void mediaButtonClicked(bool checked);
+
 private:
     Ui::androidMainWindow *ui;
 };

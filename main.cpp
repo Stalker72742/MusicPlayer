@@ -6,19 +6,21 @@
 #include "mainwindow.h"
 #endif
 
-
+#ifdef Q_OS_ANDROID
 #include "Platforms\Android\androidmainwindow.h"
-
+#endif
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    AppInstance w(nullptr);
+    AppInstance *w = new AppInstance();
 
 #ifdef Q_OS_WIN
 
-    w.createApp<mainWindow>();
+    mainWindow* win = new mainWindow(w);
+
+    win->show();
 
 #endif
 
@@ -26,6 +28,6 @@ int main(int argc, char *argv[])
 
     win->show();
 
-    return a.exec();
 
+    return a.exec();
 }

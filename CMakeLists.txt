@@ -20,14 +20,14 @@ else()
     set(PLATFORM_ANDROID FALSE)
 endif()
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets Multimedia)
-find_package(Qt6 REQUIRED COMPONENTS Widgets Multimedia)
+find_package(Qt6 COMPONENTS Core Widgets Multimedia REQUIRED)
+#find_package(Qt6 REQUIRED COMPONENTS Widgets Multimedia)
 
 if(PLATFORM_ANDROID)
-    set(ANDROID_PLATFORM android-24)
+    set(ANDROID_PLATFORM android-36)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti -fexceptions")
-
-    set_property(TARGET Qt6::Core PROPERTY INTERFACE_QT_ANDROID_DEPLOYMENT_DEPENDENCIES "")
+    set(CMAKE_ANDROID_STL_TYPE c++_shared)
+    set(ANDROID_NDK_ROOT "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/bin")
 endif()
 
 add_subdirectory(Core)
@@ -68,7 +68,6 @@ elseif (PLATFORM_ANDROID)
 else ()
 
 endif ()
-
 
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
@@ -146,6 +145,34 @@ if(PLATFORM_WINDOWS)
     endif()
 
 elseif(PLATFORM_ANDROID)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND D:/Qt/6.8.3/mingw_64/bin/androiddeployqt.exe
+            --input "D:/MusicPlayer/cmake-build-qt-android/android-MusicPlayer-deployment-settings.json"
+            --output "D:/MusicPlayer/cmake-build-qt-android//android-build"
+            --android-platform android-36
+            --jdk "C:/Program Files/Java/jdk-23"
+            --gradle
+            --ndk "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/26.1.10909125"
+            COMMENT "Сборка .apk через androiddeployqt"
+    )
+
+    #[[add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND powershell -Command "Start-Process -FilePath 'C:/Users/Stalker7274/AppData/Local/Android/Sdk/emulator/emulator.exe' -ArgumentList '-avd Pixel6 -port 5554' -WindowStyle Hidden"
+    )]]
+
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND D:/Qt/6.8.3/mingw_64/bin/androiddeployqt.exe
+            --input "D:/MusicPlayer/cmake-build-qt-android/android-MusicPlayer-deployment-settings.json"
+            --output "D:/MusicPlayer/cmake-build-qt-android//android-build"
+            --no-build
+            --reinstall
+            --android-platform android-36
+            --jdk "C:/Program Files/Java/jdk-23"
+            --gradle
+            --ndk "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/26.1.10909125"
+            --device RF8X20TNVCR
+            COMMENT "Сборка .apk через androiddeployqt"
+    )
 
 else ()
     message("Update cmake code for new platform")
