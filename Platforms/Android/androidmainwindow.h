@@ -3,6 +3,8 @@
 
 #include <QtWidgets/QMainWindow>
 
+class QVBoxLayout;
+
 namespace Ui {
 class androidMainWindow;
 }
@@ -13,7 +15,7 @@ class androidMainWindow : public QMainWindow
 
 public:
     explicit androidMainWindow(QWidget *parent = nullptr);
-    ~androidMainWindow();
+    ~androidMainWindow() override;
 
 public slots:
 
@@ -22,6 +24,8 @@ public slots:
 
 private:
     Ui::androidMainWindow *ui;
+
+    QVBoxLayout* mediaLibScrollLayout;
 };
 
 #endif // ANDROIDMAINWINDOW_H

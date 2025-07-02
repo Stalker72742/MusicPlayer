@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MedialibItem</class>
- <widget class="QWidget" name="MedialibItem">
-  <property name="geometry">
+  <author/>
+  <comment/>
+  <exportmacro/>
+  <class>medialibItemWidget</class>
+  <widget class="QWidget" name="medialibItemWidget">
+   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>327</width>
-    <height>73</height>
+    <height>78</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,7 +58,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QWidget" name="widget_2" native="true">
+       <widget class="QWidget" name="playlistIconWidget" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>36</horstretch>
@@ -114,11 +117,14 @@
          </spacer>
         </item>
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="playlistName">
           <property name="font">
            <font>
             <pointsize>12</pointsize>
            </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
           </property>
           <property name="text">
            <string>Liblary</string>
@@ -126,7 +132,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_2">
+         <widget class="QLabel" name="playlistDescript">
           <property name="styleSheet">
            <string notr="true">color: rgb(153, 153, 153);</string>
           </property>
@@ -154,7 +160,7 @@
        </layout>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="additionalOptions">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -176,7 +182,7 @@
     </widget>
    </item>
   </layout>
- </widget>
- <resources/>
- <connections/>
+  </widget>
+  <pixmapfunction/>
+  <connections/>
 </ui>
