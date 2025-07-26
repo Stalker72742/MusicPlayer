@@ -17,7 +17,7 @@ Q_OBJECT
 
 public:
     explicit medialibItemWidget(QWidget *parent = nullptr);
-    explicit medialibItemWidget(const QString &playlistName, const QString &playlistDescript = "", QWidget *parent = nullptr);
+    explicit medialibItemWidget(const QString& pathToPlaylist, const QString &playlistDescript = "", QWidget *parent = nullptr);
     ~medialibItemWidget() override;
 
     void mousePressEvent(QMouseEvent *event) override;

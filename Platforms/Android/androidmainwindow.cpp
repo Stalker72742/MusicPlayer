@@ -1,5 +1,11 @@
 #include "androidmainwindow.h"
 
+#include <QDir>
+#include <QStandardPaths>
+
+#include "AppInstanceLibs.h"
+#include "AppInstance.h"
+#include "Permissions/permissionhandler.h"
 #include "medialibitemwidget.h"
 #include "ui_androidmainwindow.h"
 
@@ -12,6 +18,9 @@ androidMainWindow::androidMainWindow(QWidget *parent)
     connect(ui->medialibButton, &QPushButton::clicked, this, &androidMainWindow::mediaButtonClicked);
     connect(ui->searchButton, &QPushButton::clicked, this, &androidMainWindow::searchButtonClicked);
 
+    PermissionHandler* handler = PermissionHandler::instance();
+
+    handler->requestPermissions();
 }
 
 androidMainWindow::~androidMainWindow()
@@ -26,11 +35,17 @@ void androidMainWindow::mediaButtonClicked(bool checked)
     mediaLibScrollLayout = new QVBoxLayout(this);
     ui->medialibScroll->setLayout(mediaLibScrollLayout);
 
-    mediaLibScrollLayout->addWidget(new medialibItemWidget("Library", "All songs : 257 songs"));
-    mediaLibScrollLayout->addWidget(new medialibItemWidget("Rock", "Playlist : 15 songs"));
-    mediaLibScrollLayout->addWidget(new medialibItemWidget("Cock", "Playlist : 52 songs"));
+    QString mediaLibFolder = AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>()->getMediaLibFolder();
 
+    medialibItemWidget* allSongs = new medialibItemWidget(mediaLibFolder);
+    connect(allSongs, &medialibItemWidget::clicked, this, &androidMainWindow::playlistSelected);
+
+    mediaLibScrollLayout->addWidget(allSongs);
     mediaLibScrollLayout->addStretch();
+}
+
+void androidMainWindow::playlistSelected() {
+
 }
 
 void androidMainWindow::searchButtonClicked(bool checked)

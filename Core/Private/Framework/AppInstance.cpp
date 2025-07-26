@@ -8,6 +8,7 @@ class QObject;
 
 AppInstance::AppInstance(QObject *parent) {
 
+    subsystems.append(new PlayerSubsystem(this));
 }
 
 AppInstance::~AppInstance() {

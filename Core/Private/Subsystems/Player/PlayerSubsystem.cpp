@@ -9,7 +9,8 @@
 #include <QMediaPlayer>
 #include <QDirIterator>
 #include <QJsonDocument>
-
+#include <QtCore/private/qandroidextras_p.h>
+#include <QDebug>
 #include "song.h"
 #include "songPath.h"
 
@@ -67,7 +68,25 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
         }
     });
 
-    setCurrentPlaylist(getPlaylists()[0]);
+#if QT_ANDROID
+
+    QJniObject environment = QJniObject::callStaticObjectMethod(
+        "android/os/Environment",
+        "getExternalStoragePublicDirectory",
+        "(Ljava/lang/String;)Ljava/io/File;",
+        QJniObject::getStaticObjectField(
+            "android/os/Environment",
+            "DIRECTORY_MUSIC",
+            "Ljava/lang/String;"
+        ).object()
+    );
+
+    DefaultMusicFolder = environment.callObjectMethod("getAbsolutePath", "()Ljava/lang/String;").toString();
+    DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
+
+    //setCurrentPlaylist(getPlaylists()[0]);
+
+#endif
 }
 
 PlayerSubsystem::~PlayerSubsystem() {
@@ -76,6 +95,35 @@ PlayerSubsystem::~PlayerSubsystem() {
 
     delete audioOutput;
     delete player;
+}
+
+void PlayerSubsystem::checkMusicFolder() {
+
+    QFile allSongs(DefaultMediaLibFolder + "/AllSongs.json");
+
+    if (allSongs.exists()) { return; }
+    QDir(DefaultMediaLibFolder).mkdir(DefaultMediaLibFolder);
+
+    if (!allSongs.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Fail to open file: " << DefaultMediaLibFolder + "/AllSongs.json" << " Error:" << allSongs.errorString();
+        return;
+    }
+
+    QJsonObject songs;
+
+    QDirIterator it(DefaultMusicFolder, QStringList{".mp3", ".mp4"}, QDir::Files,
+        QDirIterator::Subdirectories);
+
+    while (it.hasNext()) {
+        const QString songPath = it.next();
+        songs[it.fileName()] = songPath;
+    }
+
+    const QJsonDocument doc(songs);
+    allSongs.write(doc.toJson(QJsonDocument::Indented));
+    allSongs.close();
+
+    qDebug() << "Successfully saved file: " << DefaultMediaLibFolder + "/AllSongs.json";
 }
 
 void PlayerSubsystem::savePlaylist(){

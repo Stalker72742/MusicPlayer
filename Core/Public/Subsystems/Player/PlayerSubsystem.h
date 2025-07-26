@@ -68,6 +68,8 @@ public:
 
     void showMediaLib();
 
+    QString getMediaLibFolder() { return DefaultMediaLibFolder; }
+
 public slots:
 
     void PlayerError(QMediaPlayer::Error Error, const QString &error);
@@ -88,6 +90,8 @@ signals:
 
 private:
 
+    void checkMusicFolder();
+
     QAudioOutput *audioOutput;
     QMediaPlayer *player;
 
@@ -96,8 +100,8 @@ private:
     QTimer* updateTimer;
     int time = 0;
 
-    const QString DefaultMusicFolder = QDir::currentPath() + "/Music";
-    const QString DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
+    QString DefaultMusicFolder = QDir::currentPath() + "/Music";
+    QString DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
 
     QList<song*> currentPlaylist;
 

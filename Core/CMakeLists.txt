@@ -28,6 +28,7 @@ target_link_libraries(MusicPlayerCore
         PUBLIC
         Qt6::Core
         Qt6::Multimedia
+        Qt6::CorePrivate
 )
 
 target_include_directories(MusicPlayerCore

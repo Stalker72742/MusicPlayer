@@ -21,13 +21,10 @@ else()
 endif()
 
 find_package(Qt6 COMPONENTS Core Widgets Multimedia REQUIRED)
-#find_package(Qt6 REQUIRED COMPONENTS Widgets Multimedia)
 
 if(PLATFORM_ANDROID)
-    set(ANDROID_PLATFORM android-36)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti -fexceptions")
     set(CMAKE_ANDROID_STL_TYPE c++_shared)
-    set(ANDROID_NDK_ROOT "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/bin")
 endif()
 
 add_subdirectory(Core)
@@ -56,13 +53,26 @@ if (PLATFORM_WINDOWS)
     )
 elseif (PLATFORM_ANDROID)
 
-    qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp)
+    qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
+        android/AndroidManifest.xml
+        android/build.gradle
+        android/res/values/libs.xml
+        android/res/xml/qtprovider_paths.xml
+        android/gradle/wrapper/gradle-wrapper.jar
+        android/gradle/wrapper/gradle-wrapper.properties
+        android/gradle.properties android/gradlew android/gradlew.bat
+        android/src/com/example/MusicPlayer/MainActivity.java
+    )
+
+    set(ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
             MusicPlayerCore
             AndroidMusicPlayerUI
             Qt6::Core
+            Qt6::CorePrivate
             Qt6::Multimedia
     )
 else ()
@@ -145,33 +155,24 @@ if(PLATFORM_WINDOWS)
     endif()
 
 elseif(PLATFORM_ANDROID)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND D:/Qt/6.8.3/mingw_64/bin/androiddeployqt.exe
-            --input "D:/MusicPlayer/cmake-build-qt-android/android-MusicPlayer-deployment-settings.json"
-            --output "D:/MusicPlayer/cmake-build-qt-android//android-build"
-            --android-platform android-36
-            --jdk "C:/Program Files/Java/jdk-23"
-            --gradle
-            --ndk "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/26.1.10909125"
-            COMMENT "Сборка .apk через androiddeployqt"
-    )
-
-    #[[add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND powershell -Command "Start-Process -FilePath 'C:/Users/Stalker7274/AppData/Local/Android/Sdk/emulator/emulator.exe' -ArgumentList '-avd Pixel6 -port 5554' -WindowStyle Hidden"
-    )]]
 
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND D:/Qt/6.8.3/mingw_64/bin/androiddeployqt.exe
-            --input "D:/MusicPlayer/cmake-build-qt-android/android-MusicPlayer-deployment-settings.json"
-            --output "D:/MusicPlayer/cmake-build-qt-android//android-build"
+            --input ${CMAKE_BINARY_DIR}/android-MusicPlayer-deployment-settings.json
+            --output ${CMAKE_BINARY_DIR}/android-build
             --no-build
             --reinstall
             --android-platform android-36
             --jdk "C:/Program Files/Java/jdk-23"
             --gradle
-            --ndk "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/26.1.10909125"
+            --verbose
+            --apk
+            --ndk "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/29.0.13599879"
             --device RF8X20TNVCR
-            COMMENT "Сборка .apk через androiddeployqt"
+
+            COMMAND adb install -r ${CMAKE_BINARY_DIR}/android-build/build/outputs/apk/debug/android-build-debug.apk
+
+            COMMAND adb shell monkey -p com.example.MusicPlayer -c android.intent.category.LAUNCHER 1
     )
 
 else ()

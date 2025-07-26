@@ -22,6 +22,8 @@ public slots:
     void searchButtonClicked(bool checked);
     void mediaButtonClicked(bool checked);
 
+    void playlistSelected();
+
 private:
     Ui::androidMainWindow *ui;
 
