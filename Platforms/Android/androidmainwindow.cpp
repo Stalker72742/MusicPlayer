@@ -35,7 +35,7 @@ void androidMainWindow::mediaButtonClicked(bool checked)
     mediaLibScrollLayout = new QVBoxLayout(this);
     ui->medialibScroll->setLayout(mediaLibScrollLayout);
 
-    QString mediaLibFolder = AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>()->getMediaLibFolder();
+    QString mediaLibFolder = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>()->getMediaLibFolder();
 
     medialibItemWidget* allSongs = new medialibItemWidget(mediaLibFolder);
     connect(allSongs, &medialibItemWidget::clicked, this, &androidMainWindow::playlistSelected);

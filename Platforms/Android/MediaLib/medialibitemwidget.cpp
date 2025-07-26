@@ -6,6 +6,7 @@
 
 #include "medialibitemwidget.h"
 
+#include <QDirIterator>
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -23,12 +24,26 @@ medialibItemWidget::medialibItemWidget(const QString& pathToPlaylist, const QStr
 {
     ui->setupUi(this);
 
-    QFile file(pathToPlaylist);
+    if (QFile::exists(pathToPlaylist)) {
 
-    QJsonObject json = QJsonDocument::fromJson(file.readAll()).object();
+        QFile file(pathToPlaylist);
 
-    ui->playlistName->setText(pathToPlaylist);
-    ui->playlistDescript->setText("All songs : " + QString::number(json.keys().size()) + " songs");
+        QJsonObject json = QJsonDocument::fromJson(file.readAll()).object();
+
+        ui->playlistName->setText(pathToPlaylist);
+        ui->playlistDescript->setText("All songs : " + QString::number(json.keys().size()) + " songs");
+    }else {
+
+        int songs = 0;
+
+        QDirIterator it(pathToPlaylist, QDir::Files, QDirIterator::Subdirectories);
+
+        while (it.hasNext()) { songs++; }
+
+        ui->playlistName->setText(pathToPlaylist);
+        ui->playlistDescript->setText("All songs : " + QString::number(songs) + " songs");
+    }
+
 }
 
 medialibItemWidget::~medialibItemWidget() {

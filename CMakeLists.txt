@@ -23,8 +23,10 @@ endif()
 find_package(Qt6 COMPONENTS Core Widgets Multimedia REQUIRED)
 
 if(PLATFORM_ANDROID)
+    set(ANDROID_PLATFORM android-36)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti -fexceptions")
     set(CMAKE_ANDROID_STL_TYPE c++_shared)
+    set(ANDROID_NDK_ROOT "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/29.0.13599879/toolchains/llvm/prebuilt/windows-x86_64/bin")
 endif()
 
 add_subdirectory(Core)
@@ -162,7 +164,7 @@ elseif(PLATFORM_ANDROID)
             --output ${CMAKE_BINARY_DIR}/android-build
             --no-build
             --reinstall
-            --android-platform android-36
+            --android-platform ANDROID_PLATFORM
             --jdk "C:/Program Files/Java/jdk-23"
             --gradle
             --verbose

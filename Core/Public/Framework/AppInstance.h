@@ -12,9 +12,8 @@
 class AppInstance : public QObject {
 Q_OBJECT
 public:
-    explicit AppInstance(QObject *parent = nullptr);
 
-    ~AppInstance() override;
+    static AppInstance* getInstance();
 
     template <typename mw>
     void createApp() {
@@ -39,9 +38,15 @@ public:
         return qobject_cast<T*>(subsystems.last());
     };
 
+    AppInstance(const AppInstance&) = delete;
+    AppInstance& operator=(const AppInstance&) = delete;
+
 private:
+    explicit AppInstance(QObject* parent = nullptr);
+    ~AppInstance() override;
 
     QList<QObject*> subsystems;
+    static AppInstance* instance;
 };
 
 #endif //APPINSTANCE_H

@@ -4,7 +4,15 @@
 
 #include "AppInstance.h"
 
-class QObject;
+AppInstance* AppInstance::instance = nullptr;
+
+AppInstance* AppInstance::getInstance() {
+
+    if (!instance) {
+        instance = new AppInstance();
+    }
+    return instance;
+}
 
 AppInstance::AppInstance(QObject *parent) {
 
