@@ -39,7 +39,6 @@ public class MainActivity extends org.qtproject.qt.android.bindings.QtActivity {
                 }
             }
 
-            // Уведомляем C++ код о результате
             onPermissionResult(requestCode, allGranted);
 
         } else {
@@ -47,6 +46,5 @@ public class MainActivity extends org.qtproject.qt.android.bindings.QtActivity {
         }
     }
 
-    // Этот метод будет вызван из C++
     public static native void onPermissionResult(int requestCode, boolean granted);
 }

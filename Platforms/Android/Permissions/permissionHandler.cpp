@@ -14,20 +14,6 @@ PermissionHandler* PermissionHandler::instance() {
 void PermissionHandler::requestPermissions() {
     qDebug() << "Starting permission request process";
 
-    // Сначала проверяем состояние разрешений
-    if (checkPermissionStates()) {
-        qDebug() << "All permissions already granted";
-        return;
-    }
-
-    // Проверяем, заблокированы ли разрешения навсегда
-    if (arePermissionsPermanentlyDenied()) {
-        qDebug() << "Permissions permanently denied - opening settings";
-        openAppSettings();
-        return;
-    }
-
-    // Запрашиваем разрешения
     performPermissionRequest();
 }
 
@@ -117,8 +103,7 @@ QStringList PermissionHandler::getRequiredPermissions() {
         return {
             "android.permission.READ_MEDIA_IMAGES",
             "android.permission.READ_MEDIA_VIDEO",
-            "android.permission.READ_MEDIA_AUDIO",
-            "android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+            "android.permission.READ_MEDIA_AUDIO"
         };
     } else if (sdkVersion >= 33) {
         return {
@@ -199,7 +184,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
         return JNI_ERR;
     }
 
-    jclass clazz = env->FindClass("your/package/name/MainActivity"); // Замените на ваш пакет
+    jclass clazz = env->FindClass("com/example/MusicPlayer/MainActivity");
     if (clazz == nullptr) {
         qDebug() << "Failed to find MainActivity class";
         return JNI_ERR;

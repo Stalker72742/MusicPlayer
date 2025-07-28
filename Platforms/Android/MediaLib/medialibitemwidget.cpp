@@ -9,6 +9,7 @@
 #include <QDirIterator>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QStandardPaths>
 
 #include "ui_medialibItemWidget.h"
 #include "../../../../Qt/6.8.3/mingw_64/include/QtCore/qfile.h"
@@ -24,7 +25,7 @@ medialibItemWidget::medialibItemWidget(const QString& pathToPlaylist, const QStr
 {
     ui->setupUi(this);
 
-    if (QFile::exists(pathToPlaylist)) {
+    if (!QDir(pathToPlaylist).exists()) {
 
         QFile file(pathToPlaylist);
 
@@ -35,12 +36,15 @@ medialibItemWidget::medialibItemWidget(const QString& pathToPlaylist, const QStr
     }else {
 
         int songs = 0;
+        QDirIterator it(pathToPlaylist, QDir::Files, QDirIterator::Subdirectories );
+        qDebug() << "Trying to find music in " << pathToPlaylist;
 
-        QDirIterator it(pathToPlaylist, QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            songs++;
+            qDebug() << "Founded " << it.next();
+        }
 
-        while (it.hasNext()) { songs++; }
-
-        ui->playlistName->setText(pathToPlaylist);
+        ui->playlistName->setText("Media lib");
         ui->playlistDescript->setText("All songs : " + QString::number(songs) + " songs");
     }
 

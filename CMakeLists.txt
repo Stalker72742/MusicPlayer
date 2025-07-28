@@ -23,19 +23,7 @@ endif()
 find_package(Qt6 COMPONENTS Core Widgets Multimedia REQUIRED)
 
 if(PLATFORM_ANDROID)
-    set(ANDROID_PLATFORM "android-34")
-    set(ANDROID_ABI "armeabi-v7a")
-    set(ANDROID_STL "c++_shared")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti -fexceptions")
-    set(ANDROID_NDK "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/26.1.10909125")
 
-    set(CMAKE_ANDROID_STL_TYPE c++_shared)
-    set(ANDROID_NDK_HOST_SYSTEM_NAME "windows-x86_64")
-    set(CMAKE_ANDROID_NDK_TOOLCHAIN_HOST_TAG "windows-x86_64")
-
-    set(CMAKE_ANDROID_STL_PREFIX_PATH "${ANDROID_NDK}/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib")
-    set(CMAKE_ANDROID_ARCH_ABI armeabi-v7a)
-    set(ANDROID_STDCPP_PATH "${ANDROID_NDK}/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib")
 endif()
 
 add_subdirectory(Core)
@@ -86,8 +74,6 @@ elseif (PLATFORM_ANDROID)
             Qt6::CorePrivate
             Qt6::Multimedia
     )
-else ()
-
 endif ()
 
 include(GNUInstallDirs)
@@ -166,25 +152,6 @@ if(PLATFORM_WINDOWS)
     endif()
 
 elseif(PLATFORM_ANDROID)
-
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E env
-            "ANDROID_NDK_ROOT=${ANDROID_NDK}"
-            "CMAKE_ANDROID_STL_PREFIX_PATH=${ANDROID_NDK}/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib"
-            D:/Qt/6.8.3/mingw_64/bin/androiddeployqt.exe
-            --input ${CMAKE_BINARY_DIR}/android-MusicPlayer-deployment-settings.json
-            --output ${CMAKE_BINARY_DIR}/android-build
-            --android-platform android-34
-            --jdk "C:/Program Files/Java/jdk-23"
-            --ndk "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/26.1.10909125"
-            --gradle
-            --apk
-            --verbose
-
-            COMMAND adb install -r ${CMAKE_BINARY_DIR}/android-build/build/outputs/apk/debug/android-build-debug.apk
-
-            COMMAND adb shell monkey -p com.example.MusicPlayer -c android.intent.category.LAUNCHER 1
-    )
 
 else ()
     message("Update cmake code for new platform")

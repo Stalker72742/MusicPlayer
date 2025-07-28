@@ -68,7 +68,7 @@ public:
 
     void showMediaLib();
 
-    QString getMediaLibFolder() { return DefaultMediaLibFolder; }
+    QString getMusicFolder() { return DefaultMusicFolder; }
 
 public slots:
 

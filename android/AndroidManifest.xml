@@ -1,10 +1,29 @@
 <?xml version="1.0"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.MusicPlayer" android:installLocation="auto" android:versionCode="1" android:versionName="Test12312">
+<manifest
+        xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.MusicPlayer"
+        android:installLocation="auto"
+        android:versionCode="1"
+        android:versionName="Test12312">
 
+    <uses-sdk
+            android:minSdkVersion="28"
+            android:targetSdkVersion="35"
+            android:compileSdkVersion="35" />
 
     <supports-screens android:anyDensity="true" android:largeScreens="true" android:normalScreens="true" android:smallScreens="true"/>
-    <application android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true" android:label="MusicPlayer" android:requestLegacyExternalStorage="true" android:allowBackup="true" android:fullBackupOnly="false">
-        <activity android:name="com.example.MusicPlayer.MainActivity" android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:launchMode="singleTop" android:screenOrientation="unspecified" android:exported="true" android:label="Test">
+    <application
+            android:name="org.qtproject.qt.android.bindings.QtApplication"
+            android:hardwareAccelerated="true" android:label="MusicPlayer"
+            android:requestLegacyExternalStorage="true"
+            android:allowBackup="true"
+            android:fullBackupOnly="false">
+
+        <activity android:name="com.example.MusicPlayer.MainActivity"
+                  android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
+                  android:launchMode="singleTop"
+                  android:screenOrientation="unspecified"
+                  android:exported="true" android:label="Music player">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -13,7 +32,12 @@
             <meta-data android:name="android.app.arguments" android:value="-- %%INSERT_APP_ARGUMENTS%% --"/>
         </activity>
 
-        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.qtprovider" android:exported="false" android:grantUriPermissions="true">
+        <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.qtprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/qtprovider_paths"/>
         </provider>
     </application>
