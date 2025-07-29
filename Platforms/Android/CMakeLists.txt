@@ -22,6 +22,7 @@ add_library(AndroidMusicPlayerUI SHARED
         ${UI_FILES}
 )
 
+
 foreach(header ${HEADERS})
     get_filename_component(dir ${header} DIRECTORY)
     list(APPEND INCLUDE_DIRS ${dir})

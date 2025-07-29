@@ -1,7 +1,9 @@
 #include "androidmainwindow.h"
 #include "MediaLib/medialibitemwidget.h"
+#include "MediaLib/playlistsong.h"
 #include "Permissions/permissionHandler.h"
 #include "AppInstance.h"
+#include <QDirIterator>
 #include "AppInstanceLibs.h"
 #include "ui_androidmainwindow.h"
 
@@ -16,6 +18,9 @@ androidMainWindow::androidMainWindow(QWidget *parent)
 
     PermissionHandler* handler = PermissionHandler::instance();
     handler->requestPermissions();
+
+    ui->rootStackedWidget->setCurrentIndex(3);
+    ui->playlistSongsScroll->setLayout(new QVBoxLayout);
 }
 
 androidMainWindow::~androidMainWindow()
@@ -41,10 +46,26 @@ void androidMainWindow::mediaButtonClicked(bool checked)
 
 void androidMainWindow::playlistSelected() {
 
+    medialibItemWidget* playlist = qobject_cast<medialibItemWidget*>(sender());
+    if(!playlist) return;
+
+    ui->rootStackedWidget->setCurrentIndex(2);
+    QString playlistPath = playlist->getPlaylist();
+
+    QDirIterator it(playlistPath, QDir::Files, QDirIterator::Subdirectories );
+    int i = 0;
+
+    while (it.hasNext()) {
+        i++;
+        QString songPath = it.next();
+
+        ui->playlistSongsScroll->layout()->addWidget(new playlistSong(i, songPath, this));
+    }
+
+    qobject_cast<QVBoxLayout*>(ui->playlistSongsScroll->layout())->addStretch();
 }
 
 void androidMainWindow::searchButtonClicked(bool checked)
 {
-
     ui->rootStackedWidget->setCurrentIndex(0);
 }

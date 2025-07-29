@@ -12,8 +12,8 @@
 #include <QStandardPaths>
 
 #include "ui_medialibItemWidget.h"
-#include "../../../../Qt/6.8.3/mingw_64/include/QtCore/qfile.h"
-#include "../../../../Qt/6.8.3/mingw_64/include/QtGui/QMouseEvent"
+#include <QFile>
+#include <QMouseEvent>
 
 medialibItemWidget::medialibItemWidget(QWidget *parent) :
     QWidget(parent), ui(new Ui::medialibItemWidget) {
@@ -33,6 +33,7 @@ medialibItemWidget::medialibItemWidget(const QString& pathToPlaylist, const QStr
 
         ui->playlistName->setText(pathToPlaylist);
         ui->playlistDescript->setText("All songs : " + QString::number(json.keys().size()) + " songs");
+        bJsonPlaylist = true;
     }else {
 
         int songs = 0;
@@ -46,8 +47,11 @@ medialibItemWidget::medialibItemWidget(const QString& pathToPlaylist, const QStr
 
         ui->playlistName->setText("Media lib");
         ui->playlistDescript->setText("All songs : " + QString::number(songs) + " songs");
+
+        bJsonPlaylist = false;
     }
 
+    playlistPath = pathToPlaylist;
 }
 
 medialibItemWidget::~medialibItemWidget() {

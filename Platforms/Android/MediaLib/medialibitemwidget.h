@@ -22,11 +22,16 @@ public:
 
     void mousePressEvent(QMouseEvent *event) override;
 
+    QString getPlaylist() {return playlistPath; }
+
 signals:
     void clicked(medialibItemWidget* widget);
 
 private:
     Ui::medialibItemWidget *ui;
+
+    bool bJsonPlaylist;
+    QString playlistPath;
 };
 
 
