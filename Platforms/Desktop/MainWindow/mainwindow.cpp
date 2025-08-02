@@ -50,24 +50,24 @@ mainWindow::mainWindow(QObject *Parent) :
 
     });
 
-    AppInstance* AppInstance = AppInstanceLibs::getAppInstance(this);
+    AppInstance* AppInstance = AppInstance::getInstance();
 
-    connect(AppInstance->getSubsystem<ytSearcherSub>(), Q_SIGNAL(&ytSearcherSub::searchResults), this, &mainWindow::addItemToPlaylist);
+    connect(AppInstance->getSubsystem<ytSearcherSub>(), &ytSearcherSub::searchResults, this, &mainWindow::addItemToPlaylist);
 
     playerSubsystem = AppInstance->getSubsystem<PlayerSubsystem>();
 
-    connect(playerSubsystem, Q_SIGNAL(&PlayerSubsystem::playlistChanged), this, &mainWindow::updatePlaylistItems);
-    connect(playerSubsystem, Q_SIGNAL(&PlayerSubsystem::updateMusicDuration), this, &mainWindow::updateTimeSlider);
-    connect(playerSubsystem, Q_SIGNAL(&PlayerSubsystem::onShowMediaLib), this, &mainWindow::drawMediaLib);
+    connect(playerSubsystem, &PlayerSubsystem::playlistChanged, this, &mainWindow::updatePlaylistItems);
+    connect(playerSubsystem, &PlayerSubsystem::updateMusicDuration, this, &mainWindow::updateTimeSlider);
+    connect(playerSubsystem, &PlayerSubsystem::onShowMediaLib, this, &mainWindow::drawMediaLib);
 
     updatePlaylistItems();
 
-    connect(ui->playButton, Q_SIGNAL(&QPushButton::clicked), this, &mainWindow::playPause);
-    connect(ui->nextButton, Q_SIGNAL(&QPushButton::clicked), this, &mainWindow::playNext);
-    connect(ui->previousButton, Q_SIGNAL(&QPushButton::clicked), this, &mainWindow::playPrevious);
-    connect(ui->createPlaylistButton, Q_SIGNAL(&QPushButton::clicked), this, &mainWindow::createPlaylist);
+    connect(ui->playButton, &QPushButton::clicked, this, &mainWindow::playPause);
+    connect(ui->nextButton, &QPushButton::clicked, this, &mainWindow::playNext);
+    connect(ui->previousButton, &QPushButton::clicked, this, &mainWindow::playPrevious);
+    connect(ui->createPlaylistButton, &QPushButton::clicked, this, &mainWindow::createPlaylist);
 
-    connect(ui->soundSlider, Q_SIGNAL(&QSlider::valueChanged), playerSubsystem, &PlayerSubsystem::SetVolume);
+    connect(ui->soundSlider, &QSlider::valueChanged, playerSubsystem, &PlayerSubsystem::SetVolume);
 
     ui->soundSlider->setValue(playerSubsystem->getVolume());
 
@@ -89,12 +89,9 @@ mainWindow::mainWindow(QObject *Parent) :
 
     qobject_cast<QVBoxLayout*>(ui->mediatekaScrollArea->layout())->addStretch();
 
-#ifdef Q_OS_WIN
-
     RegisterHotKey(reinterpret_cast<HWND>(winId()), 1, MOD_NOREPEAT, VK_MEDIA_PLAY_PAUSE);
     RegisterHotKey(reinterpret_cast<HWND>(winId()), 2, MOD_NOREPEAT, VK_MEDIA_NEXT_TRACK);
     RegisterHotKey(reinterpret_cast<HWND>(winId()), 3, MOD_NOREPEAT, VK_MEDIA_PREV_TRACK);
-#endif
 }
 
 mainWindow::~mainWindow() {

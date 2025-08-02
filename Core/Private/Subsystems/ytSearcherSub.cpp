@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QProcess>
 #include <QUrl>
+#include <QString>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -15,7 +16,7 @@
 
 ytSearcherSub::ytSearcherSub(QObject *parent) {
 
-    process = new QProcess();
+    process = new QProcess(this);
 
 }
 
@@ -41,8 +42,31 @@ void ytSearcherSub::search(const QString &Text) {
     process->start("yt-dlp", arguments);
 }
 
-void ytSearcherSub::download(QUrl url) {
+void ytSearcherSub::download(QUrl url, QString out) {
 
+    QString outputTemplate = out + "/%(title)s.%(ext)s";
+
+    QString shell = "/system/bin/sh";
+    QString program = "sh";
+    QStringList arguments;
+    arguments << "-c" << "/data/data/com.termux/files/usr/bin/yt-dlp --version";
+
+    QProcess *process = new QProcess(this);
+
+    process->setProgram("sh");
+    process->setArguments(arguments);
+
+    process->start();
+
+    connect(process, &QProcess::readyReadStandardOutput, [=]() {
+        QByteArray output = process->readAllStandardOutput();
+        qDebug() << "yt-dlp:" << output;
+    });
+
+    connect(process, &QProcess::readyReadStandardError, [=]() {
+        QByteArray error = process->readAllStandardError();
+        qDebug() << "yt-dlp error:" << error;
+    });
 }
 
 void ytSearcherSub::searchFinished(int exitCode, QProcess::ExitStatus exitStatus) {

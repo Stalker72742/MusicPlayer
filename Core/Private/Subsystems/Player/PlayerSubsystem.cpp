@@ -9,13 +9,15 @@
 #include <QMediaPlayer>
 #include <QDirIterator>
 #include <QJsonDocument>
+#ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
+#endif
 #include <QDebug>
+#include <QFileInfo>
 #include "song.h"
 #include "songPath.h"
 
 PlayerSubsystem::PlayerSubsystem(QObject *parent) {
-
     Parent = parent;
 
     player = new QMediaPlayer(this);
@@ -32,11 +34,19 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 
     connect(player, &QMediaPlayer::errorOccurred, this, &PlayerSubsystem::PlayerError);
 
+    connect(player, &QMediaPlayer::errorChanged, this, [this]() {
+        qDebug() << "Error:" << player->errorString();
+    });
+
     connect(player, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
         switch (status) {
             case QMediaPlayer::EndOfMedia:
                 NextSong();
                 break;
+            case QMediaPlayer::BufferedMedia:
+                player->play();
+            case QMediaPlayer::LoadedMedia:
+                player->play();
             default:
                 qDebug() << "Media status changed: " << status;
         }
@@ -66,6 +76,8 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 
             break;
         }
+
+        qDebug() << "Playback state changed:" << state;
     });
 
 #if QT_ANDROID
@@ -86,6 +98,15 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 
     //setCurrentPlaylist(getPlaylists()[0]);
 
+    for (const auto &device : QMediaDevices::audioOutputs()) {
+        qDebug() << "Audio:" << device.description();
+        if (device.description().contains("speaker", Qt::CaseInsensitive)) {
+            //audioOutput->setDevice(device);
+            break;
+        }
+    }
+
+    SetVolume(100);
 #endif
 }
 
@@ -201,11 +222,20 @@ void PlayerSubsystem::PlayCurrentSong() {
 
     QUrl song = getSongs()[CurrentSongIndex]->getPlayerUrl();
 
+    for (auto x : getSongs()){
+        qDebug() << "songs: " << x->getPlayerUrl();
+    }
+
     if (song.isValid()) {
 
+        qDebug() << "Playing song: " << song.path();
+
+        player->stop();
         player->setSource(song);
-        player->play();
+        emit playingSongChanged(getSongs()[CurrentSongIndex]);
     }else {
+
+        qDebug() << "Song not valid waiting for audio Stream loaded";
 
         connect(getSongs()[CurrentSongIndex], &song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
     }
@@ -237,19 +267,18 @@ void PlayerSubsystem::NextSong() {
     if (CurrentSongIndex >= getSongs().size()) {
         CurrentSongIndex = 0;
     }
-    qDebug() << "Trying to play: " << getSongs()[CurrentSongIndex]->getPlayerUrl();
-    player->setSource(getSongs()[CurrentSongIndex]->getPlayerUrl());
-    player->play();
+
+    PlayCurrentSong();
 }
 
 void PlayerSubsystem::PreviousSong() {
     CurrentSongIndex--;
 
-    if (CurrentSongIndex <= 0) {
+    if (CurrentSongIndex < 0) {
         CurrentSongIndex = getSongs().size() - 1;
     }
-    player->setSource(getSongs()[CurrentSongIndex]->getPlayerUrl());
-    player->play();
+
+    PlayCurrentSong();
 }
 
 void PlayerSubsystem::addSong(song* Song) {
@@ -328,35 +357,69 @@ QString PlayerSubsystem::createPlaylist(QString playlistName) {
 
 void PlayerSubsystem::setCurrentPlaylist(QString playlistPathLocal) {
 
-    QFile configFile(playlistPathLocal);
-    if (!configFile.open(QIODevice::ReadOnly)) return;
+    if(QDir(playlistPathLocal).exists()){
 
-    currentPlaylist.clear();
+        currentPlaylist.clear();
 
-    playlistPath = playlistPathLocal;
+        playlistPath = playlistPathLocal;
+        QDirIterator it(playlistPath, {"*.mp3"}, QDir::Files, QDirIterator::Subdirectories);
 
-    QJsonObject json = QJsonDocument::fromJson(configFile.readAll()).object();
+        while(it.hasNext()){
+            QString songPath = it.next();
 
-    foreach(QString key, json.keys()) {
+            currentPlaylist.append(new song(songPath));
 
-        currentPlaylist.append(new song(json[key].toString()));
+            currentPlaylist.last()->setName(QFileInfo(songPath).baseName());
 
-        currentPlaylist.last()->setName(key);
+            qDebug() << "Loaded song: " << currentPlaylist.last()->getName();
+        }
 
-        qDebug() << "Loaded song: " << key;
+        emit playlistChanged();
+
+        if (!currentPlaylist.empty()) {
+
+            CurrentSongIndex = 0;
+
+        }else {
+
+            qDebug() << "No songs found";
+        }
+    }else{
+
+        QFile configFile(playlistPathLocal);
+        if (!configFile.open(QIODevice::ReadOnly)) return;
+
+        currentPlaylist.clear();
+
+        playlistPath = playlistPathLocal;
+
+        QJsonObject json = QJsonDocument::fromJson(configFile.readAll()).object();
+
+        foreach(QString key, json.keys()) {
+
+            currentPlaylist.append(new song(json[key].toString()));
+
+            currentPlaylist.last()->setName(key);
+
+            qDebug() << "Loaded song: " << key;
+        }
+
+        emit playlistChanged();
+
+        if (!currentPlaylist.empty()) {
+
+            CurrentSongIndex = 0;
+
+        }else {
+
+            qDebug() << "No songs found";
+        }
     }
+}
 
-    emit playlistChanged();
-
-    if (!currentPlaylist.empty()) {
-
-        CurrentSongIndex = 0;
-
-    }else {
-
-        qDebug() << "No songs found";
-    }
-
+void PlayerSubsystem::startPlayFromIndex(int index){
+    CurrentSongIndex = index;
+    PlayCurrentSong();
 }
 
 void PlayerSubsystem::removePlaylist(QString playlistPath) {

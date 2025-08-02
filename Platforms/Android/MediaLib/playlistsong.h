@@ -15,6 +15,14 @@ public:
     explicit playlistSong(int index, QString songPath, QWidget *parent = nullptr);
     ~playlistSong();
 
+    void mousePressEvent(QMouseEvent *event) override;
+
+    int getIndex() { return songIndex;}
+
+signals:
+
+    void clicked();
+
 private:
     Ui::playlistSong *ui;
 

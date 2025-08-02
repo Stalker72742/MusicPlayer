@@ -37,7 +37,7 @@ medialibItemWidget::medialibItemWidget(const QString& pathToPlaylist, const QStr
     }else {
 
         int songs = 0;
-        QDirIterator it(pathToPlaylist, QDir::Files, QDirIterator::Subdirectories );
+        QDirIterator it(pathToPlaylist, {"*.mp3"}, QDir::Files, QDirIterator::Subdirectories );
         qDebug() << "Trying to find music in " << pathToPlaylist;
 
         while (it.hasNext()) {

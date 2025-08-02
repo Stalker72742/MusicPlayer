@@ -20,6 +20,7 @@ else()
     set(PLATFORM_ANDROID FALSE)
 endif()
 
+
 find_package(Qt6 COMPONENTS Core Widgets Multimedia REQUIRED)
 
 if(PLATFORM_ANDROID)
@@ -61,10 +62,18 @@ elseif (PLATFORM_ANDROID)
         android/gradle/wrapper/gradle-wrapper.properties
         android/gradle.properties android/gradlew android/gradlew.bat
         android/src/com/example/MusicPlayer/MainActivity.java
+
+        android/src/com/example/MusicPlayer/MediaButtonReceiver.java
+        android/src/TestReceiver.java
     )
 
     set(ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
     set_property(TARGET ${PROJECT_NAME} PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
+
+    target_include_directories(${PROJECT_NAME}
+        PRIVATE
+        ${Python3_INCLUDE_DIRS}
+    )
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
@@ -73,8 +82,11 @@ elseif (PLATFORM_ANDROID)
             Qt6::Core
             Qt6::CorePrivate
             Qt6::Multimedia
+            Qt::Multimedia
+            ${Python3_LIBRARIES}
     )
 endif ()
+
 
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}

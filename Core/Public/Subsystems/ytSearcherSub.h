@@ -25,8 +25,7 @@ public:
     ~ytSearcherSub() override;
 
     void search(const QString &Text);
-
-    void download(QUrl url);
+    void download(QUrl url, QString out);
 
 signals:
 

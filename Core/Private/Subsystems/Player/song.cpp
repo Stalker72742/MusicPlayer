@@ -7,6 +7,7 @@
 #include <qfile.h>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QFileInfo>
 #include <QUrl>
 
 song::song(QJsonObject JsonObj) {
@@ -43,7 +44,7 @@ song::song(const QString &fileName) {
 
         songPathOrUrl = fileName;
 
-        songName = fileName.split('/').last();
+        songName = QFileInfo(fileName).baseName();
 
         bLocalSong = true;
     }

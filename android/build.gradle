@@ -21,8 +21,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     //noinspection GradleDependency
     implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.media:media:1.6.0'
 }
-
 android {
     /*******************************************************
      * The following variables:

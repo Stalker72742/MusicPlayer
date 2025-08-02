@@ -171,7 +171,6 @@ void PermissionHandler::openAppSettings() {
     qDebug() << "Opening app settings";
 }
 
-// Регистрация JNI метода
 static JNINativeMethod methods[] = {
     {"onPermissionResult", "(IZ)V", (void*)PermissionHandler::onPermissionResult}
 };

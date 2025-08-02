@@ -36,7 +36,7 @@
     <item>
      <widget class="QStackedWidget" name="rootStackedWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="searchPage">
        <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -72,7 +72,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit"/>
+           <widget class="QLineEdit" name="searchLineEdit"/>
           </item>
           <item>
            <spacer name="verticalSpacer">
@@ -119,8 +119,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>360</width>
-             <height>595</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
           </widget>
@@ -428,8 +428,8 @@ QPushButton{
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>360</width>
-             <height>199</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
           </widget>
@@ -577,8 +577,8 @@ QPushButton{
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>360</width>
-             <height>259</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
           </widget>

@@ -1,51 +1,50 @@
 <?xml version="1.0"?>
-<manifest
-        xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.MusicPlayer"
-        android:installLocation="auto"
-        android:versionCode="1"
-        android:versionName="Test12312">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.MusicPlayer" android:installLocation="auto" android:versionCode="1" android:versionName="Test12312">
 
-    <uses-sdk
-            android:minSdkVersion="28"
-            android:targetSdkVersion="35"
-            android:compileSdkVersion="35" />
+    <uses-sdk android:minSdkVersion="28" android:compileSdkVersion="35"/>
 
     <supports-screens android:anyDensity="true" android:largeScreens="true" android:normalScreens="true" android:smallScreens="true"/>
-    <application
-            android:name="org.qtproject.qt.android.bindings.QtApplication"
-            android:hardwareAccelerated="true" android:label="MusicPlayer"
-            android:requestLegacyExternalStorage="true"
-            android:allowBackup="true"
-            android:fullBackupOnly="false">
+    <application android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true" android:label="MusicPlayer" android:requestLegacyExternalStorage="true" android:allowBackup="true" android:fullBackupOnly="false">
 
-        <activity android:name="com.example.MusicPlayer.MainActivity"
-                  android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
-                  android:launchMode="singleTop"
-                  android:screenOrientation="unspecified"
-                  android:exported="true" android:label="Music player">
-
+        <activity android:name="com.example.MusicPlayer.MainActivity" android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:launchMode="singleTop" android:screenOrientation="unspecified" android:exported="true" android:label="Music player">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MEDIA_BUTTON"/>
             </intent-filter>
             <meta-data android:name="android.app.lib_name" android:value="-- %%INSERT_APP_LIB_NAME%% --"/>
             <meta-data android:name="android.app.arguments" android:value="-- %%INSERT_APP_ARGUMENTS%% --"/>
         </activity>
 
-        <provider
-                android:name="androidx.core.content.FileProvider"
-                android:authorities="${applicationId}.qtprovider"
-                android:exported="false"
-                android:grantUriPermissions="true">
+        <receiver android:name=".MediaButtonReceiver" android:exported="true" android:enabled="true">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.MEDIA_BUTTON"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </receiver>
+
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.qtprovider" android:exported="false" android:grantUriPermissions="true">
 
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/qtprovider_paths"/>
         </provider>
     </application>
 
+    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.WRITE_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
 </manifest>

@@ -52,6 +52,8 @@ public:
 
     void setCurrentPlaylist(QString playlistPathLocal);
 
+    void startPlayFromIndex(int index);
+
     void removePlaylist(QString playlistPath);
 
     QList<QString> getPlaylists();
@@ -87,6 +89,8 @@ signals:
     void updateMusicDuration(int newDuration);
 
     void onShowMediaLib(QList<QString> songs);
+
+    void playingSongChanged(song* currentPlayingSong);
 
 private:
 
