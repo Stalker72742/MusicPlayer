@@ -288,6 +288,7 @@ void PlayerSubsystem::Resume() {
 }
 
 void PlayerSubsystem::Pause() const {
+
     player->pause();
 }
 
@@ -565,19 +566,17 @@ Java_com_example_MusicPlayer_MediaSessionHandler_onMediaButton(JNIEnv *env, jobj
     QString actionStr = QJniObject(action).toString();
     qDebug() << "🎧 Получена медиа кнопка:" << keyCode << actionStr;
 
-    // Получаем экземпляр MediaController (можно через singleton или глобальную переменную)
-    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>(); // Ваша реализация
+    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
 
     if (player) {
         switch (keyCode) {
         case 127:
-            player->playPause();
-        case 126: // KEYCODE_MEDIA_PAUSE
-            player->playPause();
+            player->Pause();
             break;
-
-        case 87:  // KEYCODE_MEDIA_NEXT
-            // Ваша логика для следующего трека
+        case 126:
+            player->Resume();
+            break;
+        case 87:
             player->NextSong();
             break;
         }
