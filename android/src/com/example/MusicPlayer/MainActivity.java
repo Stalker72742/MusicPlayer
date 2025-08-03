@@ -60,34 +60,34 @@ public class MainActivity extends org.qtproject.qt.android.bindings.QtActivity {
 
             // ТЕСТ 1: Простой receiver для проверки работы системы
             testReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    Log.d(TAG, "🔥 ЛЮБОЕ СОБЫТИЕ ПОЛУЧЕНО!");
-                    Log.d(TAG, "📨 Action: " + intent.getAction());
-                    Log.d(TAG, "📦 Data: " + intent.getDataString());
-                    Log.d(TAG, "🏷️ Categories: " + intent.getCategories());
+                        @Override
+                        public void onReceive(Context context, Intent intent) {
+                            Log.d(TAG, "🔥 ЛЮБОЕ СОБЫТИЕ ПОЛУЧЕНО!");
+                            Log.d(TAG, "📨 Action: " + intent.getAction());
+                            Log.d(TAG, "📦 Data: " + intent.getDataString());
+                            Log.d(TAG, "🏷️ Categories: " + intent.getCategories());
 
-                    // Если это медиа-кнопка
-                    if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
-                        Log.d(TAG, "🎵 ЭТО МЕДИА КНОПКА!");
-                        KeyEvent keyEvent = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-                        if (keyEvent != null) {
-                            Log.d(TAG, "🔑 KeyEvent найден: " + keyEvent.toString());
-                            Log.d(TAG, "🔑 KeyCode: " + keyEvent.getKeyCode());
-                            Log.d(TAG, "🔑 Action: " + keyEvent.getAction());
-                        } else {
-                            Log.d(TAG, "❌ KeyEvent = NULL!");
+                            // Если это медиа-кнопка
+                            if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
+                                Log.d(TAG, "🎵 ЭТО МЕДИА КНОПКА!");
+                                KeyEvent keyEvent = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                                if (keyEvent != null) {
+                                    Log.d(TAG, "🔑 KeyEvent найден: " + keyEvent.toString());
+                                    Log.d(TAG, "🔑 KeyCode: " + keyEvent.getKeyCode());
+                                    Log.d(TAG, "🔑 Action: " + keyEvent.getAction());
+                                } else {
+                                    Log.d(TAG, "❌ KeyEvent = NULL!");
+                                }
+                            }
+
+                            // Bluetooth события
+                            if (intent.getAction().contains("bluetooth") || intent.getAction().contains("BLUETOOTH")) {
+                                Log.d(TAG, "🔵 BLUETOOTH EVENT!");
+                                int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
+                                Log.d(TAG, "🔵 Bluetooth state: " + state);
+                            }
                         }
-                    }
-
-                    // Bluetooth события
-                    if (intent.getAction().contains("bluetooth") || intent.getAction().contains("BLUETOOTH")) {
-                        Log.d(TAG, "🔵 BLUETOOTH EVENT!");
-                        int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
-                        Log.d(TAG, "🔵 Bluetooth state: " + state);
-                    }
-                }
-            };
+                    };
 
             // Регистрируем НА ВСЕ возможные события
             IntentFilter filter = new IntentFilter();
@@ -186,22 +186,6 @@ public class MainActivity extends org.qtproject.qt.android.bindings.QtActivity {
             Log.d(TAG, "📱 onPause вызван");
         }
 
-        @Override
-        public boolean onKeyDown(int keyCode, KeyEvent event) {
-            Log.d(TAG, "🔑 onKeyDown: " + keyCode + ", event: " + event.toString());
-
-            // Проверяем медиа-кнопки
-            switch (keyCode) {
-                case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                case KeyEvent.KEYCODE_MEDIA_NEXT:
-                case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-                case KeyEvent.KEYCODE_HEADSETHOOK:
-                    Log.d(TAG, "🎵 МЕДИА КНОПКА через onKeyDown!");
-                    return true;
-            }
-
-            return super.onKeyDown(keyCode, event);
-        }
 
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         private void setupMediaSession() {
@@ -211,27 +195,56 @@ public class MainActivity extends org.qtproject.qt.android.bindings.QtActivity {
                 mediaSession = new MediaSession(this, "MyMediaSession");
 
                 mediaSession.setCallback(new MediaSession.Callback() {
-                    @Override
-                    public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-                        Log.d(TAG, "🔥 MediaSession.onMediaButtonEvent ВЫЗВАН!");
-                        KeyEvent keyEvent = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-                        if (keyEvent != null && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                            Log.d(TAG, "🎵 MediaSession получил кнопку: " + keyEvent.getKeyCode());
-                            return true;
-                        }
-                        return false;
-                    }
+                                @Override
+                                public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+                                    Log.d(TAG, "🔥 MediaSession.onMediaButtonEvent ВЫЗВАН!");
+                                    Log.d(TAG, "📨 Intent: " + mediaButtonEvent.toString());
 
-                    @Override
-                    public void onPlay() {
-                        Log.d(TAG, "🎵 MediaSession.onPlay()");
-                    }
+                                    // Подробная диагностика как в MediaButtonReceiver
+                                    Bundle extras = mediaButtonEvent.getExtras();
+                                    if (extras != null) {
+                                        Log.d(TAG, "📦 MediaSession Extras:");
+                                        for (String key : extras.keySet()) {
+                                            Object value = extras.get(key);
+                                            Log.d(TAG, "  🔑 " + key + " = " + value);
+                                        }
+                                    }
 
-                    @Override
-                    public void onPause() {
-                        Log.d(TAG, "🎵 MediaSession.onPause()");
-                    }
-                });
+                                    KeyEvent keyEvent = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                                    if (keyEvent != null && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                                        Log.d(TAG, "🎵 MediaSession получил кнопку: " + keyEvent.getKeyCode());
+                                        onMediaKeyPressed(keyEvent.getKeyCode());
+                                        return true; // ВАЖНО: возвращаем true чтобы перехватить событие
+                                    } else {
+                                        Log.d(TAG, "💥 MediaSession: KeyEvent is NULL или не ACTION_DOWN");
+                                        // Если KeyEvent NULL, используем таймер как в MediaButtonReceiver
+                                        return true;
+                                    }
+                                }
+
+                                @Override
+                                public void onPlay() {
+                                    Log.d(TAG, "🎵 MediaSession.onPlay() ВЫЗВАН!");
+
+                                }
+
+                                @Override
+                                public void onPause() {
+                                    Log.d(TAG, "🎵 MediaSession.onPause() ВЫЗВАН!");
+                                }
+
+                                @Override
+                                public void onSkipToNext() {
+                                    Log.d(TAG, "🎵 MediaSession.onSkipToNext() ВЫЗВАН!");
+
+                                }
+
+                                @Override
+                                public void onSkipToPrevious() {
+                                    Log.d(TAG, "🎵 MediaSession.onSkipToPrevious() ВЫЗВАН!");
+
+                                }
+                            });
 
                 mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
                                      MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -323,7 +336,6 @@ public class MainActivity extends org.qtproject.qt.android.bindings.QtActivity {
         }
 
     public static native void onMediaKeyPressed(int keyCode);
-    private native void sendToQt(String action);
     public static native void onPermissionResult(int requestCode, boolean granted);
 
     @Override

@@ -128,8 +128,18 @@ void androidMainWindow::searchLineEditFinished(){
                                                                         "/storage/emulated/0/Music");
 }
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_MusicPlayer_MediaButtonReceiver_onHeadsetButton(JNIEnv *env, jobject thiz, jint keyCode)
+Java_com_example_MusicPlayer_MainActivity_onMediaKeyPressed(JNIEnv *env, jobject thiz, jint keyCode)
 {
     qDebug() << "🎧 JNI CALLBACK! KeyCode:" << keyCode;
+
+    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
+
+    if(keyCode == 126){
+        player->playPause();
+    }else if(keyCode == 127){
+        player->Pause();
+    }else if(keyCode == 87){
+        player->NextSong();
+    }
 
 }

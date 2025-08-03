@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QMediaPlayer>
 #include <QTimer>
+#include <QJniObject>
 
 #include "songPath.h"
 
@@ -72,6 +73,8 @@ public:
 
     QString getMusicFolder() { return DefaultMusicFolder; }
 
+    void playPause();
+
 public slots:
 
     void PlayerError(QMediaPlayer::Error Error, const QString &error);
@@ -96,6 +99,8 @@ private:
 
     void checkMusicFolder();
 
+    void updateMediaSessionState(const QString &state);
+
     QAudioOutput *audioOutput;
     QMediaPlayer *player;
 
@@ -116,6 +121,10 @@ private:
     bool bUseQueue = false;
 
     QList<song*> queueSongs;
+
+    bool bPaused = true;
+
+    QJniObject mediaSessionHandler;
 };
 
 #endif

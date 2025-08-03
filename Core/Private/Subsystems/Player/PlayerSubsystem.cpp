@@ -9,6 +9,7 @@
 #include <QMediaPlayer>
 #include <QDirIterator>
 #include <QJsonDocument>
+#include <AppInstance.h>
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
 #endif
@@ -42,7 +43,6 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
         switch (status) {
             case QMediaPlayer::EndOfMedia:
                 NextSong();
-                break;
             case QMediaPlayer::BufferedMedia:
                 player->play();
             case QMediaPlayer::LoadedMedia:
@@ -60,15 +60,17 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
         case QMediaPlayer::PlayingState:
 
             updateTimer->start();
+            updateMediaSessionState("PLAYING");
             break;
         case QMediaPlayer::PausedState:
-
+            updateMediaSessionState("PAUSED");
             break;
         case QMediaPlayer::StoppedState:
 
             updateTimer->stop();
             emit updateMusicDuration(0);
             time = 0;
+            updateMediaSessionState("STOPPED");
 
             break;
 
@@ -107,6 +109,25 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
     }
 
     SetVolume(100);
+
+    QTimer::singleShot(100, [=]() {
+        QJniObject activity = QJniObject::callStaticMethod<QJniObject>(
+            "org/qtproject/qt/android/QtNative",
+            "activity",
+            "()Landroid/app/Activity;"
+            );
+
+        if (activity.isValid()) {
+            mediaSessionHandler = QJniObject("com/example/MusicPlayer/MediaSessionHandler",
+                                             "(Landroid/content/Context;)V",
+                                             activity.object());
+
+            if (mediaSessionHandler.isValid()) {
+                qDebug() << "✅ MediaSessionHandler создан с задержкой";
+                mediaSessionHandler.callMethod<void>("requestAudioFocus");
+            }
+        }
+    });
 #endif
 }
 
@@ -116,6 +137,19 @@ PlayerSubsystem::~PlayerSubsystem() {
 
     delete audioOutput;
     delete player;
+}
+
+void PlayerSubsystem::updateMediaSessionState(const QString &state)
+{
+    if (mediaSessionHandler.isValid()) {
+        if (state == "PLAYING") {
+            mediaSessionHandler.callMethod<void>("setPlaying");
+        } else if (state == "PAUSED") {
+            mediaSessionHandler.callMethod<void>("setPaused");
+        } else if (state == "STOPPED") {
+            mediaSessionHandler.callMethod<void>("setStopped");
+        }
+    }
 }
 
 void PlayerSubsystem::checkMusicFolder() {
@@ -267,6 +301,8 @@ void PlayerSubsystem::NextSong() {
     if (CurrentSongIndex >= getSongs().size()) {
         CurrentSongIndex = 0;
     }
+
+    qDebug() << "Start playing next song";
 
     PlayCurrentSong();
 }
@@ -503,4 +539,47 @@ void PlayerSubsystem::addSongToQueue(song* Song) {
     qDebug() << "Adding song to queue: " << Song->getName();
 
     queueSongs.append(Song);
+}
+
+void PlayerSubsystem::playPause(){
+
+    if(getSongs().empty()) return;
+
+    if(bPaused){
+        if(player->hasAudio()){
+
+            player->play();
+        }else{
+            PlayCurrentSong();
+        }
+    }else{
+
+        player->pause();
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_example_MusicPlayer_MediaSessionHandler_onMediaButton(JNIEnv *env, jobject obj,
+                                                       jint keyCode, jstring action)
+{
+    QString actionStr = QJniObject(action).toString();
+    qDebug() << "🎧 Получена медиа кнопка:" << keyCode << actionStr;
+
+    // Получаем экземпляр MediaController (можно через singleton или глобальную переменную)
+    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>(); // Ваша реализация
+
+    if (player) {
+        switch (keyCode) {
+        case 127:
+            player->playPause();
+        case 126: // KEYCODE_MEDIA_PAUSE
+            player->playPause();
+            break;
+
+        case 87:  // KEYCODE_MEDIA_NEXT
+            // Ваша логика для следующего трека
+            player->NextSong();
+            break;
+        }
+    }
 }

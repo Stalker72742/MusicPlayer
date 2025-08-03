@@ -64,7 +64,8 @@ elseif (PLATFORM_ANDROID)
         android/src/com/example/MusicPlayer/MainActivity.java
 
         android/src/com/example/MusicPlayer/MediaButtonReceiver.java
-        android/src/TestReceiver.java
+        android/src/com/example/MusicPlayer/MediaSessionHandler.java
+
     )
 
     set(ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
