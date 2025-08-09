@@ -24,6 +24,14 @@ find_package(Qt6 COMPONENTS Core Widgets Multimedia REQUIRED)
 
 add_subdirectory(Core)
 
+if(PLATFORM_ANDROID)
+
+	add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Libs/Oboe)
+
+endif()
+
+include_directories(${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/include)
+
 if (PLATFORM_WINDOWS)
 
     qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp)
@@ -81,6 +89,8 @@ elseif (PLATFORM_ANDROID)
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
+            
+            oboe
             MusicPlayerCore
             Qt6::Core
             Qt6::CorePrivate

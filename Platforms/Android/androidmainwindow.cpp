@@ -75,14 +75,20 @@ void androidMainWindow::playlistSelected() {
     QDirIterator it(currentPlaylistPath, {"*.mp3"}, QDir::Files, QDirIterator::Subdirectories);
     int i = 0;
 
+    if(!ui->widget->layout()){
+        ui->widget->setLayout(new QVBoxLayout());
+    }
+
     while (it.hasNext()) {
         i++;
         QString songPath = it.next();
 
         playlistSong* songWidget = new playlistSong(i, songPath, this);
+        songWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+
         connect(songWidget, &playlistSong::clicked, this, &androidMainWindow::songClicked);
 
-        ui->playlistSongsScroll->layout()->addWidget(songWidget);
+        ui->widget->layout()->addWidget(songWidget);
     }
 
     qobject_cast<QVBoxLayout*>(ui->playlistSongsScroll->layout())->addStretch();
@@ -126,20 +132,4 @@ void androidMainWindow::searchLineEditFinished(){
 
     AppInstance::getInstance()->getSubsystem<ytSearcherSub>()->download(QUrl("https://www.youtube.com/watch?v=QIZ6xYx_S-M"),
                                                                         "/storage/emulated/0/Music");
-}
-extern "C" JNIEXPORT void JNICALL
-Java_com_example_MusicPlayer_MainActivity_onMediaKeyPressed(JNIEnv *env, jobject thiz, jint keyCode)
-{
-    qDebug() << "🎧 JNI CALLBACK! KeyCode:" << keyCode;
-
-    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
-
-    if(keyCode == 126){
-        player->playPause();
-    }else if(keyCode == 127){
-        player->Pause();
-    }else if(keyCode == 87){
-        player->NextSong();
-    }
-
 }
