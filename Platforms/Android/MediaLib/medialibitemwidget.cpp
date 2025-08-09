@@ -11,7 +11,7 @@
 #include <QJsonObject>
 #include <QStandardPaths>
 
-#include "ui_medialibItemWidget.h"
+#include "ui_medialibitemwidget.h"
 #include <QFile>
 #include <QMouseEvent>
 

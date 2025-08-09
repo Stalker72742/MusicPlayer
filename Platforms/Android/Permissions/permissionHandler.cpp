@@ -4,8 +4,6 @@
 
 #include "permissionHandler.h"
 
-#include "PermissionHandler.h"
-
 PermissionHandler* PermissionHandler::instance() {
     static PermissionHandler* inst = new PermissionHandler();
     return inst;

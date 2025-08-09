@@ -5,7 +5,7 @@
 #ifdef Q_OS_WIN
 #include "mainwindow.h"
 #elifdef Q_OS_ANDROID
-#include "Platforms\Android\androidmainwindow.h"
+#include "androidmainwindow.h"
 #endif
 
 int main(int argc, char *argv[])

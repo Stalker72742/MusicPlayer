@@ -20,25 +20,9 @@ else()
     set(PLATFORM_ANDROID FALSE)
 endif()
 
-
 find_package(Qt6 COMPONENTS Core Widgets Multimedia REQUIRED)
 
-if(PLATFORM_ANDROID)
-
-endif()
-
 add_subdirectory(Core)
-
-if(PLATFORM_ANDROID)
-
-    add_subdirectory(Platforms/Android)
-elseif(PLATFORM_WINDOWS)
-
-    add_subdirectory(Platforms/Desktop)
-else()
-
-    message("Update cmake code for new platform")
-endif ()
 
 if (PLATFORM_WINDOWS)
 
@@ -62,10 +46,24 @@ elseif (PLATFORM_ANDROID)
         android/gradle/wrapper/gradle-wrapper.properties
         android/gradle.properties android/gradlew android/gradlew.bat
         android/src/com/example/MusicPlayer/MainActivity.java
-
         android/src/com/example/MusicPlayer/MediaButtonReceiver.java
         android/src/com/example/MusicPlayer/MediaSessionHandler.java
-
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/androidmainwindow.cpp"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/androidmainwindow.h"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/androidmainwindow.ui"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/CurrentPlayingSong/currentplayingsong.cpp"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/CurrentPlayingSong/currentplayingsong.h"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/CurrentPlayingSong/currentplayingsong.ui"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaKeyHandler/mediakeyhandler.cpp"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaKeyHandler/mediakeyhandler.h"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/medialibitemwidget.cpp"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/medialibitemwidget.h"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/medialibitemwidget.ui"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/playlistsong.cpp"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/playlistsong.h"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/playlistsong.ui"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/Permissions/permissionHandler.cpp"
+        "${CMAKE_SOURCE_DIR}/Platforms/Android/Permissions/permissionHandler.h"
     )
 
     set(ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -74,17 +72,20 @@ elseif (PLATFORM_ANDROID)
     target_include_directories(${PROJECT_NAME}
         PRIVATE
         ${Python3_INCLUDE_DIRS}
+        "Platforms/Android"
+        "Platforms/Android/CurrentPlayingSong"
+        "Platforms/Android/MediaKeyHandler"
+        "Platforms/Android/MediaLib"
+        "Platforms/Android/Permissions"
     )
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
             MusicPlayerCore
-            AndroidMusicPlayerUI
             Qt6::Core
             Qt6::CorePrivate
+            Qt6::Widgets
             Qt6::Multimedia
-            Qt::Multimedia
-            ${Python3_LIBRARIES}
     )
 endif ()
 
