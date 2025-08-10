@@ -7,11 +7,11 @@
 #elifdef Q_OS_ANDROID
 #include "androidmainwindow.h"
 #include <QGuiApplication>
-#include <QQmlApplicationEngine>/*
+#include <QQmlApplicationEngine>
 extern "C" {
 #include "Source/Libs/ffmpeg/build/arm64-v8a/include/libavformat/avformat.h"
 #include "Source/Libs/ffmpeg/build/arm64-v8a/include/libavcodec/avcodec.h"
-}*/
+}
 #endif
 
 int main(int argc, char *argv[])
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     androidMainWindow* win = new androidMainWindow();
     win->show();
 
-    /*const char* filename = "/storage/emulated/0/Music/Primorose.mp3";
+    const char* filename = "/storage/emulated/0/Music/Primorose.mp3";
 
     AVFormatContext* fmt_ctx = nullptr;
 
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
     qDebug() << "FFmpeg open file succes";
 
-    avformat_close_input(&fmt_ctx);*/
+    avformat_close_input(&fmt_ctx);
 
     //QQmlApplicationEngine engine;
     //engine.load(QUrl(QStringLiteral("qrc:/main.qml")));

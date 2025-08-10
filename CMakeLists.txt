@@ -9,8 +9,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-#set(FFMPEG_INCLUE_DIR ${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/build/arm64-v8a/include)
-#set(FFMPEG_LIB_DIR ${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/build/arm64-v8a/lib)
+set(FFMPEG_INCLUE_DIR ${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/build/arm64-v8a/include)
+set(FFMPEG_LIB_DIR ${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/build/arm64-v8a/lib)
 
 if(ANDROID)
     set(PLATFORM_ANDROID TRUE)
@@ -83,7 +83,7 @@ elseif (PLATFORM_ANDROID)
 
     target_include_directories(${PROJECT_NAME}
         PRIVATE
-        #"Source/Libs/ffmpeg/build/arm64-v8a/include"
+        "Source/Libs/ffmpeg/build/arm64-v8a/include"
         "Platforms/Android"
         "Platforms/Android/CurrentPlayingSong"
         "Platforms/Android/MediaKeyHandler"
@@ -91,20 +91,20 @@ elseif (PLATFORM_ANDROID)
         "Platforms/Android/Permissions"
     )
 
-    #add_library(avformat SHARED IMPORTED)
-    #set_target_properties(avformat PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavformat.so)
+    add_library(avformat SHARED IMPORTED)
+    set_target_properties(avformat PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavformat.so)
     
-    #add_library(avcodec SHARED IMPORTED)
-    #set_target_properties(avcodec PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavcodec.so)
+    add_library(avcodec SHARED IMPORTED)
+    set_target_properties(avcodec PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavcodec.so)
     
-    #add_library(avutil SHARED IMPORTED)
-    #set_target_properties(avutil PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavutil.so)
+    add_library(avutil SHARED IMPORTED)
+    set_target_properties(avutil PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavutil.so)
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
-            #avformat
-            #avcodec
-            #avutil
+            avformat
+            avcodec
+            avutil
             MusicPlayerCore
             Qt6::Core
             Qt6::CorePrivate
