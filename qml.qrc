@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="main.qml">Source/Android/Widgets/androidMainWindow.qml</file>
+        <file>Source/Android/Widgets/testAllSongsPage.qml</file>
+    </qresource>
+</RCC>

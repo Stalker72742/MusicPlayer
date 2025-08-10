@@ -20,7 +20,7 @@ else()
     set(PLATFORM_ANDROID FALSE)
 endif()
 
-find_package(Qt6 COMPONENTS Core Widgets Multimedia REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Multimedia Gui Qml Quick REQUIRED)
 
 add_subdirectory(Core)
 
@@ -72,7 +72,8 @@ elseif (PLATFORM_ANDROID)
         "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/playlistsong.ui"
         "${CMAKE_SOURCE_DIR}/Platforms/Android/Permissions/permissionHandler.cpp"
         "${CMAKE_SOURCE_DIR}/Platforms/Android/Permissions/permissionHandler.h"
-    )
+        qml.qrc)
+
 
     set(ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
     set_property(TARGET ${PROJECT_NAME} PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -89,13 +90,14 @@ elseif (PLATFORM_ANDROID)
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
-            
-            oboe
             MusicPlayerCore
             Qt6::Core
             Qt6::CorePrivate
             Qt6::Widgets
             Qt6::Multimedia
+            Qt6::Gui
+            Qt6::Qml
+            Qt6::Quick
     )
 endif ()
 
