@@ -27,6 +27,7 @@ find_package(Qt6 COMPONENTS Core Widgets Multimedia Gui Qml Quick REQUIRED)
 
 add_subdirectory(Core)
 
+
 if(PLATFORM_ANDROID)
 
 	add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Libs/Oboe)

@@ -7,22 +7,20 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Multimedia)
 
-file(GLOB_RECURSE SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/Private/*.cpp
+add_library(MusicPlayerCore SHARED Public/Data/songPath.h
+        Public/Framework/AppInstance.h
+        Private/Framework/AppInstance.cpp
+        Public/Libs/AppInstanceLibs.h
+        Private/Libs/AppInstanceLibs.cpp
+        Public/Subsystems/ytSearcherSub.h
+        Private/Subsystems/ytSearcherSub.cpp
+        Public/Subsystems/Player/PlayerSubsystem.h
+        Private/Subsystems/Player/PlayerSubsystem.cpp
+        Public/Subsystems/Player/song.h
+        Private/Subsystems/Player/song.cpp
+        Private/Subsystems/Player/PlayerBackend/playerbase.cpp
+        Private/Subsystems/Player/PlayerBackend/playerbase.h
 )
-
-file(GLOB_RECURSE HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/Public/*.h"
-)
-
-foreach(header ${HEADERS})
-    get_filename_component(dir ${header} DIRECTORY)
-    list(APPEND INCLUDE_DIRS ${dir})
-endforeach()
-
-list(REMOVE_DUPLICATES INCLUDE_DIRS)
-
-add_library(MusicPlayerCore SHARED ${SOURCES} ${HEADERS})
 
 target_link_libraries(MusicPlayerCore
         PUBLIC
@@ -33,7 +31,15 @@ target_link_libraries(MusicPlayerCore
 
 target_include_directories(MusicPlayerCore
         PUBLIC
-        ${INCLUDE_DIRS}
+        Private/Framework
+        Private/Libs
+        Private/Subsystems
+        Private/Subsystems/Player
+        Public/Data
+        Public/Framework
+        Public/Libs
+        Public/Subsystems
+        Public/Subsystems/Player
 )
 
 if(PLATFORM_WINDOWS)

@@ -12,8 +12,6 @@
 #include <QTimer>
 #include <QJniObject>
 
-#include "songPath.h"
-
 class QSlider;
 class song;
 
@@ -101,6 +99,8 @@ private:
 
     void updateMediaSessionState(const QString &state);
 
+
+    playerBase* customPlayer;
     QAudioOutput *audioOutput;
     QMediaPlayer *player;
 
