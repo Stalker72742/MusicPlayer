@@ -2,7 +2,7 @@
 // Created by Stalker7274 on 27.03.2025.
 //
 
-#include "ytSearcherSub.h"
+#include "ytSearcher.h"
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>

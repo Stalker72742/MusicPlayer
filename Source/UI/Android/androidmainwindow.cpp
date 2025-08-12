@@ -2,13 +2,12 @@
 #include "MediaLib/medialibitemwidget.h"
 #include "MediaLib/playlistsong.h"
 #include "CurrentPlayingSong/currentplayingsong.h"
-#include "Permissions/permissionHandler.h"
+#include "PermissionsHandler/permissionHandler.h"
 #include "MediaKeyHandler/mediakeyhandler.h"
 #include "AppInstance.h"
 #include <QDirIterator>
-#include "AppInstanceLibs.h"
 #include "ui_androidmainwindow.h"
-#include "ytSearcherSub.h"
+#include "ytSearcher.h"
 #include <QStandardPaths>
 #include <QShortcut>
 

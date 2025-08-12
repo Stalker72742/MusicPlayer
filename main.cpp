@@ -5,7 +5,7 @@
 #ifdef Q_OS_WIN
 #include "mainwindow.h"
 #elifdef Q_OS_ANDROID
-#include "androidmainwindow.h"
+#include "Source/UI/Android/androidmainwindow.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 extern "C" {

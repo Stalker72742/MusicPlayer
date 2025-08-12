@@ -11,6 +11,7 @@
 #include <QMediaPlayer>
 #include <QTimer>
 #include <QJniObject>
+#include "PlayerBackend/playerbase.h"
 
 class QSlider;
 class song;
@@ -98,7 +99,6 @@ private:
     void checkMusicFolder();
 
     void updateMediaSessionState(const QString &state);
-
 
     playerBase* customPlayer;
     QAudioOutput *audioOutput;

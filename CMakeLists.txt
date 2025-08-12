@@ -25,14 +25,12 @@ endif()
 
 find_package(Qt6 COMPONENTS Core Widgets Multimedia Gui Qml Quick REQUIRED)
 
-add_subdirectory(Core)
-
+add_subdirectory(Source/Core)
 
 if(PLATFORM_ANDROID)
-
 	add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Libs/Oboe)
-
 endif()
+
 
 include_directories(${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/include)
 
@@ -60,24 +58,23 @@ elseif (PLATFORM_ANDROID)
         android/src/com/example/MusicPlayer/MainActivity.java
         android/src/com/example/MusicPlayer/MediaButtonReceiver.java
         android/src/com/example/MusicPlayer/MediaSessionHandler.java
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/androidmainwindow.cpp"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/androidmainwindow.h"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/androidmainwindow.ui"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/CurrentPlayingSong/currentplayingsong.cpp"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/CurrentPlayingSong/currentplayingsong.h"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/CurrentPlayingSong/currentplayingsong.ui"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaKeyHandler/mediakeyhandler.cpp"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaKeyHandler/mediakeyhandler.h"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/medialibitemwidget.cpp"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/medialibitemwidget.h"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/medialibitemwidget.ui"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/playlistsong.cpp"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/playlistsong.h"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/MediaLib/playlistsong.ui"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/Permissions/permissionHandler.cpp"
-        "${CMAKE_SOURCE_DIR}/Platforms/Android/Permissions/permissionHandler.h"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/androidmainwindow.cpp"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/androidmainwindow.h"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/androidmainwindow.ui"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/CurrentPlayingSong/currentplayingsong.cpp"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/CurrentPlayingSong/currentplayingsong.h"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/CurrentPlayingSong/currentplayingsong.ui"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaKeyHandler/mediakeyhandler.cpp"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaKeyHandler/mediakeyhandler.h"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/medialibitemwidget.cpp"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/medialibitemwidget.h"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/medialibitemwidget.ui"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/playlistsong.cpp"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/playlistsong.h"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/playlistsong.ui"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/PermissionsHandler/permissionHandler.cpp"
+        "${CMAKE_SOURCE_DIR}/Source/UI/Android/PermissionsHandler/permissionHandler.h"
         qml.qrc)
-
 
     set(ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
     set_property(TARGET ${PROJECT_NAME} PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -85,11 +82,11 @@ elseif (PLATFORM_ANDROID)
     target_include_directories(${PROJECT_NAME}
         PRIVATE
         "Source/Libs/ffmpeg/build/arm64-v8a/include"
-        "Platforms/Android"
-        "Platforms/Android/CurrentPlayingSong"
-        "Platforms/Android/MediaKeyHandler"
-        "Platforms/Android/MediaLib"
-        "Platforms/Android/Permissions"
+        "Source/UI/Platforms/Android"
+        "Source/UI/Platforms/Android/CurrentPlayingSong"
+        "Source/UI/Platforms/Android/MediaKeyHandler"
+        "Source/UI/Platforms/Android/MediaLib"
+        "Source/UI/Platforms/Android/Permissions"
     )
 
     add_library(avformat SHARED IMPORTED)

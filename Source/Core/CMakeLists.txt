@@ -10,10 +10,8 @@ find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Multimedia)
 add_library(MusicPlayerCore SHARED Public/Data/songPath.h
         Public/Framework/AppInstance.h
         Private/Framework/AppInstance.cpp
-        Public/Libs/AppInstanceLibs.h
-        Private/Libs/AppInstanceLibs.cpp
-        Public/Subsystems/ytSearcherSub.h
-        Private/Subsystems/ytSearcherSub.cpp
+        Public/Subsystems/ytSearcher.h
+        Private/Subsystems/ytSearcher.cpp
         Public/Subsystems/Player/PlayerSubsystem.h
         Private/Subsystems/Player/PlayerSubsystem.cpp
         Public/Subsystems/Player/song.h
