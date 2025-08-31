@@ -1,99 +1,92 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
+import QtMultimedia
 
 ApplicationWindow {
-    id: root
+
+    property var playlist: ["file:///storage/emulated/0/Music/Primorose.mp3",
+        "file:///storage/emulated/0/Music/Gasoline.mp3", "file:///storage/emulated/0/Music/Judas.mp3"]
+    property int currentIndex: 0
+    width: 1080
+    height: 1920
     visible: true
-    width: 360
-    height: 640
-    title: "Главное окно"
-    color: "#121212"
+    color: "#fff"
 
-    Material.theme: Material.Dark
-    Material.accent: Material.Teal
+    Column {
+            anchors.centerIn: parent
+            spacing: 16
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
-
-        // StackView занимает всё, кроме места под панель
-        StackView {
-            id: stackView
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredHeight: parent.height - bottomBar.height
-
-            initialItem: page1
-        }
-
-        // Нижняя панель кнопок
-        Rectangle {
-            id: bottomBar
-            Layout.fillWidth: true
-            height: 60
-            color: "#1e1e1e"
-
-            RowLayout {
-                anchors.fill: parent
-                spacing: 0
-
-                Button {
-                    Layout.fillWidth: true
-                    text: "Стр. 1"
-                    onClicked: stackView.replace(page1)
+            Button {
+                text: "▶ Play / ⏸ Pause"
+                background: Rectangle {
+                    radius: 8
+                    color: "#000"
                 }
-                Button {
-                    Layout.fillWidth: true
-                    text: "Стр. 2"
-                    onClicked: stackView.replace(page2)
+                width: 150
+                height: 150
+                contentItem: Text {
+                    text: parent.Button.text
+                    color: "white"
+                    font.pixelSize: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                 }
-                Button {
-                    Layout.fillWidth: true
-                    text: "Стр. 3"
-                    onClicked: stackView.replace(page3)
+                onClicked: {
+                    player.play()
                 }
             }
-        }
+
+            Button {
+                text: "⏭ Next"
+                background: Rectangle {
+                    radius: 8
+                    color: "#4CAF50"
+                }
+                contentItem: Text {
+                    text: parent.Button.text
+                    color: "white"
+                    font.pixelSize: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: {
+                    currentIndex = (currentIndex + 1) % playlist.length
+                    player.source = playlist[currentIndex]
+                    player.play()
+                }
+            }
+
+            Button {
+                text: "⏮ Previous"
+                background: Rectangle {
+                    radius: 8
+                    color: "#F44336"
+                }
+                contentItem: Text {
+                    text: parent.Button.text
+                    color: "white"
+                    font.pixelSize: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: {
+                    currentIndex = (currentIndex - 1 + playlist.length) % playlist.length
+                    player.source = playlist[currentIndex]
+                    player.play()
+                }
+            }
     }
 
-    // Страницы
-    Component {
-        id: page1
-        Rectangle {
-            color: "#212121"
-            anchors.fill: parent
-            Label {
-                text: "Первая страница"
-                color: "white"
-                anchors.centerIn: parent
+    MediaPlayer {
+            id: player
+            source: playlist[currentIndex]
+            audioOutput: AudioOutput { id: audioOut; volume: 1.0 }
+            onPlaybackStateChanged: {
+                if (playbackState === MediaPlayer.StoppedState) {
+                    currentIndex = (currentIndex + 1) % playlist.length
+                    source = playlist[currentIndex]
+                    play()
+                }
             }
         }
-    }
-
-    Component {
-        id: page2
-        Rectangle {
-            color: "#263238"
-            anchors.fill: parent
-            Label {
-                text: "Вторая страница"
-                color: "white"
-                anchors.centerIn: parent
-            }
-        }
-    }
-
-    Component {
-        id: page3
-        Rectangle {
-            color: "#1b5e20"
-            anchors.fill: parent
-            Label {
-                text: "Третья страница"
-                color: "white"
-                anchors.centerIn: parent
-            }
-        }
-    }
 }

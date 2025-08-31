@@ -1,16 +1,9 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.16...3.24)
 set(PROJECT_NAME "MusicPlayer")
 project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
-set(FFMPEG_INCLUE_DIR ${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/build/arm64-v8a/include)
-set(FFMPEG_LIB_DIR ${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/build/arm64-v8a/lib)
 
 if(ANDROID)
     set(PLATFORM_ANDROID TRUE)
@@ -23,16 +16,15 @@ else()
     set(PLATFORM_ANDROID FALSE)
 endif()
 
-find_package(Qt6 COMPONENTS Core Widgets Multimedia Gui Qml Quick REQUIRED)
+set(Qt6_DIR "C:/Qt/6.8.3/android_arm64_v8a/lib/cmake/Qt6")
+set(CMAKE_PREFIX_PATH "D:/Qt/6.8.3/android_arm64_v8a")
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Gui Qml Quick)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 add_subdirectory(Source/Core)
-
-if(PLATFORM_ANDROID)
-	add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Libs/Oboe)
-endif()
-
-
-include_directories(${CMAKE_SOURCE_DIR}/Source/Libs/ffmpeg/include)
 
 if (PLATFORM_WINDOWS)
 
@@ -48,72 +40,75 @@ if (PLATFORM_WINDOWS)
 elseif (PLATFORM_ANDROID)
 
     qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
-        android/AndroidManifest.xml
-        android/build.gradle
-        android/res/values/libs.xml
-        android/res/xml/qtprovider_paths.xml
-        android/gradle/wrapper/gradle-wrapper.jar
-        android/gradle/wrapper/gradle-wrapper.properties
-        android/gradle.properties android/gradlew android/gradlew.bat
-        android/src/com/example/MusicPlayer/MainActivity.java
-        android/src/com/example/MusicPlayer/MediaButtonReceiver.java
-        android/src/com/example/MusicPlayer/MediaSessionHandler.java
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/androidmainwindow.cpp"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/androidmainwindow.h"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/androidmainwindow.ui"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/CurrentPlayingSong/currentplayingsong.cpp"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/CurrentPlayingSong/currentplayingsong.h"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/CurrentPlayingSong/currentplayingsong.ui"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaKeyHandler/mediakeyhandler.cpp"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaKeyHandler/mediakeyhandler.h"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/medialibitemwidget.cpp"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/medialibitemwidget.h"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/medialibitemwidget.ui"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/playlistsong.cpp"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/playlistsong.h"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/MediaLib/playlistsong.ui"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/PermissionsHandler/permissionHandler.cpp"
-        "${CMAKE_SOURCE_DIR}/Source/UI/Android/PermissionsHandler/permissionHandler.h"
-        qml.qrc)
-
-    set(ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
-    set_property(TARGET ${PROJECT_NAME} PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android)
-
-    target_include_directories(${PROJECT_NAME}
-        PRIVATE
-        "Source/Libs/ffmpeg/build/arm64-v8a/include"
-        "Source/UI/Platforms/Android"
-        "Source/UI/Platforms/Android/CurrentPlayingSong"
-        "Source/UI/Platforms/Android/MediaKeyHandler"
-        "Source/UI/Platforms/Android/MediaLib"
-        "Source/UI/Platforms/Android/Permissions"
+            android/AndroidManifest.xml
+            android/build.gradle
+            android/res/values/libs.xml
+            android/res/xml/qtprovider_paths.xml
+            android/gradle/wrapper/gradle-wrapper.jar
+            android/gradle/wrapper/gradle-wrapper.properties
+            android/gradle.properties android/gradlew android/gradlew.bat
+            android/src/com/example/MusicPlayer/MainActivity.java
+            android/src/com/example/MusicPlayer/MediaButtonReceiver.java
+            android/src/com/example/MusicPlayer/MediaSessionHandler.java
+            Source/UI/Android/androidmainwindow.cpp
+            Source/UI/Android/androidmainwindow.h
+            Source/UI/Android/androidmainwindow.ui
+            Source/UI/Android/CurrentPlayingSong/currentplayingsong.cpp
+            Source/UI/Android/CurrentPlayingSong/currentplayingsong.h
+            Source/UI/Android/CurrentPlayingSong/currentplayingsong.ui
+            Source/UI/Android/MediaKeyHandler/mediakeyhandler.cpp
+            Source/UI/Android/MediaKeyHandler/mediakeyhandler.h
+            Source/UI/Android/MediaLib/medialibitemwidget.cpp
+            Source/UI/Android/MediaLib/medialibitemwidget.h
+            Source/UI/Android/MediaLib/medialibitemwidget.ui
+            Source/UI/Android/MediaLib/playlistsong.cpp
+            Source/UI/Android/MediaLib/playlistsong.h
+            Source/UI/Android/MediaLib/playlistsong.ui
+            Source/UI/Android/PermissionsHandler/permissionHandler.cpp
+            Source/UI/Android/PermissionsHandler/permissionHandler.h
+            qml.qrc
+            android/src/com/example/MusicPlayer/NativeAudioPlayer.java
+            android/src/com/example/MusicPlayer/JavaMusicPlayer.java
     )
 
-    add_library(avformat SHARED IMPORTED)
-    set_target_properties(avformat PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavformat.so)
-    
-    add_library(avcodec SHARED IMPORTED)
-    set_target_properties(avcodec PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavcodec.so)
-    
-    add_library(avutil SHARED IMPORTED)
-    set_target_properties(avutil PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIB_DIR}/libavutil.so)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
+            QT_ANDROID_MIN_SDK_VERSION 21
+            QT_ANDROID_TARGET_SDK_VERSION 34
+    )
+
+    target_include_directories(${PROJECT_NAME}
+            PRIVATE
+            Source/Core/Private/Framework
+            Source/Core/Private/Libs
+            Source/Core/Private/Subsystems
+            Source/Core/Private/Subsystems/Player
+            Source/Core/Public/Data
+            Source/Core/Public/Framework
+            Source/Core/Public/Libs
+            Source/Core/Public/Subsystems
+            Source/Core/Public/Subsystems/Player
+            PUBLIC
+            "Source/Libs/ffmpeg/build/arm64-v8a/include"
+            "Source/Libs/Oboe/include"
+            "Source/UI/Platforms/Android"
+            "Source/UI/Platforms/Android/CurrentPlayingSong"
+            "Source/UI/Platforms/Android/MediaKeyHandler"
+            "Source/UI/Platforms/Android/MediaLib"
+            "Source/UI/Platforms/Android/Permissions"
+    )
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
-            avformat
-            avcodec
-            avutil
             MusicPlayerCore
-            Qt6::Core
+            Qt::Core
             Qt6::CorePrivate
             Qt6::Widgets
-            Qt6::Multimedia
             Qt6::Gui
             Qt6::Qml
             Qt6::Quick
     )
 endif ()
-
 
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
@@ -121,6 +116,8 @@ install(TARGETS ${PROJECT_NAME}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+qt_finalize_executable(${PROJECT_NAME})
 
 if(PLATFORM_WINDOWS)
 
@@ -192,8 +189,26 @@ if(PLATFORM_WINDOWS)
 
 elseif(PLATFORM_ANDROID)
 
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/android-build/libs/${ANDROID_ABI}"
+
+            COMMAND ${CMAKE_COMMAND} -E copy
+            "${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}_${ANDROID_ABI}.so"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>" "${CMAKE_CURRENT_BINARY_DIR}/android-build/libs/${ANDROID_ABI}"
+
+            COMMAND D:/Qt/6.8.3/mingw_64/bin/androiddeployqt.exe
+            --input ${CMAKE_BINARY_DIR}/android-${PROJECT_NAME}-deployment-settings.json
+            --output ${CMAKE_BINARY_DIR}/android-build
+            --android-platform android-34
+            --jdk "C:/Program Files/Java/jdk-23"
+            --gradle
+            --install
+            --device RF8X20TNVCR
+            --apk
+            --verbose
+            DEPENDS ${PROJECT_NAME}
+    )
+
 else ()
     message("Update cmake code for new platform")
 endif ()
-
-qt_finalize_executable(${PROJECT_NAME})

@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtMultimedia
 
 Rectangle {
     color: "#212121"
@@ -36,13 +35,5 @@ Rectangle {
                 }
             }
         }
-    }
-
-    Audio {
-        id: audio
-    }
-
-    Component.onCompleted: {
-        musicScanner.scanMusicFolder()
     }
 }

@@ -32,9 +32,9 @@ public:
 
     void Pause() const;
 
-    void SetVolume(int volume) const;
+    void SetVolume(int volume);
 
-    int getVolume() const { return static_cast<int>(audioOutput->volume() * 100.0f); };
+    int getVolume() const;
 
     void NextSong();
 
@@ -58,13 +58,12 @@ public:
 
     QList<QString> getPlaylists();
 
-    /// playlist maybe name = QString or path = QDir
     template <typename P>
     void addSongToPlaylist(song* Song, P playlist);
 
     void addSongToPlaylistByName(QString Song, QString playlistName);
 
-    qint64 getMaxDuration() const { return player->duration(); }
+    qint64 getMaxDuration() const;
 
     QList<QString> getLocalSongsPaths() const;
 
@@ -100,9 +99,23 @@ private:
 
     void updateMediaSessionState(const QString &state);
 
+    // Java backend methods
+    void initJavaPlayer();
+    void registerJavaCallbacks();
+
+    // Static callbacks for Java
+    static void onJavaPlaybackStateChanged(JNIEnv *env, jobject obj, jint state);
+    static void onJavaSongFinished(JNIEnv *env, jobject obj);
+    static void onJavaError(JNIEnv *env, jobject obj, jstring error);
+
+    // Убираем QMediaPlayer и QAudioOutput
+    // QAudioOutput *audioOutput;  // УДАЛЕНО
+    // QMediaPlayer *player;        // УДАЛЕНО
+
+    // Добавляем Java плеер
+    QJniObject javaPlayer;
+
     playerBase* customPlayer;
-    QAudioOutput *audioOutput;
-    QMediaPlayer *player;
 
     QObject* Parent;
 
@@ -125,6 +138,9 @@ private:
     bool bPaused = true;
 
     QJniObject mediaSessionHandler;
+
+    int currentVolume = 50;
+    qint64 currentDuration = 0;
 };
 
 #endif

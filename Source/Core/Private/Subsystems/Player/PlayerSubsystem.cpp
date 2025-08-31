@@ -16,73 +16,19 @@
 #include <QDebug>
 #include <QFileInfo>
 #include "song.h"
-#include "songPath.h"
+#include <QJsonObject>
 
 PlayerSubsystem::PlayerSubsystem(QObject *parent) {
     Parent = parent;
-
-    player = new QMediaPlayer(this);
-
-    audioOutput = new QAudioOutput;
-    audioOutput->setDevice(QMediaDevices::defaultAudioOutput());
 
     updateTimer = new QTimer(this);
     updateTimer->setInterval(1000);
 
     SetVolume(50);
 
-    player->setAudioOutput(audioOutput);
-
-    connect(player, &QMediaPlayer::errorOccurred, this, &PlayerSubsystem::PlayerError);
-
-    connect(player, &QMediaPlayer::errorChanged, this, [this]() {
-        qDebug() << "Error:" << player->errorString();
-    });
-
-    connect(player, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
-        switch (status) {
-            case QMediaPlayer::EndOfMedia:
-                NextSong();
-            case QMediaPlayer::BufferedMedia:
-                player->play();
-            case QMediaPlayer::LoadedMedia:
-                player->play();
-            default:
-                qDebug() << "Media status changed: " << status;
-        }
-    });
-
     connect(updateTimer, &QTimer::timeout, this, &PlayerSubsystem::updateSliderPosition);
 
-    connect(player, &QMediaPlayer::playbackStateChanged,
-            [this](QMediaPlayer::PlaybackState state) {
-        switch (state) {
-        case QMediaPlayer::PlayingState:
-
-            updateTimer->start();
-            updateMediaSessionState("PLAYING");
-            break;
-        case QMediaPlayer::PausedState:
-            updateMediaSessionState("PAUSED");
-            break;
-        case QMediaPlayer::StoppedState:
-
-            updateTimer->stop();
-            emit updateMusicDuration(0);
-            time = 0;
-            updateMediaSessionState("STOPPED");
-
-            break;
-
-        default:
-
-            break;
-        }
-
-        qDebug() << "Playback state changed:" << state;
-    });
-
-#if QT_ANDROID
+#ifdef Q_OS_ANDROID
 
     QJniObject environment = QJniObject::callStaticObjectMethod(
         "android/os/Environment",
@@ -92,21 +38,11 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
             "android/os/Environment",
             "DIRECTORY_MUSIC",
             "Ljava/lang/String;"
-        ).object()
-    );
+            ).object()
+        );
 
     DefaultMusicFolder = environment.callObjectMethod("getAbsolutePath", "()Ljava/lang/String;").toString();
     DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
-
-    //setCurrentPlaylist(getPlaylists()[0]);
-
-    for (const auto &device : QMediaDevices::audioOutputs()) {
-        qDebug() << "Audio:" << device.description();
-        if (device.description().contains("speaker", Qt::CaseInsensitive)) {
-            //audioOutput->setDevice(device);
-            break;
-        }
-    }
 
     SetVolume(100);
 
@@ -118,6 +54,9 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
             );
 
         if (activity.isValid()) {
+            // Инициализируем Java плеер
+            initJavaPlayer();
+
             mediaSessionHandler = QJniObject("com/example/MusicPlayer/MediaSessionHandler",
                                              "(Landroid/content/Context;)V",
                                              activity.object());
@@ -132,11 +71,52 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 }
 
 PlayerSubsystem::~PlayerSubsystem() {
+    // Останавливаем Java плеер
+    if (javaPlayer.isValid()) {
+        javaPlayer.callMethod<void>("release");
+    }
+}
 
-    player->stop();
+void PlayerSubsystem::initJavaPlayer() {
+#ifdef Q_OS_ANDROID
+    QJniObject activity = QJniObject::callStaticMethod<QJniObject>(
+        "org/qtproject/qt/android/QtNative",
+        "activity",
+        "()Landroid/app/Activity;"
+        );
 
-    delete audioOutput;
-    delete player;
+    if (activity.isValid()) {
+        javaPlayer = QJniObject("com/example/MusicPlayer/JavaMusicPlayer",
+                                "(Landroid/content/Context;)V",
+                                activity.object());
+
+        if (javaPlayer.isValid()) {
+            qDebug() << "✅ Java Player initialized";
+            registerJavaCallbacks();
+        } else {
+            qDebug() << "❌ Failed to initialize Java Player";
+        }
+    }
+#endif
+}
+
+void PlayerSubsystem::registerJavaCallbacks() {
+#ifdef Q_OS_ANDROID
+    JNINativeMethod methods[] = {
+        {"onPlaybackStateChanged", "(I)V", (void*)&PlayerSubsystem::onJavaPlaybackStateChanged},
+        {"onSongFinished", "()V", (void*)&PlayerSubsystem::onJavaSongFinished},
+        {"onError", "(Ljava/lang/String;)V", (void*)&PlayerSubsystem::onJavaError}
+    };
+
+    QJniEnvironment env;
+    jclass clazz = env.findClass("com/example/MusicPlayer/JavaMusicPlayer");
+    if (clazz) {
+        env->RegisterNatives(clazz, methods, sizeof(methods)/sizeof(methods[0]));
+        qDebug() << "✅ Native methods registered";
+    } else {
+        qDebug() << "❌ Failed to find JavaMusicPlayer class";
+    }
+#endif
 }
 
 void PlayerSubsystem::updateMediaSessionState(const QString &state)
@@ -167,7 +147,7 @@ void PlayerSubsystem::checkMusicFolder() {
     QJsonObject songs;
 
     QDirIterator it(DefaultMusicFolder, QStringList{".mp3", ".mp4"}, QDir::Files,
-        QDirIterator::Subdirectories);
+                    QDirIterator::Subdirectories);
 
     while (it.hasNext()) {
         const QString songPath = it.next();
@@ -254,46 +234,69 @@ void PlayerSubsystem::LoadSongs() {
 
 void PlayerSubsystem::PlayCurrentSong() {
 
-    QUrl song = getSongs()[CurrentSongIndex]->getPlayerUrl();
+    if (getSongs().isEmpty()) {
+        qDebug() << "No songs in playlist";
+        return;
+    }
+
+    song* currentSong = getSongs()[CurrentSongIndex];
 
     for (auto x : getSongs()){
         qDebug() << "songs: " << x->getPlayerUrl();
     }
 
-    if (song.isValid()) {
+    // Используем Java плеер вместо QMediaPlayer
+    if (javaPlayer.isValid()) {
+        QString songPath = currentSong->getSongPath();
 
-        qDebug() << "Playing song: " << song.path();
+        qDebug() << "Playing song via Java backend: " << songPath;
+        
+        javaPlayer.callMethod<void>("playSong", "(Ljava/lang/String;)V", QJniObject::fromString(songPath).object());
 
-        player->stop();
-        player->setSource(song);
-        emit playingSongChanged(getSongs()[CurrentSongIndex]);
-    }else {
+        emit playingSongChanged(currentSong);
+    } else {
+        qDebug() << "Java player not valid, trying to get audio stream";
 
-        qDebug() << "Song not valid waiting for audio Stream loaded";
-
-        connect(getSongs()[CurrentSongIndex], &song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
+        // Для URL песен ждем загрузки стрима
+        if (!currentSong->getSongPath().startsWith("/")) {
+            connect(currentSong, &song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
+        }
     }
 }
 
 void PlayerSubsystem::Resume() {
 
-    if (player->source().isValid()) {
-
-        player->play();
-
-    }else {
-
+    if (javaPlayer.isValid()) {
+        javaPlayer.callMethod<void>("resume");
+        bPaused = false;
+    } else {
         PlayCurrentSong();
     }
 }
 
 void PlayerSubsystem::Pause() const {
 
-    player->pause();
+    if (javaPlayer.isValid()) {
+        javaPlayer.callMethod<void>("pause");
+    }
 }
 
-void PlayerSubsystem::SetVolume(const int volume) const {
-    audioOutput->setVolume(static_cast<float>(volume) / 100);
+void PlayerSubsystem::SetVolume(const int volume) {
+    currentVolume = volume;
+    if (javaPlayer.isValid()) {
+        javaPlayer.callMethod<void>("setVolume", "(F)V", static_cast<float>(volume) / 100.0f);
+    }
+}
+
+int PlayerSubsystem::getVolume() const {
+    return currentVolume;
+}
+
+qint64 PlayerSubsystem::getMaxDuration() const {
+    if (javaPlayer.isValid()) {
+        return javaPlayer.callMethod<jlong>("getDuration");
+    }
+    return currentDuration;
 }
 
 void PlayerSubsystem::NextSong() {
@@ -531,8 +534,6 @@ void PlayerSubsystem::addSongToPlaylistByName(QString Song, QString playlistName
 template<typename P>
 void PlayerSubsystem::addSongToPlaylist(song *Song, P playlist) {
 
-
-
 }
 
 void PlayerSubsystem::addSongToQueue(song* Song) {
@@ -547,21 +548,65 @@ void PlayerSubsystem::playPause(){
     if(getSongs().empty()) return;
 
     if(bPaused){
-        if(player->hasAudio()){
-
-            player->play();
-        }else{
+        if (javaPlayer.isValid()) {
+            javaPlayer.callMethod<void>("resume");
+            bPaused = false;
+        } else {
             PlayCurrentSong();
         }
     }else{
-
-        player->pause();
+        if (javaPlayer.isValid()) {
+            javaPlayer.callMethod<void>("pause");
+            bPaused = true;
+        }
     }
 }
 
+// Static callbacks for Java
+void PlayerSubsystem::onJavaPlaybackStateChanged(JNIEnv *env, jobject obj, jint state) {
+    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
+    if (player) {
+        switch (state) {
+        case 1: // PLAYING
+            player->updateTimer->start();
+            player->bPaused = false;
+            player->updateMediaSessionState("PLAYING");
+            qDebug() << "Java Player: PLAYING";
+            break;
+        case 2: // PAUSED
+            player->bPaused = true;
+            player->updateMediaSessionState("PAUSED");
+            qDebug() << "Java Player: PAUSED";
+            break;
+        case 3: // STOPPED
+            player->updateTimer->stop();
+            player->bPaused = true;
+            player->time = 0;
+            player->updateMediaSessionState("STOPPED");
+            emit player->updateMusicDuration(0);
+            qDebug() << "Java Player: STOPPED";
+            break;
+        }
+    }
+}
+
+void PlayerSubsystem::onJavaSongFinished(JNIEnv *env, jobject obj) {
+    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
+    if (player) {
+        qDebug() << "Java Player: Song finished, playing next";
+        player->NextSong();
+    }
+}
+
+void PlayerSubsystem::onJavaError(JNIEnv *env, jobject obj, jstring error) {
+    QString errorStr = QJniObject(error).toString();
+    qDebug() << "Java Player Error:" << errorStr;
+}
+
+// Остальные методы без изменений
 extern "C" JNIEXPORT void JNICALL
 Java_com_example_MusicPlayer_MediaSessionHandler_onMediaButton(JNIEnv *env, jobject obj,
-                                                       jint keyCode, jstring action)
+                                                               jint keyCode, jstring action)
 {
     QString actionStr = QJniObject(action).toString();
     qDebug() << "🎧 Получена медиа кнопка:" << keyCode << actionStr;

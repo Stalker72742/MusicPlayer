@@ -32,14 +32,6 @@ androidMainWindow::androidMainWindow(QWidget *parent)
     ui->playlistSongsScroll->setLayout(new QVBoxLayout);
 
     connect(AppInstance::getInstance()->getSubsystem<PlayerSubsystem>(), &PlayerSubsystem::playingSongChanged, this, &androidMainWindow::playingNewSong);
-
-    mediaKeyHandler mediaHandler;
-    qApp->installEventFilter(&mediaHandler);
-
-    auto *playShortcut = new QShortcut(QKeySequence(Qt::Key_MediaPlay), parent);
-    connect(playShortcut, &QShortcut::activated, this, [](){
-        qDebug() << "Play";
-    });
 }
 
 androidMainWindow::~androidMainWindow()

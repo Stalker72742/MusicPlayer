@@ -1,0 +1,21 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "android",
+      "displayName": "Android Config",
+      "toolchainFile": "D:/Qt/6.8.3/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": {
+        "ANDROID_ABI": "arm64-v8a",
+        "ANDROID_PLATFORM": "android-34",
+        "ANDROID_SDK_ROOT": "C:/Users/Stalker7274/AppData/Local/Android/Sdk",
+        "ANDROID_NDK_ROOT": "C:/Users/Stalker7274/AppData/Local/Android/Sdk/ndk/29.0.13599879",
+        "CMAKE_PREFIX_PATH": "D:/Qt/6.8.3/android_arm64_v8a"
+      },
+      "environment": {
+        "QT_ROOT": "D:/Qt/6.8.3/android_arm64_v8a",
+        "JAVA_HOME": "C:/Program Files/Java/jdk-23"
+      }
+    }
+  ]
+}

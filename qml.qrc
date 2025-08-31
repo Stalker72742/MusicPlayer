@@ -1,1 +1,5 @@
-<RCC/>
+<RCC>
+    <qresource prefix="/">
+        <file>Source/UI/Android/Widgets/AndroidMainWindow.qml</file>
+    </qresource>
+</RCC>
