@@ -1,6 +1,0 @@
-[submodule "Source/Libs/Oboe"]
-	path = Source/Libs/Oboe
-	url = https://github.com/google/oboe.git
-[submodule "Source/Libs/ffmpeg"]
-	path = Source/Libs/ffmpeg
-	url = https://git.ffmpeg.org/ffmpeg.git
