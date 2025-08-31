@@ -10,7 +10,7 @@ The project is built with **Qt + CMake** and can be compiled in just a few steps
 
 ### Download the project and dependencies
 
-1. Clone the repository:
+1.  Clone the repository:
 ```bash
 git clone https://github.com/Stalker72742/MusicPlayer.git
 cd MusicPlayer
@@ -40,4 +40,41 @@ Then specify your device in the CMake settings so that the APK is installed dire
 4. Generate CMake files and build:
 ```bash
 cmake -B build -S .
+```
+If you tried to build outside Qt Creator, see section 5.
+
+5.  Setting up Environment for CLion or Other IDEs
+
+Building EXE Applications:
+
+* Set the path to Qt in `CMAKE_PREFIX_PATH`, e.g.:
+
+```json
+"CMAKE_PREFIX_PATH": "D:/Qt/6.8.3/mingw_64"
+```
+
+* Use MinGW compilers provided with Qt.
+
+Building APK Applications:
+
+* In addition to the compiler and `CMAKE_PREFIX_PATH`, specify:
+
+  * `toolchainFile` path
+  * `ANDROID_SDK_ROOT`
+  * `ANDROID_NDK_ROOT`
+  * `QT_ROOT`
+  * `JAVA_HOME`
+  * target architecture (`arm64-v8a`, `armeabi-v7a`, etc.)
+  * `ANDROID_PLATFORM`
+
+* Compilers setup in CLion:
+
+  * Go to **Toolchains** and create a **System Toolchain**.
+  * Specify CMake and Ninja from Qt (`Qt/Tools/Ninja`).
+
+    * Other versions may fail; compiler might not execute even a simple program.
+  * Specify compiler path, e.g.:
+
+```
+C:\...\ndk\29.0.13599879\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe
 ```
