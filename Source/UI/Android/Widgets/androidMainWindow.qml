@@ -1,92 +1,117 @@
+
 import QtQuick
 import QtQuick.Controls
-import QtMultimedia
+import QtQuick.Layouts 1.15
 
-ApplicationWindow {
-
-    property var playlist: ["file:///storage/emulated/0/Music/Primorose.mp3",
-        "file:///storage/emulated/0/Music/Gasoline.mp3", "file:///storage/emulated/0/Music/Judas.mp3"]
-    property int currentIndex: 0
-    width: 1080
-    height: 1920
+ApplicationWindow  {
     visible: true
-    color: "#fff"
+    width: 360
+    height: 640
+    color: "#121212"
 
-    Column {
-            anchors.centerIn: parent
-            spacing: 16
+    Rectangle {
+        id: rectangle1
+        color: "#1A1A1A"
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 0
+        anchors.rightMargin: 0
+        anchors.topMargin: 0
 
-            Button {
-                text: "▶ Play / ⏸ Pause"
-                background: Rectangle {
-                    radius: 8
-                    color: "#000"
-                }
-                width: 150
-                height: 150
-                contentItem: Text {
-                    text: parent.Button.text
-                    color: "white"
-                    font.pixelSize: 18
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                onClicked: {
-                    player.play()
+        ColumnLayout {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 0
+            anchors.rightMargin: 0
+            anchors.topMargin: 0
+
+            Row{
+                id: row
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: stackLayout.bottom
+                anchors.topMargin: 0
+                topPadding: 0
+                spacing: 10
+
+                RowLayout{
+                    anchors.fill: parent
+                    Button {
+                        width: 150
+                        height: 35
+                        text: "Search"
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        onClicked: {
+                            stackLayout.currentIndex = 0
+                        }
+                    }
+
+                    Button {
+                        width: 150
+                        height: 35
+                        text: "Medialib"
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        background: Rectangle{
+                            color: "white"
+                        }
+                        onClicked: {
+                            stackLayout.currentIndex = 1
+                        }
+                    }
                 }
             }
 
-            Button {
-                text: "⏭ Next"
-                background: Rectangle {
-                    radius: 8
-                    color: "#4CAF50"
-                }
-                contentItem: Text {
-                    text: parent.Button.text
-                    color: "white"
-                    font.pixelSize: 18
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                onClicked: {
-                    currentIndex = (currentIndex + 1) % playlist.length
-                    player.source = playlist[currentIndex]
-                    player.play()
-                }
-            }
+            StackLayout {
+                id: stackLayout
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: 0
+                anchors.rightMargin: 0
+                anchors.topMargin: 0
+                anchors.bottomMargin: 150
+                currentIndex: 0
 
-            Button {
-                text: "⏮ Previous"
-                background: Rectangle {
-                    radius: 8
-                    color: "#F44336"
-                }
-                contentItem: Text {
-                    text: parent.Button.text
-                    color: "white"
-                    font.pixelSize: 18
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                onClicked: {
-                    currentIndex = (currentIndex - 1 + playlist.length) % playlist.length
-                    player.source = playlist[currentIndex]
-                    player.play()
-                }
-            }
-    }
+                Item {
+                    id: search
 
-    MediaPlayer {
-            id: player
-            source: playlist[currentIndex]
-            audioOutput: AudioOutput { id: audioOut; volume: 1.0 }
-            onPlaybackStateChanged: {
-                if (playbackState === MediaPlayer.StoppedState) {
-                    currentIndex = (currentIndex + 1) % playlist.length
-                    source = playlist[currentIndex]
-                    play()
+                    TextField {
+                        id: textField
+                        height: 25
+                        text: " "
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.leftMargin: 150
+                        anchors.rightMargin: 150
+                        anchors.topMargin: 150
+                        placeholderText: qsTr("Text Field")
+                    }
+                }
+
+                Item {
+                    id: mediaLib
+
+                    Rectangle {
+                        id: rectangle2
+                        height: 200
+                        color: "#ffffff"
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.leftMargin: 75
+                        anchors.rightMargin: 75
+                        anchors.topMargin: 150
+                    }
+
                 }
             }
         }
+    }
 }

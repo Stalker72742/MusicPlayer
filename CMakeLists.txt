@@ -5,24 +5,17 @@ project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(ANDROID)
-    set(PLATFORM_ANDROID TRUE)
-    set(PLATFORM_WINDOWS FALSE)
-elseif(WIN32)
-    set(PLATFORM_WINDOWS TRUE)
-    set(PLATFORM_ANDROID FALSE)
-else()
-    set(PLATFORM_WINDOWS FALSE)
-    set(PLATFORM_ANDROID FALSE)
-endif()
-
-set(Qt6_DIR "C:/Qt/6.8.3/android_arm64_v8a/lib/cmake/Qt6")
-set(CMAKE_PREFIX_PATH "D:/Qt/6.8.3/android_arm64_v8a")
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Gui Qml Quick)
-
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+
+if(PLATFORM_ANDROID)
+
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Gui Qml Quick QuickControls2)
+elseif(PLATFORM_WINDOWS)
+
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia)
+endif()
 
 add_subdirectory(Source/Core)
 
@@ -33,8 +26,8 @@ if (PLATFORM_WINDOWS)
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
             MusicPlayerCore
-            DesktopMusicPlayerUI
             Qt6::Core
+            Qt6::Widgets
             Qt6::Multimedia
     )
 elseif (PLATFORM_ANDROID)
@@ -107,6 +100,7 @@ elseif (PLATFORM_ANDROID)
             Qt6::Gui
             Qt6::Qml
             Qt6::Quick
+            Qt6::QuickControls2
     )
 endif ()
 
@@ -118,6 +112,9 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 qt_finalize_executable(${PROJECT_NAME})
+
+
+if(IDE_QTCREATOR STREQUAL "OFF")
 
 if(PLATFORM_WINDOWS)
 
@@ -140,7 +137,6 @@ if(PLATFORM_WINDOWS)
             "D:/Qt/Tools/mingw1310_64/bin/libstdc++-6.dll"
             "D:/Qt/Tools/mingw1310_64/bin/libwinpthread-1.dll"
             "$<TARGET_FILE:MusicPlayerCore>"
-            "$<TARGET_FILE:DesktopMusicPlayerUI>"
     )
 
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -212,3 +208,5 @@ elseif(PLATFORM_ANDROID)
 else ()
     message("Update cmake code for new platform")
 endif ()
+
+endif()

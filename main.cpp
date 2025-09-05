@@ -1,17 +1,18 @@
 
-#include <QApplication>
-
+#include <QGuiApplication>
 #ifdef Q_OS_WIN
 #include "mainwindow.h"
 #elifdef Q_OS_ANDROID
 #include "Source/UI/Android/androidmainwindow.h"
 #include <QGuiApplication>
 #include "Source/UI/Android/PermissionsHandler/permissionHandler.h"
+#include <QQmlApplicationEngine>
+#include <QtQuickControls2/QQuickStyle>
 #endif
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QGuiApplication  a(argc, argv);
     //AppInstance *w = AppInstance::getInstance();
 
 #ifdef Q_OS_WIN
@@ -20,8 +21,13 @@ int main(int argc, char *argv[])
     win->show();
 #elifdef  Q_OS_ANDROID
 
-    androidMainWindow* win = new androidMainWindow();
-    win->show();
+    //androidMainWindow* win = new androidMainWindow();
+    //win->show();
+
+    QQuickStyle::setStyle("Fusion");
+
+    QQmlApplicationEngine engine;
+    engine.load(QUrl(QStringLiteral("qrc:/Source/UI/Android/Widgets/AndroidMainWindow.qml")));
 
     PermissionHandler* handler = PermissionHandler::instance();
     handler->requestPermissions();

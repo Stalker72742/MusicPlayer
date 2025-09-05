@@ -19,7 +19,6 @@ public class MediaButtonReceiver extends BroadcastReceiver {
 private void tryAlternativeKeyDetection(Intent intent) {
         Log.d(TAG, "🔍 Пробуем альтернативные способы определения клавиши...");
 
-        // Проверяем все extras в Intent
         Bundle extras = intent.getExtras();
         if (extras != null) {
             Log.d(TAG, "📋 Все extras в Intent:");
