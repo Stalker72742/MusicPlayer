@@ -5,20 +5,20 @@
 #include "medialibitem.h"
 #include "ui_mediaLibItem.h"
 
-#include <QMenu>
 #include <QAction>
 #include <QLabel>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPushButton>
-
+#include "PlayerSubsystem.h"
 #include "AppInstance.h"
-#include "AppInstanceLibs.h"
+#include "SubsystemBase.h"
 
 mediaLibItem::mediaLibItem(QWidget *parent, QString playlist) :
     QWidget(parent), ui(new Ui::mediaLibItem) {
     ui->setupUi(this);
 
-    player = AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>();
+    player = SubsystemBase::GetSubsystem<PlayerSubsystem>();
 
     if (!playlist.isEmpty()) {
 
@@ -122,7 +122,7 @@ mediaLibItem::mediaLibItem(QWidget *parent, bool bAllSongs):
     QWidget(parent), ui(new Ui::mediaLibItem) {
     ui->setupUi(this);
 
-    player = AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>();
+    player = SubsystemBase::GetSubsystem<PlayerSubsystem>();
 
     bMediaLib = bAllSongs;
 

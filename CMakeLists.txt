@@ -22,7 +22,32 @@ add_subdirectory(Source/Core)
 if (PLATFORM_WINDOWS)
 
     qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
+            Source/UI/Windows/MainWindow/mainwindow.cpp
+            Source/UI/Windows/MainWindow/mainwindow.h
+            Source/UI/Windows/MainWindow/mainwindow.ui
+            Source/UI/Windows/MainWindow/Components/titlebar.cpp
+            Source/UI/Windows/MainWindow/Components/titlebar.h
+            Source/UI/Windows/MainWindow/Components/titlebar.ui
+            Source/UI/Windows/MediaLib/addtoplaylist.cpp
+            Source/UI/Windows/MediaLib/addtoplaylist.h
+            Source/UI/Windows/MediaLib/addtoplaylist.ui
+            Source/UI/Windows/MediaLib/medialibitem.cpp
+            Source/UI/Windows/MediaLib/medialibitem.h
+            Source/UI/Windows/MediaLib/medialibitem.ui
+            Source/UI/Windows/OldWidgets/Components/foundedSongButton.cpp
+            Source/UI/Windows/OldWidgets/Components/foundedSongButton.h
+            Source/UI/Windows/OldWidgets/Components/musicbutton.cpp
+            Source/UI/Windows/OldWidgets/Components/musicbutton.h
+            Source/UI/Windows/OldWidgets/Playlist/playlistitem.cpp
+            Source/UI/Windows/OldWidgets/Playlist/playlistitem.h
+            Source/UI/Windows/OldWidgets/Playlist/playlistitem.ui
+    )
 
+    target_include_directories(${PROJECT_NAME}
+            PUBLIC
+            Source/UI/Windows/MediaLib
+            Source/UI/Windows/OldWidgets/Components
+            Source/UI/Windows/OldWidgets/Playlist
     )
 
     target_link_libraries(${PROJECT_NAME}

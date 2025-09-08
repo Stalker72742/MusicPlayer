@@ -6,7 +6,7 @@
 #define MUSICBUTTON_H
 
 #include <QPushButton>
-#include "songPath.h"
+#include "Data/songPath.h"
 
 class MusicButton : public QWidget {
 Q_OBJECT

@@ -4,10 +4,10 @@
 
 #include "addtoplaylist.h"
 
-#include <QPushButton>
 #include "AppInstance.h"
-#include "AppInstanceLibs.h"
+#include "PlayerSubsystem.h"
 #include "ui_addToPlaylist.h"
+#include <QPushButton>
 
 addToPlaylist::addToPlaylist(QWidget *parent, QString songName) :
     QWidget(parent), ui(new Ui::addToPlaylist) {
@@ -15,7 +15,7 @@ addToPlaylist::addToPlaylist(QWidget *parent, QString songName) :
 
     ui->selectPlaylistLabel->setText("Select playlist for " + songName);
 
-    QList<QString> playlists = AppInstanceLibs::getAppInstance(parent)->getSubsystem<PlayerSubsystem>()->getPlaylists();
+    QList<QString> playlists; //SubsystemBase::GetSubsystem<PlayerSubsystem>()->getPlaylists();
 
     QVBoxLayout* layout = new QVBoxLayout(ui->playlistsScroll);
 
@@ -37,8 +37,8 @@ addToPlaylist::~addToPlaylist() {
 
 void addToPlaylist::playlistSelected() {
 
-    AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>()->addSongToPlaylistByName(ui->selectPlaylistLabel->text(),
-        qobject_cast<QPushButton*>(sender())->text());
+    /*AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>()->addSongToPlaylistByName(ui->selectPlaylistLabel->text(),
+        qobject_cast<QPushButton*>(sender())->text());*/
 
     this->deleteLater();
 }

@@ -12,8 +12,6 @@
 #include "PlayerSubsystem.h"
 #include "song.h"
 #include "AppInstance.h"
-#include "AppInstanceLibs.h"
-
 
 playListItem::playListItem(QWidget *parent, QJsonObject info) :
     QWidget(parent), ui(new Ui::playListItem) {
@@ -76,7 +74,7 @@ void playListItem::mousePressEvent(QMouseEvent *event) {
 
     }else {
 
-        AppInstanceLibs::getAppInstance(this)->getSubsystem<PlayerSubsystem>()->addSong(new song(data));
+        SubsystemBase::GetSubsystem<PlayerSubsystem>()->addSong(new song(data));
     }
 
 }

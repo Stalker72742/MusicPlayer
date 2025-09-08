@@ -17,7 +17,7 @@ public:
     explicit SubsystemBase(QObject* parent = nullptr);
 
     template <typename T>
-    static T GetSubsystem() {
+    static T* GetSubsystem() {
         for (auto subsystem : AppInstance::getInstance()->getSubsystems()) {
             if (T* var = qobject_cast<T*>(subsystem)) {
                 return var;

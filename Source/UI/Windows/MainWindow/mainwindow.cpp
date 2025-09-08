@@ -8,12 +8,15 @@
 #include <QMouseEvent>
 //#include "ytSearcherSub.h"
 #include "AppInstance.h"
-#include "titlebar.h"
-#include "AppInstanceLibs.h"
+#include "Components/titlebar.h"
+#include "PlayerSubsystem.h"
+#include "SubsystemBase.h"
+#include "medialibitem.h"
 #include "playlistitem.h"
+#include "ytSearcher.h"
+
 #include <QTimer>
 #include <utility>
-#include "medialibitem.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -52,9 +55,9 @@ mainWindow::mainWindow(QObject *Parent) :
 
     AppInstance* AppInstance = AppInstance::getInstance();
 
-    connect(AppInstance->getSubsystem<ytSearcherSub>(), &ytSearcherSub::searchResults, this, &mainWindow::addItemToPlaylist);
+    //connect(AppInstance->getSubsystem<ytSearcherSub>(), &ytSearcherSub::searchResults, this, &mainWindow::addItemToPlaylist);
 
-    playerSubsystem = AppInstance->getSubsystem<PlayerSubsystem>();
+    playerSubsystem = SubsystemBase::GetSubsystem<PlayerSubsystem>();
 
     connect(playerSubsystem, &PlayerSubsystem::playlistChanged, this, &mainWindow::updatePlaylistItems);
     connect(playerSubsystem, &PlayerSubsystem::updateMusicDuration, this, &mainWindow::updateTimeSlider);
@@ -136,7 +139,7 @@ bool mainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr
     return QMainWindow::nativeEvent(eventType, message, result);
 }
 
-void mainWindow::addItemToPlaylist(QJsonObject Json, ESearchResultsState searchResultsState) {
+/*void mainWindow::addItemToPlaylist(QJsonObject Json, ESearchResultsState searchResultsState) {
 
     playListItem* playlistItem;
 
@@ -169,7 +172,7 @@ void mainWindow::addItemToPlaylist(QJsonObject Json, ESearchResultsState searchR
 
             break;
     }
-}
+}*/
 
 void mainWindow::playPause() {
 

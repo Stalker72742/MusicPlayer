@@ -8,11 +8,10 @@
 
 #include <QMouseEvent>
 
-#include "ui_TitleBar.h"
-#include "ytSearcherSub.h"
 #include "AppInstance.h"
-#include "AppInstanceLibs.h"
-
+#include "SubsystemBase.h"
+#include "ui_TitleBar.h"
+#include "ytSearcher.h"
 
 TitleBar::TitleBar(QWidget *parent) :
     QWidget(parent), ui(new Ui::TitleBar) {
@@ -21,7 +20,7 @@ TitleBar::TitleBar(QWidget *parent) :
 
     connect(ui->Close, &QPushButton::clicked, this, &TitleBar::exitButtonClicked);
     connect(ui->Minimize, &QPushButton::clicked, this, &TitleBar::minimizeButtonClicked);
-    connect(ui->Maximize, QPushButton::clicked, this, &TitleBar::maximizeButtonClicked);
+    connect(ui->Maximize, &QPushButton::clicked, this, &TitleBar::maximizeButtonClicked);
 }
 
 TitleBar::TitleBar(QMainWindow *mainWindow) :
@@ -33,7 +32,7 @@ TitleBar::TitleBar(QMainWindow *mainWindow) :
 
     connect(ui->Close, &QPushButton::clicked, this, &TitleBar::exitButtonClicked);
     connect(ui->Minimize, &QPushButton::clicked, this, &TitleBar::minimizeButtonClicked);
-    connect(ui->Maximize, QPushButton::clicked, this, &TitleBar::maximizeButtonClicked);
+    connect(ui->Maximize, &QPushButton::clicked, this, &TitleBar::maximizeButtonClicked);
 
     connect(ui->searchLineEdit, &QLineEdit::editingFinished, this, &TitleBar::textChanged);
 }
@@ -82,10 +81,10 @@ void TitleBar::textChanged() {
 
     qDebug() << ui->searchLineEdit->text();
 
-    auto x = AppInstanceLibs::getAppInstance(parent())->getSubsystem<ytSearcherSub>();
+    //ytSearcherSub* x = SubsystemBase::GetSubsystem<ytSearcherSub>();
 
-    if (x) {
+    //if (x) {
 
-        x->search(ui->searchLineEdit->text());
-    }
+      //  x->search(ui->searchLineEdit->text());
+    //}
 }
