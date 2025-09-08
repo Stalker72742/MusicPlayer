@@ -71,15 +71,13 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
 }
 
 PlayerSubsystem::~PlayerSubsystem() {
-    // Останавливаем Java плеер
-    if (javaPlayer.isValid()) {
-        javaPlayer.callMethod<void>("release");
-    }
+
+    playerBackend->deleteLater();
 }
 
 void PlayerSubsystem::initJavaPlayer() {
 #ifdef Q_OS_ANDROID
-    QJniObject activity = QJniObject::callStaticMethod<QJniObject>(
+  const QJniObject activity = QJniObject::callStaticMethod<QJniObject>(
         "org/qtproject/qt/android/QtNative",
         "activity",
         "()Landroid/app/Activity;"
@@ -121,7 +119,7 @@ void PlayerSubsystem::registerJavaCallbacks() {
 
 void PlayerSubsystem::updateMediaSessionState(const QString &state)
 {
-    if (mediaSessionHandler.isValid()) {
+    /*if (mediaSessionHandler.isValid()) {
         if (state == "PLAYING") {
             mediaSessionHandler.callMethod<void>("setPlaying");
         } else if (state == "PAUSED") {
@@ -129,7 +127,7 @@ void PlayerSubsystem::updateMediaSessionState(const QString &state)
         } else if (state == "STOPPED") {
             mediaSessionHandler.callMethod<void>("setStopped");
         }
-    }
+    }*/
 }
 
 void PlayerSubsystem::checkMusicFolder() {
@@ -245,29 +243,28 @@ void PlayerSubsystem::PlayCurrentSong() {
         qDebug() << "songs: " << x->getPlayerUrl();
     }
 
-    // Используем Java плеер вместо QMediaPlayer
-    if (javaPlayer.isValid()) {
+    if (playerBackend) {
         QString songPath = currentSong->getSongPath();
 
         qDebug() << "Playing song via Java backend: " << songPath;
         
-        javaPlayer.callMethod<void>("playSong", "(Ljava/lang/String;)V", QJniObject::fromString(songPath).object());
+        playerBackend->setSource(songPath);
+        playerBackend->play();
 
         emit playingSongChanged(currentSong);
     } else {
         qDebug() << "Java player not valid, trying to get audio stream";
 
-        // Для URL песен ждем загрузки стрима
         if (!currentSong->getSongPath().startsWith("/")) {
-            connect(currentSong, &song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
+            connect(currentSong,&song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
         }
     }
 }
 
 void PlayerSubsystem::Resume() {
 
-    if (javaPlayer.isValid()) {
-        javaPlayer.callMethod<void>("resume");
+    if (playerBackend) {
+        playerBackend->unpause();
         bPaused = false;
     } else {
         PlayCurrentSong();
@@ -276,15 +273,15 @@ void PlayerSubsystem::Resume() {
 
 void PlayerSubsystem::Pause() const {
 
-    if (javaPlayer.isValid()) {
-        javaPlayer.callMethod<void>("pause");
+    if (playerBackend) {
+        playerBackend->pause();
     }
 }
 
 void PlayerSubsystem::SetVolume(const int volume) {
     currentVolume = volume;
-    if (javaPlayer.isValid()) {
-        javaPlayer.callMethod<void>("setVolume", "(F)V", static_cast<float>(volume) / 100.0f);
+    if (playerBackend) {
+        playerBackend->setVolume(static_cast<float>(volume));
     }
 }
 
@@ -293,9 +290,9 @@ int PlayerSubsystem::getVolume() const {
 }
 
 qint64 PlayerSubsystem::getMaxDuration() const {
-    if (javaPlayer.isValid()) {
+    /*if (javaPlayer.isValid()) {
         return javaPlayer.callMethod<jlong>("getDuration");
-    }
+    }*/
     return currentDuration;
 }
 
@@ -548,22 +545,22 @@ void PlayerSubsystem::playPause(){
     if(getSongs().empty()) return;
 
     if(bPaused){
-        if (javaPlayer.isValid()) {
-            javaPlayer.callMethod<void>("resume");
+        if (playerBackend) {
+            playerBackend->play();
             bPaused = false;
         } else {
             PlayCurrentSong();
         }
     }else{
-        if (javaPlayer.isValid()) {
-            javaPlayer.callMethod<void>("pause");
+        if (playerBackend) {
+            playerBackend->pause();
             bPaused = true;
         }
     }
 }
 
 // Static callbacks for Java
-void PlayerSubsystem::onJavaPlaybackStateChanged(JNIEnv *env, jobject obj, jint state) {
+/*void PlayerSubsystem::onJavaPlaybackStateChanged(JNIEnv *env, jobject obj, jint state) {
     PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
     if (player) {
         switch (state) {
@@ -626,4 +623,4 @@ Java_com_example_MusicPlayer_MediaSessionHandler_onMediaButton(JNIEnv *env, jobj
             break;
         }
     }
-}
+}*/

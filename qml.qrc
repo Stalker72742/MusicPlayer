@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>Source/UI/Android/Widgets/AndroidMainWindow.qml</file>
+        <file>Source/UI/Android/Widgets/PlaylistWidget.qml</file>
     </qresource>
 </RCC>

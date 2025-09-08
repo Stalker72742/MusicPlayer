@@ -3,10 +3,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts 1.15
 
-ApplicationWindow  {
+Window  {
     visible: true
-    width: 360
-    height: 640
+    width: 540
+    height: 960
     color: "#121212"
 
     Rectangle {
@@ -42,25 +42,35 @@ ApplicationWindow  {
                 RowLayout{
                     anchors.fill: parent
                     Button {
-                        width: 150
-                        height: 35
-                        text: "Search"
+                        id: button
+                        width: 250
+                        height: 50
+                        transformOrigin: Item.Center
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         onClicked: {
                             stackLayout.currentIndex = 0
                         }
+
+                        Label{
+                            text: "Search"
+                            anchors.centerIn: parent
+                            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        }
                     }
 
                     Button {
-                        width: 150
-                        height: 35
-                        text: "Medialib"
+                        id: button1
+                        width: 250
+                        height: 50
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        background: Rectangle{
-                            color: "white"
-                        }
                         onClicked: {
                             stackLayout.currentIndex = 1
+                        }
+
+                        Label{
+                            text: "Medialib"
+                            anchors.centerIn: parent
+                            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         }
                     }
                 }
@@ -76,7 +86,7 @@ ApplicationWindow  {
                 anchors.rightMargin: 0
                 anchors.topMargin: 0
                 anchors.bottomMargin: 150
-                currentIndex: 0
+                currentIndex: 1
 
                 Item {
                     id: search
@@ -88,28 +98,81 @@ ApplicationWindow  {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.leftMargin: 150
-                        anchors.rightMargin: 150
+                        anchors.leftMargin: 15
+                        anchors.rightMargin: 15
                         anchors.topMargin: 150
+                        placeholderTextColor: "#00000000"
                         placeholderText: qsTr("Text Field")
                     }
                 }
 
                 Item {
-                    id: mediaLib
+                    id: mediaLibPage
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
 
-                    Rectangle {
-                        id: rectangle2
-                        height: 200
-                        color: "#ffffff"
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.leftMargin: 75
-                        anchors.rightMargin: 75
-                        anchors.topMargin: 150
+                    ScrollView {
+                        anchors.fill: parent
+                        anchors.margins: 16
+
+                        Column {
+                            width: parent.width
+                            spacing: 16
+
+                            PlaylistWidget {
+                                width: parent.width
+                                height: 90
+
+                                onClicked: {
+
+                                    stackLayout.currentIndex = 1
+                                }
+                            }
+                        }
                     }
+                }
 
+                Item {
+                    id: playlistPage
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        Item{
+                            height: 50
+                        }
+
+                        Button{
+
+                            text: "Back"
+                        }
+
+                        Item{
+                            height: 150
+                        }
+
+                        Image{
+                            width: 100
+                            height: 100
+
+                        }
+
+                        Item{
+
+                        }
+
+                        Text{
+                            text: "Library"
+                        }
+
+                        Item{
+
+                            Layout.fillHeight: true
+                        }
+                    }
                 }
             }
         }

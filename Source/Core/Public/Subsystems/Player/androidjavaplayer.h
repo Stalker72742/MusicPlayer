@@ -5,7 +5,9 @@
 #include <functional>
 #include <string>
 #include <memory>
+#ifdef Q_OS_ANDROID
 #include <QJniObject>
+
 #include <QThread>
 #include <QTimer>
 #include <atomic>
@@ -116,7 +118,9 @@ private slots:
     void handleJavaCallback(int messageType, const QString& data);
 
 private:
+#ifdef Q_OS_ANDROID
     QJniObject javaPlayer;
+#endif
     QTimer* positionTimer;
 
     std::atomic<PlayerState> currentState{PlayerState::Stopped};
@@ -130,5 +134,6 @@ private:
     void startPositionUpdates();
     void stopPositionUpdates();
 };
+#endif
 
 #endif // ANDROIDJAVAPLAYER_H

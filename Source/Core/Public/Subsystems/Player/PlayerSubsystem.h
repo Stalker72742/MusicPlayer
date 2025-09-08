@@ -5,21 +5,24 @@
 #ifndef PLAYERSUBSYSTEM_H
 #define PLAYERSUBSYSTEM_H
 
-#include <QAudioOutput>
-#include <QObject>
+#include "PlayerBackend.h"
+#include "SubsystemBase.h"
+
 #include <QDir>
 #include <QMediaPlayer>
+#include <QObject>
 #include <QTimer>
+
+#ifdef Q_OS_ANDROID
 #include <QJniObject>
-#include "PlayerBackend/playerbase.h"
+#endif
 
 class QSlider;
 class song;
 
-class PlayerSubsystem : public QObject {
+class PlayerSubsystem : public SubsystemBase {
     Q_OBJECT
 public:
-
     explicit PlayerSubsystem(QObject* parent = nullptr);
 
     ~PlayerSubsystem() override;
@@ -103,19 +106,17 @@ private:
     void initJavaPlayer();
     void registerJavaCallbacks();
 
-    // Static callbacks for Java
+#ifdef Q_OS_ANDROID
     static void onJavaPlaybackStateChanged(JNIEnv *env, jobject obj, jint state);
     static void onJavaSongFinished(JNIEnv *env, jobject obj);
     static void onJavaError(JNIEnv *env, jobject obj, jstring error);
 
-    // Убираем QMediaPlayer и QAudioOutput
-    // QAudioOutput *audioOutput;  // УДАЛЕНО
-    // QMediaPlayer *player;        // УДАЛЕНО
-
-    // Добавляем Java плеер
     QJniObject javaPlayer;
 
-    playerBase* customPlayer;
+    QJniObject mediaSessionHandler;
+#endif
+
+    playerBackend* playerBackend;
 
     QObject* Parent;
 
@@ -136,8 +137,6 @@ private:
     QList<song*> queueSongs;
 
     bool bPaused = true;
-
-    QJniObject mediaSessionHandler;
 
     int currentVolume = 50;
     qint64 currentDuration = 0;

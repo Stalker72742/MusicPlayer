@@ -1,5 +1,7 @@
 #include "androidjavaplayer.h"
 
+#ifdef Q_OS_ANDROID
+
 AndroidJavaPlayer::AndroidJavaPlayer()
     : positionTimer(new QTimer(this)) {
 
@@ -222,3 +224,4 @@ Java_com_example_MusicPlayer_NativeAudioPlayer_nativeCallback(
                                   Q_ARG(QString, dataStr));
     }
 }
+#endif

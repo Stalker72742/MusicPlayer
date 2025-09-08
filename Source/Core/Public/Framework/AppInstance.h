@@ -1,13 +1,14 @@
 //
 // Created by Stalker7274 on 17.04.2025.
 //
-
 #pragma once
 
 #ifndef APPINSTANCE_H
 #define APPINSTANCE_H
 
-#include "PlayerSubsystem.h"
+#include <QObject>
+
+class SubsystemBase;
 
 class AppInstance : public QObject {
 Q_OBJECT
@@ -15,28 +16,20 @@ public:
 
     static AppInstance* getInstance();
 
+    [[nodiscard]] QList<SubsystemBase*> getSubsystems() const { return subsystems; }
+
+    template <typename T>
+    T* createSubsystem() {
+        subsystems.append(new T(this));
+        return qobject_cast<T*>(subsystems.last());
+    }
+
     template <typename mw>
     void createApp() {
 
         mw *window = new mw();
         window->show();
-    };
-
-    template <typename T>
-    T* getSubsystem() {
-
-        foreach(QObject *subsystem, subsystems) {
-
-            if (T* result = qobject_cast<T*>(subsystem)) {
-
-                return result;
-            }
-        }
-
-        subsystems.append(new T());
-
-        return qobject_cast<T*>(subsystems.last());
-    };
+    }
 
     AppInstance(const AppInstance&) = delete;
     AppInstance& operator=(const AppInstance&) = delete;
@@ -45,7 +38,7 @@ private:
     explicit AppInstance(QObject* parent = nullptr);
     ~AppInstance() override;
 
-    QList<QObject*> subsystems;
+    QList<SubsystemBase*> subsystems;
     static AppInstance* instance;
 };
 

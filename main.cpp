@@ -1,7 +1,9 @@
 
+#include "AppInstance.h"
+
 #include <QGuiApplication>
 #ifdef Q_OS_WIN
-#include "mainwindow.h"
+#include "Source/UI/Windows/MainWindow/mainwindow.h"
 #elifdef Q_OS_ANDROID
 #include "Source/UI/Android/androidmainwindow.h"
 #include <QGuiApplication>
@@ -13,7 +15,7 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication  a(argc, argv);
-    //AppInstance *w = AppInstance::getInstance();
+    AppInstance *w = AppInstance::getInstance();
 
 #ifdef Q_OS_WIN
 

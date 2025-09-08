@@ -8,7 +8,7 @@
 #define MAINWINDOW_H
 
 #include <QtWidgets/QMainWindow>
-#include "ytSearcherSub.h"
+//#include "ytSearcherSub.h"
 
 class PlayerSubsystem;
 class AppInstance;
@@ -30,7 +30,7 @@ public:
 
 public slots:
 
-    void addItemToPlaylist(QJsonObject Json, ESearchResultsState searchResultsState);
+    //void addItemToPlaylist(QJsonObject Json, ESearchResultsState searchResultsState);
 
     void playPause();
 

@@ -3,8 +3,9 @@
 //
 
 #include "AppInstance.h"
+#include "PlayerSubsystem.h"
 
-AppInstance* AppInstance::instance = nullptr;
+AppInstance * AppInstance::instance = nullptr;
 
 AppInstance* AppInstance::getInstance() {
 

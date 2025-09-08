@@ -21,7 +21,9 @@ add_subdirectory(Source/Core)
 
 if (PLATFORM_WINDOWS)
 
-    qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp)
+    qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
+
+    )
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
@@ -60,7 +62,6 @@ elseif (PLATFORM_ANDROID)
             Source/UI/Android/PermissionsHandler/permissionHandler.cpp
             Source/UI/Android/PermissionsHandler/permissionHandler.h
             qml.qrc
-            android/src/com/example/MusicPlayer/NativeAudioPlayer.java
             android/src/com/example/MusicPlayer/JavaMusicPlayer.java
     )
 

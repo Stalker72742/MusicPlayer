@@ -6,7 +6,7 @@
 #include "ui_MainWindow.h"
 
 #include <QMouseEvent>
-#include "ytSearcherSub.h"
+//#include "ytSearcherSub.h"
 #include "AppInstance.h"
 #include "titlebar.h"
 #include "AppInstanceLibs.h"

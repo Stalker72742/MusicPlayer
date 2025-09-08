@@ -10,7 +10,7 @@ set(CMAKE_PREFIX_PATH "D:/Qt/6.8.3/android_arm64_v8a")
 set(Qt6_DIR "D:/Qt/6.8.3/android_arm64_v8a/lib/cmake/Qt6")
 find_package(Qt6 COMPONENTS Core)
 
-add_library(MusicPlayerCore SHARED Public/Data/songPath.h
+add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Public/Framework/AppInstance.h
         Private/Framework/AppInstance.cpp
         Public/Subsystems/ytSearcher.h
@@ -19,9 +19,13 @@ add_library(MusicPlayerCore SHARED Public/Data/songPath.h
         Private/Subsystems/Player/PlayerSubsystem.cpp
         Public/Subsystems/Player/song.h
         Private/Subsystems/Player/song.cpp
-        Private/Subsystems/Player/PlayerBackend/playerbase.cpp
-        Private/Subsystems/Player/PlayerBackend/playerbase.h
         Public/Subsystems/Player/androidjavaplayer.h Public/Subsystems/Player/androidjavaplayer.cpp
+        Private/Framework/SubsystemBase.cpp
+        Public/Framework/SubsystemBase.h
+        Public/Subsystems/Player/PlayerBackend.h
+        Private/Subsystems/Player/PlayerBackend/PlayerBackend.cpp
+        Public/Subsystems/Player/MultimediaBackend.cpp
+        Public/Subsystems/Player/MultimediaBackend.h
 )
 
 target_link_libraries(MusicPlayerCore
@@ -33,10 +37,6 @@ target_link_libraries(MusicPlayerCore
 
 target_include_directories(MusicPlayerCore
         PUBLIC
-        Private/Framework
-        Private/Libs
-        Private/Subsystems
-        Private/Subsystems/Player
         Public/Data
         Public/Framework
         Public/Libs
