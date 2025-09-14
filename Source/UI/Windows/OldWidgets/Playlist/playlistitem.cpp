@@ -8,10 +8,10 @@
 #include <QJsonObject>
 #include <QMouseEvent>
 
-#include "addtoplaylist.h"
-#include "PlayerSubsystem.h"
-#include "song.h"
+#include "../../../../Core/Public/Subsystems/Player/SubObjects/song.h"
 #include "AppInstance.h"
+#include "PlayerSubsystem.h"
+#include "addtoplaylist.h"
 
 playListItem::playListItem(QWidget *parent, QJsonObject info) :
     QWidget(parent), ui(new Ui::playListItem) {

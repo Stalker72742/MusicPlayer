@@ -13,13 +13,16 @@
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
 #endif
+#include "../../../Public/Subsystems/Player/SubObjects/song.h"
 #include <QDebug>
 #include <QFileInfo>
-#include "song.h"
 #include <QJsonObject>
+#include "PlayerBackend.h"
 
-PlayerSubsystem::PlayerSubsystem(QObject *parent) {
+PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
+
     Parent = parent;
+    playerBackend = Backend;
 
     updateTimer = new QTimer(this);
     updateTimer->setInterval(1000);
@@ -45,76 +48,19 @@ PlayerSubsystem::PlayerSubsystem(QObject *parent) {
     DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
 
     SetVolume(100);
-
-    QTimer::singleShot(100, [=]() {
-        QJniObject activity = QJniObject::callStaticMethod<QJniObject>(
-            "org/qtproject/qt/android/QtNative",
-            "activity",
-            "()Landroid/app/Activity;"
-            );
-
-        if (activity.isValid()) {
-            // Инициализируем Java плеер
-            initJavaPlayer();
-
-            mediaSessionHandler = QJniObject("com/example/MusicPlayer/MediaSessionHandler",
-                                             "(Landroid/content/Context;)V",
-                                             activity.object());
-
-            if (mediaSessionHandler.isValid()) {
-                qDebug() << "✅ MediaSessionHandler создан с задержкой";
-                mediaSessionHandler.callMethod<void>("requestAudioFocus");
-            }
-        }
-    });
 #endif
 }
-
 PlayerSubsystem::~PlayerSubsystem() {
 
     playerBackend->deleteLater();
 }
 
 void PlayerSubsystem::initJavaPlayer() {
-#ifdef Q_OS_ANDROID
-  const QJniObject activity = QJniObject::callStaticMethod<QJniObject>(
-        "org/qtproject/qt/android/QtNative",
-        "activity",
-        "()Landroid/app/Activity;"
-        );
 
-    if (activity.isValid()) {
-        javaPlayer = QJniObject("com/example/MusicPlayer/JavaMusicPlayer",
-                                "(Landroid/content/Context;)V",
-                                activity.object());
-
-        if (javaPlayer.isValid()) {
-            qDebug() << "✅ Java Player initialized";
-            registerJavaCallbacks();
-        } else {
-            qDebug() << "❌ Failed to initialize Java Player";
-        }
-    }
-#endif
 }
 
 void PlayerSubsystem::registerJavaCallbacks() {
-#ifdef Q_OS_ANDROID
-    JNINativeMethod methods[] = {
-        {"onPlaybackStateChanged", "(I)V", (void*)&PlayerSubsystem::onJavaPlaybackStateChanged},
-        {"onSongFinished", "()V", (void*)&PlayerSubsystem::onJavaSongFinished},
-        {"onError", "(Ljava/lang/String;)V", (void*)&PlayerSubsystem::onJavaError}
-    };
 
-    QJniEnvironment env;
-    jclass clazz = env.findClass("com/example/MusicPlayer/JavaMusicPlayer");
-    if (clazz) {
-        env->RegisterNatives(clazz, methods, sizeof(methods)/sizeof(methods[0]));
-        qDebug() << "✅ Native methods registered";
-    } else {
-        qDebug() << "❌ Failed to find JavaMusicPlayer class";
-    }
-#endif
 }
 
 void PlayerSubsystem::updateMediaSessionState(const QString &state)

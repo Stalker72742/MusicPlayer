@@ -17,15 +17,13 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Private/Subsystems/ytSearcher.cpp
         Public/Subsystems/Player/PlayerSubsystem.h
         Private/Subsystems/Player/PlayerSubsystem.cpp
-        Public/Subsystems/Player/song.h
+        Public/Subsystems/Player/SubObjects/song.h
         Private/Subsystems/Player/song.cpp
-        Public/Subsystems/Player/androidjavaplayer.h Public/Subsystems/Player/androidjavaplayer.cpp
+        ../UI/Android/Subsystems/androidjavaplayer.h ../UI/Android/Subsystems/androidjavaplayer.cpp
         Private/Framework/SubsystemBase.cpp
         Public/Framework/SubsystemBase.h
         Public/Subsystems/Player/PlayerBackend.h
         Private/Subsystems/Player/PlayerBackend/PlayerBackend.cpp
-        Public/Subsystems/Player/MultimediaBackend.cpp
-        Public/Subsystems/Player/MultimediaBackend.h
 )
 
 target_link_libraries(MusicPlayerCore

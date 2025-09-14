@@ -1,7 +1,8 @@
 
 #include "AppInstance.h"
 
-#include <QGuiApplication>
+#include "PlayerSubsystem.h"
+#include "Source/UI/Android/Subsystems/androidjavaplayer.h"
 #ifdef Q_OS_WIN
 #include "Source/UI/Windows/MainWindow/mainwindow.h"
 #elifdef Q_OS_ANDROID
@@ -26,8 +27,9 @@ int main(int argc, char *argv[])
     //androidMainWindow* win = new androidMainWindow();
     //win->show();
 
-    QQuickStyle::setStyle("Fusion");
+    w->addSubsystem(new PlayerSubsystem( new AndroidJavaPlayer(nullptr), w));
 
+    QQuickStyle::setStyle("Fusion");
     QQmlApplicationEngine engine;
     engine.load(QUrl(QStringLiteral("qrc:/Source/UI/Android/Widgets/AndroidMainWindow.qml")));
 

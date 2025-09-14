@@ -8,8 +8,7 @@
 #include <QJsonObject>
 #include <QWidget>
 
-#include "song.h"
-
+#include "../../../../Core/Public/Subsystems/Player/SubObjects/song.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class playListItem; }

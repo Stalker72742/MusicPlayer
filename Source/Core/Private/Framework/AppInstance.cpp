@@ -14,10 +14,13 @@ AppInstance* AppInstance::getInstance() {
     }
     return instance;
 }
+void AppInstance::addSubsystem(SubsystemBase* subsystem)
+{
+    subsystems.push_back(subsystem);
+}
 
 AppInstance::AppInstance(QObject *parent) {
 
-    subsystems.append(new PlayerSubsystem(this));
 }
 
 AppInstance::~AppInstance() {

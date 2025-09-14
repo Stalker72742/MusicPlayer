@@ -2,13 +2,13 @@
 // Created by Stalker7274 on 07.05.2025.
 //
 
-#include "song.h"
+#include "../../../Public/Subsystems/Player/SubObjects/song.h"
 
-#include <qfile.h>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QFileInfo>
 #include <QUrl>
+#include <qfile.h>
 
 song::song(QJsonObject JsonObj) {
 

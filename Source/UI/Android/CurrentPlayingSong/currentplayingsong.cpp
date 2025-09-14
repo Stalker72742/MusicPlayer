@@ -1,8 +1,8 @@
 #include "currentplayingsong.h"
-#include "ui_currentplayingsong.h"
-#include "song.h"
+#include "../../../Core/Public/Subsystems/Player/SubObjects/song.h"
 #include "AppInstance.h"
 #include "PlayerSubsystem.h"
+#include "ui_currentplayingsong.h"
 
 currentPlayingSong::currentPlayingSong(QWidget *parent)
     : QWidget(parent)
@@ -10,7 +10,7 @@ currentPlayingSong::currentPlayingSong(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect(ui->prevSongButton, &QPushButton::clicked, this, [](){
+    /*connect(ui->prevSongButton, &QPushButton::clicked, this, [](){
 
         AppInstance::getInstance()->getSubsystem<PlayerSubsystem>()->PreviousSong();
     });
@@ -32,7 +32,7 @@ currentPlayingSong::currentPlayingSong(QWidget *parent)
     connect(ui->nextSongButton, &QPushButton::clicked, this, [](){
 
         AppInstance::getInstance()->getSubsystem<PlayerSubsystem>()->NextSong();
-    });
+    });*/
 }
 
 currentPlayingSong::~currentPlayingSong()

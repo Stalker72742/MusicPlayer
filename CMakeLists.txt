@@ -10,6 +10,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 if(PLATFORM_ANDROID)
+    add_definitions(-DQ_OS_ANDROID)
 
     find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Gui Qml Quick QuickControls2)
 elseif(PLATFORM_WINDOWS)
@@ -115,6 +116,7 @@ elseif (PLATFORM_ANDROID)
             "Source/UI/Platforms/Android/MediaKeyHandler"
             "Source/UI/Platforms/Android/MediaLib"
             "Source/UI/Platforms/Android/Permissions"
+            Source/UI/Platforms/Android/Subsystems
     )
 
     target_link_libraries(${PROJECT_NAME}
@@ -138,7 +140,6 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 qt_finalize_executable(${PROJECT_NAME})
-
 
 if(IDE_QTCREATOR STREQUAL "OFF")
 

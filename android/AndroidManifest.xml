@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.MusicPlayer" android:installLocation="auto" android:versionCode="1" android:versionName="Test12312">
 
-    <uses-sdk android:minSdkVersion="28" android:compileSdkVersion="35"/>
+    <uses-sdk android:compileSdkVersion="34"/>
 
     <supports-screens android:anyDensity="true" android:largeScreens="true" android:normalScreens="true" android:smallScreens="true"/>
-    <application android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true" android:label="MusicPlayer" android:requestLegacyExternalStorage="true" android:allowBackup="true" android:fullBackupOnly="false">
+    <application android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true" android:label="MusicPlayer" android:requestLegacyExternalStorage="true" android:allowBackup="true" android:fullBackupOnly="false" android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
         <activity android:name="com.example.MusicPlayer.MainActivity" android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:launchMode="singleTop" android:screenOrientation="unspecified" android:exported="true" android:label="Music player">
             <intent-filter>
@@ -27,6 +27,14 @@
 
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/qtprovider_paths"/>
         </provider>
+
+        <service android:name=".MusicPlayerService" android:enabled="true" android:exported="false" android:foregroundServiceType="mediaPlayback">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON"/>
+                <action android:name="com.example.MusicPlayer.MusicPlayerService"/>
+            </intent-filter>
+        </service>
     </application>
 
     <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"/>
@@ -42,6 +50,7 @@
     <uses-permission android:name="android.permission.WRITE_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>

@@ -24,6 +24,8 @@ public:
         return qobject_cast<T*>(subsystems.last());
     }
 
+    void addSubsystem(SubsystemBase* subsystem);
+
     template <typename mw>
     void createApp() {
 

@@ -31,7 +31,7 @@ androidMainWindow::androidMainWindow(QWidget *parent)
     ui->rootStackedWidget->setCurrentIndex(0);
     ui->playlistSongsScroll->setLayout(new QVBoxLayout);
 
-    connect(AppInstance::getInstance()->getSubsystem<PlayerSubsystem>(), &PlayerSubsystem::playingSongChanged, this, &androidMainWindow::playingNewSong);
+    //connect(AppInstance::getInstance()->getSubsystem<PlayerSubsystem>(), &PlayerSubsystem::playingSongChanged, this, &androidMainWindow::playingNewSong);
 }
 
 androidMainWindow::~androidMainWindow()
@@ -46,7 +46,7 @@ void androidMainWindow::mediaButtonClicked(bool checked)
     mediaLibScrollLayout = new QVBoxLayout(this);
     ui->medialibScroll->setLayout(mediaLibScrollLayout);
 
-    QString mediaLibFolder = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>()->getMusicFolder();
+    QString mediaLibFolder;// = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>()->getMusicFolder();
 
     medialibItemWidget* allSongs = new medialibItemWidget(mediaLibFolder);
     connect(allSongs, &medialibItemWidget::clicked, this, &androidMainWindow::playlistSelected);
@@ -87,10 +87,10 @@ void androidMainWindow::playlistSelected() {
 
 void androidMainWindow::songClicked(){
 
-    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
+    //PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
 
-    player->setCurrentPlaylist(currentPlaylistPath);
-    player->startPlayFromIndex(qobject_cast<playlistSong*>(sender())->getIndex() - 1);
+    /*player->setCurrentPlaylist(currentPlaylistPath);
+    player->startPlayFromIndex(qobject_cast<playlistSong*>(sender())->getIndex() - 1);*/
 }
 
 void androidMainWindow::playingNewSong(song* song){
@@ -121,6 +121,6 @@ void androidMainWindow::searchLineEditFinished(){
 
     qDebug() << "Searching: " << ui->searchLineEdit->text();
 
-    AppInstance::getInstance()->getSubsystem<ytSearcherSub>()->download(QUrl("https://www.youtube.com/watch?v=QIZ6xYx_S-M"),
-                                                                        "/storage/emulated/0/Music");
+    /*AppInstance::getInstance()->getSubsystem<ytSearcherSub>()->download(QUrl("https://www.youtube.com/watch?v=QIZ6xYx_S-M"),
+                                                                        "/storage/emulated/0/Music");*/
 }

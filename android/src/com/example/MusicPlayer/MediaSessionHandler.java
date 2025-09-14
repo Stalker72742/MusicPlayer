@@ -36,10 +36,8 @@ public class MediaSessionHandler {
     private void setupMediaSession() {
         Log.d(TAG, "🎵 Создаем MediaSession...");
 
-        // Создаем MediaSession
         mediaSession = new MediaSession(context, "MyAppMediaSession");
 
-        // Устанавливаем callback для обработки медиа команд
         mediaSession.setCallback(new MediaSession.Callback() {
             @Override
             public void onPlay() {

@@ -23,7 +23,7 @@ class song;
 class PlayerSubsystem : public SubsystemBase {
     Q_OBJECT
 public:
-    explicit PlayerSubsystem(QObject* parent = nullptr);
+    explicit PlayerSubsystem(playerBackend* Backend, QObject* parent = nullptr);
 
     ~PlayerSubsystem() override;
 
@@ -102,19 +102,8 @@ private:
 
     void updateMediaSessionState(const QString &state);
 
-    // Java backend methods
     void initJavaPlayer();
     void registerJavaCallbacks();
-
-#ifdef Q_OS_ANDROID
-    static void onJavaPlaybackStateChanged(JNIEnv *env, jobject obj, jint state);
-    static void onJavaSongFinished(JNIEnv *env, jobject obj);
-    static void onJavaError(JNIEnv *env, jobject obj, jstring error);
-
-    QJniObject javaPlayer;
-
-    QJniObject mediaSessionHandler;
-#endif
 
     playerBackend* playerBackend;
 
