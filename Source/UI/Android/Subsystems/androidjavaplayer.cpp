@@ -12,7 +12,6 @@ AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
             qWarning() << "No Android context!";
             return;
         }
-
         // Создаём Intent для сервиса
         QJniObject intent("android/content/Intent", "()V");
         intent.callObjectMethod(
@@ -25,8 +24,6 @@ AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
             qWarning() << "Failed to create intent!";
             return;
         }
-
-        // Запускаем foreground-сервис
         QJniObject componentName = activity.callObjectMethod(
             "startForegroundService",
             "(Landroid/content/Intent;)Landroid/content/ComponentName;",
@@ -38,7 +35,6 @@ AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
         }
 
         qDebug() << "MusicPlayerService started successfully";
-
         //AndroidJavaPlayer::setVolume(100);
     });
 }

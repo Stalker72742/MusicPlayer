@@ -26,14 +26,6 @@ import android.widget.RemoteViews;
 import androidx.core.app.NotificationCompat;
 import java.io.IOException;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.Context;
-import android.os.Build;
-import android.widget.RemoteViews;
-import androidx.core.app.NotificationCompat;
-
 public class MusicPlayerService extends Service {
     private static final String TAG = "MusicPlayerService";
     private static final String CHANNEL_ID = "music_player_channel";
@@ -109,15 +101,6 @@ public class MusicPlayerService extends Service {
 
         Log.d(TAG, "onStartCommand called");
 
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setContentTitle("Music Player")
-                    .setContentText("Playing music...")
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .build();
-
-
-        startForeground(NOTIFICATION_ID, notification);
 
         return START_STICKY;
     }
@@ -256,17 +239,44 @@ public class MusicPlayerService extends Service {
 
     private void showNotification() {
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_media_play)
-                .setContentTitle(currentSongTitle)
-                .setContentText(currentArtist)
-                .setOngoing(true)
-                .setAutoCancel(false)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+            RemoteViews notificationView = new RemoteViews(getPackageName(), R.layout.notification_music_player);
 
-            Log.d(TAG, "📱 Showing notification with title: " + currentSongTitle);
-            startForeground(NOTIFICATION_ID, builder.build());
+                            // Set song info
+                           /*  notificationView.setTextViewText(R.id.notification_title, currentSongTitle);
+                            notificationView.setTextViewText(R.id.notification_artist, currentArtist);
+
+                            // Set album art
+                            if (albumArt != null) {
+                                notificationView.setImageViewBitmap(R.id.notification_album_art, albumArt);
+                            } */
+
+                            // Set play/pause button icon
+                            int playPauseIcon = isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play;
+                            //notificationView.setImageViewResource(R.id.notification_play_pause, playPauseIcon);
+
+                            // Create PendingIntents for buttons
+                            //PendingIntent playPauseIntent = createActionIntent(ACTION_PLAY_PAUSE);
+                            //PendingIntent nextIntent = createActionIntent(ACTION_NEXT);
+                            //PendingIntent previousIntent = createActionIntent(ACTION_PREVIOUS);
+                            //PendingIntent stopIntent = createActionIntent(ACTION_STOP);
+
+                            // Set click listeners
+                           // notificationView.setOnClickPendingIntent(R.id.notification_play_pause, playPauseIntent);
+                            //notificationView.setOnClickPendingIntent(R.id.notification_next, nextIntent);
+                           // notificationView.setOnClickPendingIntent(R.id.notification_previous, previousIntent);
+
+                            // Build notification
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                                .setSmallIcon(R.drawable.ic_music_note)
+                                .setCustomContentView(notificationView)
+                                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+                                .setOngoing(true) // Делает уведомление постоянным
+                                .setAutoCancel(false)
+                                .setPriority(NotificationCompat.PRIORITY_LOW)
+                                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+                            // Show notification as foreground service
+                            startForeground(NOTIFICATION_ID, builder.build());
     }
 
     private PendingIntent createActionIntent(String action) {

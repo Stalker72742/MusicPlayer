@@ -4,9 +4,9 @@
     <uses-sdk android:compileSdkVersion="34"/>
 
     <supports-screens android:anyDensity="true" android:largeScreens="true" android:normalScreens="true" android:smallScreens="true"/>
-    <application android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true" android:label="MusicPlayer" android:requestLegacyExternalStorage="true" android:allowBackup="true" android:fullBackupOnly="false" android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+    <application android:icon="@drawable/ic_launcher" android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true" android:label="Sound link" android:requestLegacyExternalStorage="true" android:allowBackup="true" android:fullBackupOnly="false" android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
-        <activity android:name="com.example.MusicPlayer.MainActivity" android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:launchMode="singleTop" android:screenOrientation="unspecified" android:exported="true" android:label="Music player">
+        <activity android:name="com.example.MusicPlayer.MainActivity" android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:launchMode="singleTop" android:screenOrientation="unspecified" android:exported="true" android:label="Sound link">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

@@ -1,6 +1,19 @@
 cmake_minimum_required(VERSION 3.16...3.24)
-set(PROJECT_NAME "MusicPlayer")
+set(PROJECT_NAME "SoundLink")
 project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
+
+
+#[[TODO: Change name to link bellow or make new from zero if Sound Link will be bad
+Beatlink
+ToneLink
+AudioLink
+StreamLink
+ModLink
+EchoLink
+WaveLink
+VibeLink
+TrackLink
+PulseLink ]]
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -93,7 +106,7 @@ elseif (PLATFORM_ANDROID)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
             QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
-            QT_ANDROID_MIN_SDK_VERSION 21
+            QT_ANDROID_MIN_SDK_VERSION 28
             QT_ANDROID_TARGET_SDK_VERSION 34
     )
 
@@ -225,10 +238,11 @@ elseif(PLATFORM_ANDROID)
             --android-platform android-34
             --jdk "C:/Program Files/Java/jdk-23"
             --gradle
-            --install
-            --device RF8X20TNVCR
             --apk
             --verbose
+
+            COMMAND adb install -r "${CMAKE_CURRENT_BINARY_DIR}/android-build/build/outputs/apk/debug/android-build-debug.apk"
+
             DEPENDS ${PROJECT_NAME}
     )
 

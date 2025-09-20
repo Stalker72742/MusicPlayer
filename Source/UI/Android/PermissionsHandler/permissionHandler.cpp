@@ -101,16 +101,19 @@ QStringList PermissionHandler::getRequiredPermissions() {
         return {
             "android.permission.READ_MEDIA_IMAGES",
             "android.permission.READ_MEDIA_VIDEO",
-            "android.permission.READ_MEDIA_AUDIO"
+            "android.permission.READ_MEDIA_AUDIO",
+            "android.permission.POST_NOTIFICATIONS"
         };
     } else if (sdkVersion >= 33) {
         return {
             "android.permission.READ_MEDIA_IMAGES",
             "android.permission.READ_MEDIA_VIDEO",
-            "android.permission.READ_MEDIA_AUDIO"
+            "android.permission.READ_MEDIA_AUDIO",
+            "android.permission.POST_NOTIFICATIONS"
         };
     } else {
-        return {"android.permission.READ_EXTERNAL_STORAGE"};
+        return {"android.permission.READ_EXTERNAL_STORAGE",
+            "android.permission.POST_NOTIFICATIONS"};
     }
 }
 

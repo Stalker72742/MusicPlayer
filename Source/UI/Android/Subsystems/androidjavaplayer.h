@@ -31,9 +31,9 @@ private slots:
     void handleJavaCallback(int messageType, const QString& data);
 
 private:
-
     void startPositionUpdates();
     void stopPositionUpdates();
+
 
     QJniObject playerService;
     QJniObject mediaSessionHandler;
