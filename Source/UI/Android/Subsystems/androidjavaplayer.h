@@ -34,7 +34,6 @@ private:
     void startPositionUpdates();
     void stopPositionUpdates();
 
-
     QJniObject playerService;
     QJniObject mediaSessionHandler;
 };
