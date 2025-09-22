@@ -13,29 +13,34 @@ AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
             return;
         }
         // Создаём Intent для сервиса
-        QJniObject intent("android/content/Intent", "()V");
-        intent.callObjectMethod(
+        playerService = QJniObject("android/content/Intent", "()V");
+        playerService.callObjectMethod(
             "setClassName",
             "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;",
             QJniObject::fromString("com.example.MusicPlayer").object<jstring>(),
             QJniObject::fromString("com.example.MusicPlayer.MusicPlayerService").object<jstring>());
 
-        if (!intent.isValid()) {
+        if (!playerService.isValid()) {
             qWarning() << "Failed to create intent!";
             return;
         }
-        QJniObject componentName = activity.callObjectMethod(
+        QJniObject Object = activity.callObjectMethod(
             "startForegroundService",
             "(Landroid/content/Intent;)Landroid/content/ComponentName;",
-            intent.object());
+            playerService.object());
 
-        if (!componentName.isValid()) {
+        if (!Object.isValid()) {
             qWarning() << "Failed to start MusicPlayerService";
             return;
         }
 
         qDebug() << "MusicPlayerService started successfully";
-        //AndroidJavaPlayer::setVolume(100);
+
+        QTimer::singleShot(300, [this](){
+            setVolume(100);
+            setSource("/storage/emulated/0/Music/Judas.mp3");
+        });
+        //play();
     });
 }
 
@@ -44,14 +49,19 @@ AndroidJavaPlayer::~AndroidJavaPlayer() {
 }
 
 void AndroidJavaPlayer::setSource(const QString& source) {
+
     if (!playerService.isValid()) return;
 
-    bool result = playerService.callMethod<jboolean>("setSource",
-                                                  "(Ljava/lang/String;)Z",
-                                                  QJniObject::fromString(source).object());
+    bool result = QJniObject::callStaticMethod<jboolean>(
+        "com/example/MusicPlayer/MusicPlayerService",
+        "playSongStatic",
+        "(Ljava/lang/String;)Z",
+        QJniObject::fromString(source).object<jstring>());
 
     if (result) {
         currentState = playerState::Loading;
+    }else{
+        qWarning() << "Fail to set source and play";
     }
 }
 
@@ -80,7 +90,11 @@ void AndroidJavaPlayer::setVolume(float vol) {
     if (!playerService.isValid()) return;
 
     vol = std::clamp(vol, 0.0f, 100.0f);
-    bool result = playerService.callMethod<jboolean>("setVolume", "(F)Z", vol);
+    bool result = QJniObject::callStaticMethod<jboolean>(
+        "com/example/MusicPlayer/MusicPlayerService",
+        "setVolumeStatic",
+        "(F)Z",
+        vol);
     if (result) {
         volume = vol;
     }

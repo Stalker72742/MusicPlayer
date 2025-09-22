@@ -2,15 +2,11 @@
 #define ANDROIDJAVAPLAYER_H
 
 #pragma once
-#include <functional>
-
 #include "../../../Core/Public/Subsystems/Player/PlayerBackend.h"
 
 #include <QJniObject>
-
 #include <QThread>
 #include <QTimer>
-#include <atomic>
 
 class AndroidJavaPlayer : public playerBackend {
     Q_OBJECT
@@ -35,7 +31,7 @@ private:
     void stopPositionUpdates();
 
     QJniObject playerService;
-    QJniObject mediaSessionHandler;
+    QJniObject mediaSessionHandler; //TODO: remove or make logic with mediaSessionHandler
 };
 
 #endif // ANDROIDJAVAPLAYER_H

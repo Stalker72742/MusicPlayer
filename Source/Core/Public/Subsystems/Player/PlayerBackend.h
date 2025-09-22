@@ -59,10 +59,8 @@ public:
     playerError lastError{playerError::None};
     QString errorString;
 
-    float volume{100.0f};
+    float volume {100.0f};
     playerPosition position;
-
-
 };
 
 #endif // MUSICPLAYER_IPLAYERBACKEND_H

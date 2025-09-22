@@ -24,6 +24,8 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Public/Framework/SubsystemBase.h
         Public/Subsystems/Player/PlayerBackend.h
         Private/Subsystems/Player/PlayerBackend/PlayerBackend.cpp
+        Public/Subsystems/Player/SubObjects/playlist.cpp
+        Public/Subsystems/Player/SubObjects/playlist.h
 )
 
 target_link_libraries(MusicPlayerCore

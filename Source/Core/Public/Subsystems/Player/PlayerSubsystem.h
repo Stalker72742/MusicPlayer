@@ -17,6 +17,8 @@
 #include <QJniObject>
 #endif
 
+
+class playlist;
 class QSlider;
 class song;
 
@@ -116,6 +118,7 @@ private:
     QString DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
 
     QList<song*> currentPlaylist;
+    playlist* currentPlaylistPtr;
 
     QString playlistPath;
 
