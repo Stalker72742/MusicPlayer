@@ -45,11 +45,11 @@ playerPosition playerBackend::getPosition() const {
   return position;
 }
 
-playerState playerBackend::getState() const {
+EPlayerState playerBackend::getState() const {
   return currentState;
 }
 
-playerError playerBackend::getLastError() const {
+EPlayerError playerBackend::getLastError() const {
   return lastError;
 }
 

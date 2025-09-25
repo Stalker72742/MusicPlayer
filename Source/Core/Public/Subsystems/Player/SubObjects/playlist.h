@@ -17,11 +17,11 @@ public:
     ~playlist() override;
 
     void addSong(song* NewSong);
-    QList<song*> getSongs() { return songs; }
+    QList<song*> getSongs() const { return songs; }
+    song* getCurrentSong() const { return songs[currentSongIndex]; }
 
     song* next();
     song* prev();
-
 
     static playlist* constructDir(const QString& dirPath, bool recursive = true);
 

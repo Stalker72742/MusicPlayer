@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.16...3.24)
 set(PROJECT_NAME "SoundLink")
 project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 
-
 #[[TODO: Change name to link bellow or make new from zero if Sound Link will be bad
 Beatlink
 ToneLink
@@ -102,6 +101,8 @@ elseif (PLATFORM_ANDROID)
             Source/UI/Android/PermissionsHandler/permissionHandler.h
             qml.qrc
             android/src/com/example/MusicPlayer/JavaMusicPlayer.java
+            Source/UI/Android/Subsystems/androidjavaplayer.h
+            Source/UI/Android/Subsystems/androidjavaplayer.cpp
     )
 
     set_target_properties(${PROJECT_NAME} PROPERTIES

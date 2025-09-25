@@ -86,6 +86,8 @@ public slots:
 
     void updateSliderPosition();
 
+    void onBackendStateChanged(EPlayerState inBackedState);
+
 signals:
 
     void playlistUpdated();

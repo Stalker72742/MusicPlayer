@@ -31,7 +31,6 @@ private:
     void stopPositionUpdates();
 
     QJniObject playerService;
-    QJniObject mediaSessionHandler; //TODO: remove or make logic with mediaSessionHandler
 };
 
 #endif // ANDROIDJAVAPLAYER_H

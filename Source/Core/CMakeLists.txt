@@ -19,7 +19,6 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Private/Subsystems/Player/PlayerSubsystem.cpp
         Public/Subsystems/Player/SubObjects/song.h
         Private/Subsystems/Player/song.cpp
-        ../UI/Android/Subsystems/androidjavaplayer.h ../UI/Android/Subsystems/androidjavaplayer.cpp
         Private/Framework/SubsystemBase.cpp
         Public/Framework/SubsystemBase.h
         Public/Subsystems/Player/PlayerBackend.h

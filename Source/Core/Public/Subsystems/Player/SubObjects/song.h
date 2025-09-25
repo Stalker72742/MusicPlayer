@@ -23,7 +23,7 @@ public:
 
     QUrl getPlayerUrl();
 
-    QString getSongPath() { return songPathOrUrl;}
+    QString getSongPath() const { return songPathOrUrl;}
 
 
 signals:

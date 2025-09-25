@@ -62,7 +62,6 @@ public class MusicPlayerService extends MediaBrowserServiceCompat {
     // Playback state
     private int currentState = STATE_IDLE;
 
-    // Native callback methods (keeps your existing JNI hooks)
     public static native void onPlaybackStateChanged(int state);
     public static native void onSongFinished();
     public static native void onError(String error);

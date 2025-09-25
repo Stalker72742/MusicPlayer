@@ -6,6 +6,7 @@
 #define MUSICPLAYER_SUBSYSTEMBASE_H
 
 #include "AppInstance.h"
+#include <QDebug>
 
 class PlayerSubsystem;
 
@@ -24,7 +25,9 @@ public:
             }
         }
 
-        return AppInstance::getInstance()->createSubsystem<T>();
+        qWarning() << "Failed to find subsystem. Returning nullptr";
+
+        return nullptr;
     }
 };
 

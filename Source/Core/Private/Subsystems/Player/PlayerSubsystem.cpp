@@ -13,11 +13,12 @@
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
 #endif
-#include "../../../Public/Subsystems/Player/SubObjects/song.h"
 #include <QDebug>
 #include <QFileInfo>
 #include <QJsonObject>
+#include "../../../Public/Subsystems/Player/SubObjects/song.h"
 #include "PlayerBackend.h"
+#include "SubObjects/playlist.h"
 
 PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
 
@@ -30,6 +31,8 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
     SetVolume(50);
 
     connect(updateTimer, &QTimer::timeout, this, &PlayerSubsystem::updateSliderPosition);
+
+    connect(playerBackend, &playerBackend::onPlayerStateChanged, this, &PlayerSubsystem::onBackendStateChanged);
 
 #ifdef Q_OS_ANDROID
 
@@ -49,6 +52,9 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
 
     SetVolume(100);
 #endif
+
+    currentPlaylistPtr = playlist::constructDir(DefaultMusicFolder);
+    playerBackend->setSource(currentPlaylistPtr->getSongs()[0]->getSongPath());
 }
 PlayerSubsystem::~PlayerSubsystem() {
 
@@ -178,16 +184,7 @@ void PlayerSubsystem::LoadSongs() {
 
 void PlayerSubsystem::PlayCurrentSong() {
 
-    if (getSongs().isEmpty()) {
-        qDebug() << "No songs in playlist";
-        return;
-    }
-
-    song* currentSong = getSongs()[CurrentSongIndex];
-
-    for (auto x : getSongs()){
-        qDebug() << "songs: " << x->getPlayerUrl();
-    }
+    song* currentSong = currentPlaylistPtr->getCurrentSong();
 
     if (playerBackend) {
         QString songPath = currentSong->getSongPath();
@@ -202,7 +199,7 @@ void PlayerSubsystem::PlayCurrentSong() {
         qDebug() << "Java player not valid, trying to get audio stream";
 
         if (!currentSong->getSongPath().startsWith("/")) {
-            connect(currentSong,&song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
+            //connect(currentSong, &song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
         }
     }
 }
@@ -243,11 +240,8 @@ qint64 PlayerSubsystem::getMaxDuration() const {
 }
 
 void PlayerSubsystem::NextSong() {
-    CurrentSongIndex++;
 
-    if (CurrentSongIndex >= getSongs().size()) {
-        CurrentSongIndex = 0;
-    }
+    currentPlaylistPtr->next();
 
     qDebug() << "Start playing next song";
 
@@ -314,6 +308,23 @@ void PlayerSubsystem::updateSliderPosition() {
     time++;
 
     emit updateMusicDuration(time);
+}
+void PlayerSubsystem::onBackendStateChanged(EPlayerState inBackedState)
+{
+    switch (inBackedState)
+    {
+    case EPlayerState::Loading:
+        break;
+    case EPlayerState::Playing:
+        break;
+    case EPlayerState::Stopped:
+        break;
+    case EPlayerState::Finished:
+        playerBackend->setSource(currentPlaylistPtr->next()->getSongPath());
+        break;
+    case EPlayerState::Error:
+        break;
+    }
 }
 
 QList<song*> PlayerSubsystem::getSongs() {

@@ -2,6 +2,8 @@
 
 #include "androidjavaplayer.h"
 #include <private/qandroidextras_p.h>
+#include "SubsystemBase.h"
+#include "PlayerSubsystem.h"
 
 AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
     : playerBackend(parent) {
@@ -12,7 +14,7 @@ AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
             qWarning() << "No Android context!";
             return;
         }
-        // Создаём Intent для сервиса
+
         playerService = QJniObject("android/content/Intent", "()V");
         playerService.callObjectMethod(
             "setClassName",
@@ -59,7 +61,7 @@ void AndroidJavaPlayer::setSource(const QString& source) {
         QJniObject::fromString(source).object<jstring>());
 
     if (result) {
-        currentState = playerState::Loading;
+        currentState = EPlayerState::Loading;
     }else{
         qWarning() << "Fail to set source and play";
     }
@@ -70,7 +72,7 @@ void AndroidJavaPlayer::play() {
 
     bool result = playerService.callMethod<jboolean>("play");
     if (result) {
-        currentState = playerState::Playing;
+        currentState = EPlayerState::Playing;
         startPositionUpdates();
     }
 }
@@ -80,7 +82,7 @@ void AndroidJavaPlayer::pause() {
 
     bool result = playerService.callMethod<jboolean>("pause");
     if (result) {
-        currentState = playerState::Paused;
+        currentState = EPlayerState::Stopped;
         stopPositionUpdates();
     }
 
@@ -110,7 +112,7 @@ void AndroidJavaPlayer::setPosition(qint64 positionMs) {
 }
 
 void AndroidJavaPlayer::startPositionUpdates() {
-    if (currentState == playerState::Playing) {
+    if (currentState == EPlayerState::Playing) {
         positionTimer->start();
     }
 }
@@ -120,11 +122,11 @@ void AndroidJavaPlayer::stopPositionUpdates() {
 }
 
 void AndroidJavaPlayer::updatePosition() {
-    if (currentState == playerState::Playing) {
+    if (currentState == EPlayerState::Playing) {
         playerPosition pos = getPosition();
 
         if (pos.totalMs > 0 && pos.currentMs >= pos.totalMs) {
-            currentState = playerState::Stopped;
+            currentState = EPlayerState::Stopped;
             stopPositionUpdates();
         }
     }
@@ -135,7 +137,7 @@ void AndroidJavaPlayer::handleJavaCallback(int messageType, const QString& data)
     case 0:
         break;
     case 1:
-        lastError = playerError::Unknown;
+        lastError = EPlayerError::Unknown;
         errorString = data;
         break;
     case 2:
@@ -169,6 +171,12 @@ Java_com_example_MusicPlayer_MusicPlayerService_onPlaybackStateChanged(
 }
 
 extern "C" JNIEXPORT void JNICALL
+Java_com_example_MusicPlayer_MusicPlayerService_onSongFinished(JNIEnv *env, jobject thiz){
+
+    SubsystemBase::GetSubsystem<PlayerSubsystem>()->NextSong();
+}
+
+extern "C" JNIEXPORT void JNICALL
 Java_com_example_MusicPlayer_MusicPlayerService_onError(JNIEnv *env, jobject thiz, jstring error){
 
     qDebug() << error;
@@ -178,4 +186,10 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_example_MusicPlayer_MusicPlayerService_onMediaButton(JNIEnv *env, jobject thiz, jint keyCode, jstring action){
 
     qDebug() << "On hot key:" << keyCode;
+
+    switch(keyCode){
+        case 87:
+            SubsystemBase::GetSubsystem<PlayerSubsystem>()->NextSong();
+            break;
+    }
 }

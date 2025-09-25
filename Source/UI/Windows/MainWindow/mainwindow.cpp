@@ -59,6 +59,8 @@ mainWindow::mainWindow(QObject *Parent) :
 
     playerSubsystem = SubsystemBase::GetSubsystem<PlayerSubsystem>();
 
+    if (!playerSubsystem) return;
+
     connect(playerSubsystem, &PlayerSubsystem::playlistChanged, this, &mainWindow::updatePlaylistItems);
     connect(playerSubsystem, &PlayerSubsystem::updateMusicDuration, this, &mainWindow::updateTimeSlider);
     connect(playerSubsystem, &PlayerSubsystem::onShowMediaLib, this, &mainWindow::drawMediaLib);

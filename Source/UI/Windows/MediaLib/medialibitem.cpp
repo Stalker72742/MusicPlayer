@@ -11,7 +11,6 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include "PlayerSubsystem.h"
-#include "AppInstance.h"
 #include "SubsystemBase.h"
 
 mediaLibItem::mediaLibItem(QWidget *parent, QString playlist) :

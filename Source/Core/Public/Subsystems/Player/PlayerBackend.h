@@ -11,15 +11,15 @@ struct playerPosition {
   int64_t totalMs = 0;
 };
 
-enum class playerState {
-  Stopped,
-  Playing,
-  Paused,
-  Loading,
-  Error
+enum class EPlayerState {
+    Loading,
+    Playing,
+    Stopped,
+    Finished,
+    Error
 };
 
-enum class playerError {
+enum class EPlayerError {
   None,
   InvalidSource,
   NetworkError,
@@ -45,18 +45,19 @@ public:
 
 signals:
     void onUpdatePosition(playerPosition position);
+    void onPlayerStateChanged(EPlayerState state);
 
 public:
     virtual float getVolume() const;
     virtual playerPosition getPosition() const;
-    virtual playerState getState() const;
-    virtual playerError getLastError() const;
+    virtual EPlayerState getState() const;
+    virtual EPlayerError getLastError() const;
     virtual QString getErrorString() const;
 
     QTimer* positionTimer;
 
-    playerState currentState{playerState::Stopped};
-    playerError lastError{playerError::None};
+    EPlayerState currentState{EPlayerState::Stopped};
+    EPlayerError lastError{EPlayerError::None};
     QString errorString;
 
     float volume {100.0f};

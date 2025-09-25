@@ -14,6 +14,7 @@ AppInstance* AppInstance::getInstance() {
     }
     return instance;
 }
+
 void AppInstance::addSubsystem(SubsystemBase* subsystem)
 {
     subsystems.push_back(subsystem);
