@@ -542,42 +542,4 @@ void PlayerSubsystem::playPause(){
             break;
         }
     }
-}
-
-void PlayerSubsystem::onJavaSongFinished(JNIEnv *env, jobject obj) {
-    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
-    if (player) {
-        qDebug() << "Java Player: Song finished, playing next";
-        player->NextSong();
-    }
-}
-
-void PlayerSubsystem::onJavaError(JNIEnv *env, jobject obj, jstring error) {
-    QString errorStr = QJniObject(error).toString();
-    qDebug() << "Java Player Error:" << errorStr;
-}
-
-// Остальные методы без изменений
-extern "C" JNIEXPORT void JNICALL
-Java_com_example_MusicPlayer_MediaSessionHandler_onMediaButton(JNIEnv *env, jobject obj,
-                                                               jint keyCode, jstring action)
-{
-    QString actionStr = QJniObject(action).toString();
-    qDebug() << "🎧 Получена медиа кнопка:" << keyCode << actionStr;
-
-    PlayerSubsystem* player = AppInstance::getInstance()->getSubsystem<PlayerSubsystem>();
-
-    if (player) {
-        switch (keyCode) {
-        case 127:
-            player->Pause();
-            break;
-        case 126:
-            player->Resume();
-            break;
-        case 87:
-            player->NextSong();
-            break;
-        }
-    }
 }*/
