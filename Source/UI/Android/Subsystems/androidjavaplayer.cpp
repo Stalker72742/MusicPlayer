@@ -60,6 +60,21 @@ void AndroidJavaPlayer::setSource(const QString& source) {
         "(Ljava/lang/String;)Z",
         QJniObject::fromString(source).object<jstring>());
 
+    QJniObject jTitle = QJniObject::fromString(QFileInfo(source).baseName());
+    QJniObject jArtist = QJniObject::fromString("");
+    QJniObject jAlbum = QJniObject::fromString("");
+
+    jbyteArray jAlbumArt = {};
+
+    QJniObject::callStaticMethod<void>(
+        "com/example/MusicPlayer/MusicPlayerService",
+        "setSongInfoStatic",
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[B)V",
+        jTitle.object<jstring>(),
+        jArtist.object<jstring>(),
+        jAlbum.object<jstring>(),
+        jAlbumArt);
+
     if (result) {
         currentState = EPlayerState::Loading;
     }else{
@@ -70,7 +85,7 @@ void AndroidJavaPlayer::setSource(const QString& source) {
 void AndroidJavaPlayer::play() {
     if (!playerService.isValid()) return;
 
-    bool result = playerService.callMethod<jboolean>("play");
+    const bool result = playerService.callMethod<jboolean>("play");
     if (result) {
         currentState = EPlayerState::Playing;
         startPositionUpdates();

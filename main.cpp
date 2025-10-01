@@ -23,8 +23,6 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-
-
     mainWindow* win = new mainWindow(w);
     win->show();
 
