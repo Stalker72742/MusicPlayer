@@ -70,7 +70,7 @@ mainWindow::mainWindow(QObject *Parent) :
     connect(ui->playButton, &QPushButton::clicked, this, &mainWindow::playPause);
     connect(ui->nextButton, &QPushButton::clicked, this, &mainWindow::playNext);
     connect(ui->previousButton, &QPushButton::clicked, this, &mainWindow::playPrevious);
-    connect(ui->createPlaylistButton, &QPushButton::clicked, this, &mainWindow::createPlaylist);
+    //connect(ui->createPlaylistButton, &QPushButton::clicked, this, &mainWindow::createPlaylist);
 
     connect(ui->soundSlider, &QSlider::valueChanged, playerSubsystem, &PlayerSubsystem::SetVolume);
 

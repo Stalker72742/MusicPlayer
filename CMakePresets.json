@@ -14,7 +14,7 @@
         "CMAKE_PREFIX_PATH": "D:/Qt/6.8.3/android_arm64_v8a",
         "PLATFORM_ANDROID": "ON",
         "Qt6_DIR" : "C:/Qt/6.8.3/android_arm64_v8a/lib/cmake/Qt6",
-        "IDE_QTCREATOR" : "OFF"
+        "NOT_QTCREATOR" : "ON"
       },
       "environment": {
         "QT_ROOT": "D:/Qt/6.8.3/android_arm64_v8a",
@@ -27,7 +27,7 @@
       "cacheVariables": {
         "CMAKE_PREFIX_PATH": "D:/Qt/6.8.3/mingw_64",
         "PLATFORM_WINDOWS": "ON",
-        "IDE_QTCREATOR" : "OFF"
+        "NOT_QTCREATOR" : "ON"
       }
     }
   ]

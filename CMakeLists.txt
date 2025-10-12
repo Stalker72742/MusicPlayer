@@ -2,18 +2,6 @@ cmake_minimum_required(VERSION 3.16...3.24)
 set(PROJECT_NAME "SoundLink")
 project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 
-#[[TODO: Change name to link bellow or make new from zero if Sound Link will be bad
-Beatlink
-ToneLink
-AudioLink
-StreamLink
-ModLink
-EchoLink
-WaveLink
-VibeLink
-TrackLink
-PulseLink ]]
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -21,18 +9,22 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-if(PLATFORM_ANDROID)
-    add_definitions(-DQ_OS_ANDROID)
+if(ANDROID)
+
+    if (NOT_QTCREATOR)
+
+        add_definitions(-DQ_OS_ANDROID)
+    endif ()
 
     find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Gui Qml Quick QuickControls2)
-elseif(PLATFORM_WINDOWS)
+elseif(WIN32)
 
     find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia)
 endif()
 
 add_subdirectory(Source/Core)
 
-if (PLATFORM_WINDOWS)
+if (WIN32)
 
     qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
             Source/UI/Windows/MainWindow/mainwindow.cpp
@@ -70,7 +62,7 @@ if (PLATFORM_WINDOWS)
             Qt6::Widgets
             Qt6::Multimedia
     )
-elseif (PLATFORM_ANDROID)
+elseif (ANDROID)
 
     qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
             android/AndroidManifest.xml
@@ -81,8 +73,6 @@ elseif (PLATFORM_ANDROID)
             android/gradle/wrapper/gradle-wrapper.properties
             android/gradle.properties android/gradlew android/gradlew.bat
             android/src/com/example/MusicPlayer/MainActivity.java
-            android/src/com/example/MusicPlayer/MediaButtonReceiver.java
-            android/src/com/example/MusicPlayer/MediaSessionHandler.java
             Source/UI/Android/androidmainwindow.cpp
             Source/UI/Android/androidmainwindow.h
             Source/UI/Android/androidmainwindow.ui
@@ -100,16 +90,19 @@ elseif (PLATFORM_ANDROID)
             Source/UI/Android/PermissionsHandler/permissionHandler.cpp
             Source/UI/Android/PermissionsHandler/permissionHandler.h
             qml.qrc
-            android/src/com/example/MusicPlayer/JavaMusicPlayer.java
             Source/UI/Android/Subsystems/androidjavaplayer.h
             Source/UI/Android/Subsystems/androidjavaplayer.cpp
     )
+
+    if (NOT_QTCREATOR)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
             QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
             QT_ANDROID_MIN_SDK_VERSION 28
             QT_ANDROID_TARGET_SDK_VERSION 34
     )
+
+    endif ()
 
     target_include_directories(${PROJECT_NAME}
             PRIVATE
@@ -155,9 +148,9 @@ install(TARGETS ${PROJECT_NAME}
 
 qt_finalize_executable(${PROJECT_NAME})
 
-if(IDE_QTCREATOR STREQUAL "OFF")
+if(NOT_QTCREATOR)
 
-if(PLATFORM_WINDOWS)
+if(WIN32)
 
     get_target_property(QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
     get_filename_component(QT_BIN_DIR "${QMAKE_EXECUTABLE}" DIRECTORY)
@@ -224,7 +217,7 @@ if(PLATFORM_WINDOWS)
         )
     endif()
 
-elseif(PLATFORM_ANDROID)
+elseif(ANDROID)
 
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/android-build/libs/${ANDROID_ABI}"
