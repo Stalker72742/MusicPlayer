@@ -11,7 +11,7 @@ Window  {
 
     Rectangle {
         id: rectangle1
-        color: "#1A1A1A"
+        color: "#121212"
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -39,36 +39,95 @@ Window  {
                 topPadding: 0
                 spacing: 10
 
+                Rectangle {
+                        anchors.fill: parent
+                        color: "#1A1A1A"
+                        z: -1
+                }
+
                 RowLayout{
                     anchors.fill: parent
+
                     Button {
-                        id: button
+                        id: searchButton
                         width: 250
                         height: 50
                         transformOrigin: Item.Center
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                        background: Rectangle {
+                                    color: "transparent"
+                        }
+
+                        topPadding: 10
+                        bottomPadding: 10
+                        leftPadding: 20
+                        rightPadding: 20
+
                         onClicked: {
                             stackLayout.currentIndex = 0
                         }
 
                         Label{
                             text: "Search"
+
+                            color: stackLayout.currentIndex === 0 ? "#FFFFFF" : "#808080"
                             anchors.centerIn: parent
                             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         }
                     }
 
                     Button {
-                        id: button1
+                        id: medialib
                         width: 250
                         height: 50
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                        background: Rectangle {
+                                    color: "transparent"
+                        }
+
+                        topPadding: 10
+                        bottomPadding: 10
+                        leftPadding: 20
+                        rightPadding: 20
+
                         onClicked: {
                             stackLayout.currentIndex = 1
                         }
 
                         Label{
                             text: "Medialib"
+
+                            color: stackLayout.currentIndex === 1 ? "#FFFFFF" : "#808080"
+                            anchors.centerIn: parent
+                            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        }
+                    }
+
+                    Button {
+                        id: settings
+                        width: 250
+                        height: 50
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                        topPadding: 10
+                        bottomPadding: 10
+                        leftPadding: 20
+                        rightPadding: 20
+
+                        background: Rectangle {
+                                    color: "transparent"
+                        }
+
+                        onClicked: {
+
+                        }
+
+                        Label{
+                            text: "Settings"
+
+                            color: stackLayout.currentIndex === 2 ? "#FFFFFF" : "#808080"
                             anchors.centerIn: parent
                             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         }
@@ -85,24 +144,55 @@ Window  {
                 anchors.leftMargin: 0
                 anchors.rightMargin: 0
                 anchors.topMargin: 0
-                anchors.bottomMargin: 150
-                currentIndex: 1
+                anchors.bottomMargin: parent.height * 0.12
+                currentIndex: 0
 
                 Item {
                     id: search
 
+                    Text {
+                        id: searchMenuText
+
+                        text: qsTr("What do you want to listen to?")
+                        color: "#FFFFFF"
+                        font.bold: true
+                        font.pixelSize: 18;
+                        anchors {
+                            top: parent.top
+                            left: parent.left
+                            right: parent.right
+                            topMargin: parent.height * 0.1
+                            leftMargin: 15
+                            rightMargin: 15
+                        }
+
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
                     TextField {
                         id: textField
-                        height: 25
-                        text: " "
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.leftMargin: 15
-                        anchors.rightMargin: 15
-                        anchors.topMargin: 150
-                        placeholderTextColor: "#00000000"
-                        placeholderText: qsTr("Text Field")
+                        anchors {
+                            top: searchMenuText.bottom
+                            left: parent.left
+                            right: parent.right
+                            topMargin: parent.height * 0.04
+                            leftMargin: parent.width * 0.053
+                            rightMargin: parent.width * 0.053
+                        }
+
+                        background: Rectangle {
+                                color: "#282828"
+                                radius: 24
+                                border.color: "#282828"
+                                border.width: 1
+                        }
+
+                        height: Math.max(40, parent.height * 0.06)
+                        placeholderText: qsTr("Search...")
+                        placeholderTextColor: "#999999"
+
+                        font.pixelSize: Math.min(parent.width, parent.height) * 0.04
                     }
                 }
 

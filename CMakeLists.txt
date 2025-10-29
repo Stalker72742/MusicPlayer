@@ -94,13 +94,22 @@ elseif (ANDROID)
             Source/UI/Android/Subsystems/androidjavaplayer.cpp
     )
 
+
+
     if (NOT_QTCREATOR)
 
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+                QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
+                QT_ANDROID_MIN_SDK_VERSION 28
+                QT_ANDROID_TARGET_SDK_VERSION 34
+        )
+
+    else()
+
+        set_target_properties(${PROJECT_NAME} PROPERTIES
             QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
-            QT_ANDROID_MIN_SDK_VERSION 28
-            QT_ANDROID_TARGET_SDK_VERSION 34
-    )
+
+        )
 
     endif ()
 
