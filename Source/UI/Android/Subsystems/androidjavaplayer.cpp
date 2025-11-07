@@ -40,7 +40,6 @@ AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
 
         QTimer::singleShot(300, [this](){
             setVolume(100);
-            setSource("/storage/emulated/0/Music/Judas.mp3");
         });
         //play();
     });

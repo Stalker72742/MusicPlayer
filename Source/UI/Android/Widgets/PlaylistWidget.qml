@@ -6,6 +6,9 @@ Rectangle {
     id: root
     width: 800
     height: 150
+    color: "#2A2A2A"
+
+    radius: 20
 
     signal clicked()
 
@@ -38,6 +41,8 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             Layout.fillWidth: false
 
+            radius: 10
+
             Image {
                 id: name
                 width: 65
@@ -62,24 +67,25 @@ Rectangle {
                 text: "Liblary"
                 font.pointSize: 18
                 font.styleName: "Bold"
-
+                font.bold: true
+                color: "#FFFFFF"
             }
 
             Label{
                 text: "All songs : 247 songs"
                 font.pointSize: 12
-
+                color: "#999999"
             }
         }
 
-        Item {
-            id: item2
-            width: 15
+        // Item {
+        //     id: item2
+        //     width: 15
 
-            height: 25
-            anchors.verticalCenter: parent.verticalCenter
-            Layout.fillWidth: true
-        }
+        //     height: 25
+        //     anchors.verticalCenter: parent.verticalCenter
+        //     Layout.fillWidth: true
+        // }
 
         ToolBar{
             width: 50

@@ -16,10 +16,10 @@ if(ANDROID)
         add_definitions(-DQ_OS_ANDROID)
     endif ()
 
-    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Gui Qml Quick QuickControls2)
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network Gui Qml Quick QuickControls2)
 elseif(WIN32)
 
-    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia)
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network)
 endif()
 
 add_subdirectory(Source/Core)
@@ -61,6 +61,7 @@ if (WIN32)
             Qt6::Core
             Qt6::Widgets
             Qt6::Multimedia
+            Qt6::Network
     )
 elseif (ANDROID)
 
@@ -92,9 +93,9 @@ elseif (ANDROID)
             qml.qrc
             Source/UI/Android/Subsystems/androidjavaplayer.h
             Source/UI/Android/Subsystems/androidjavaplayer.cpp
+            Source/UI/Android/Widgets/Interfaces/playlistwidget.h Source/UI/Android/Widgets/Interfaces/playlistwidget.cpp
+            Source/UI/Android/Widgets/Interfaces/filemanager.h Source/UI/Android/Widgets/Interfaces/filemanager.cpp
     )
-
-
 
     if (NOT_QTCREATOR)
 
@@ -133,18 +134,20 @@ elseif (ANDROID)
             "Source/UI/Platforms/Android/MediaLib"
             "Source/UI/Platforms/Android/Permissions"
             Source/UI/Platforms/Android/Subsystems
+             Source/Core/Public/Data
     )
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
             MusicPlayerCore
-            Qt::Core
+            Qt6::Core
             Qt6::CorePrivate
             Qt6::Widgets
             Qt6::Gui
             Qt6::Qml
             Qt6::Quick
             Qt6::QuickControls2
+            Qt6::Network
     )
 endif ()
 

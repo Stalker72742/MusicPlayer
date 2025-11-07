@@ -8,7 +8,8 @@ set(CMAKE_AUTOUIC ON)
 #find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Multimedia)
 set(CMAKE_PREFIX_PATH "D:/Qt/6.8.3/android_arm64_v8a")
 set(Qt6_DIR "D:/Qt/6.8.3/android_arm64_v8a/lib/cmake/Qt6")
-find_package(Qt6 COMPONENTS Core)
+find_package(Qt6 COMPONENTS Core Network)
+find_package(Qt6 REQUIRED COMPONENTS Core Network)
 
 add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Public/Framework/AppInstance.h
@@ -25,6 +26,11 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Private/Subsystems/Player/PlayerBackend/PlayerBackend.cpp
         Public/Subsystems/Player/SubObjects/playlist.cpp
         Public/Subsystems/Player/SubObjects/playlist.h
+        universalaudioparser.h universalaudioparser.cpp
+        Public/Subsystems/FileManager/FileManager.cpp
+        Public/Subsystems/FileManager/FileManager.h
+        Public/Data/staticData.cpp
+        Public/Data/staticData.h
 )
 
 target_link_libraries(MusicPlayerCore
@@ -32,6 +38,7 @@ target_link_libraries(MusicPlayerCore
         Qt6::Core
         Qt6::Multimedia
         Qt6::CorePrivate
+        Qt6::Network
 )
 
 target_include_directories(MusicPlayerCore
@@ -67,11 +74,11 @@ elseif(PLATFORM_ANDROID)
     target_link_libraries(MusicPlayerCore PRIVATE
             Qt6::Core
             Qt6::Multimedia
+            Qt6::Network
             android
             log
             OpenSLES
     )
-
     target_compile_definitions(MusicPlayerCore PRIVATE
             ANDROID_PLATFORM
             QT_ANDROID

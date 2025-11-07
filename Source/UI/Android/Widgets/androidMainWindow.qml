@@ -127,7 +127,7 @@ Window  {
                         Label{
                             text: "Settings"
 
-                            color: stackLayout.currentIndex === 2 ? "#FFFFFF" : "#808080"
+                            color: stackLayout.currentIndex === -5 ? "#FFFFFF" : "#808080"
                             anchors.centerIn: parent
                             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         }
@@ -215,7 +215,7 @@ Window  {
 
                                 onClicked: {
 
-                                    stackLayout.currentIndex = 1
+                                    stackLayout.currentIndex = 2
                                 }
                             }
                         }
@@ -226,36 +226,60 @@ Window  {
                     id: playlistPage
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    anchors.fill: parent
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-
-                        Item{
-                            height: 50
-                        }
+                        anchors.fill: parent
 
                         Button{
+
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+
+                            anchors.leftMargin: parent.width * 0.02
+                            anchors.topMargin: parent.height * 0.025
 
                             text: "Back"
                         }
 
-                        Item{
-                            height: 150
-                        }
 
-                        Image{
-                            width: 100
-                            height: 100
+                        Rectangle {
+                            id: playlistImage
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.top: parent.top
+                            anchors.topMargin: parent.height * 0.09
 
-                        }
+                            width: 200
+                            height: 200
 
-                        Item{
+                            color: "#2A2A2A"
+                            radius: 15
+                            border.color: "#333333"
+                            border.width: 1
 
+                            Rectangle {
+
+                                anchors.centerIn: parent
+                                width: 175
+                                height: 175
+
+                                color: "#FFFFFF"
+                                radius: 15
+                            }
                         }
 
                         Text{
-                            text: "Library"
+                            id: playlistName
+
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.top: playlistImage.bottom
+
+                            anchors.topMargin: parent.height * 0.015
+
+                            text: "playlistName"
+                            color: "#FFFFFF"
                         }
 
                         Item{

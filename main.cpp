@@ -13,13 +13,17 @@
 #include <QQmlApplicationEngine>
 #include <QGuiApplication>
 #include <QtQuickControls2/QQuickStyle>
+#include "Source/UI/Android/Widgets/Interfaces/filemanager.h"
+#include <QQmlContext>
 #endif
 
 int main(int argc, char *argv[])
 {
-    AppInstance *w = AppInstance::getInstance();
+
 
 #ifdef Q_OS_WIN
+
+    AppInstance *w = AppInstance::getInstance();
 
     QApplication a(argc, argv);
 
@@ -33,14 +37,20 @@ int main(int argc, char *argv[])
     //androidMainWindow* win = new androidMainWindow();
     //win->show();
 
+    PermissionHandler* handler = PermissionHandler::instance();
+    handler->requestPermissions();
+
+    AppInstance *w = AppInstance::getInstance();
+
     w->addSubsystem(new PlayerSubsystem( new AndroidJavaPlayer(nullptr), w));
 
     QQuickStyle::setStyle("Fusion");
     QQmlApplicationEngine engine;
+    fileManager fileManager;
+    engine.rootContext()->setContextProperty("fileManager", &fileManager);
     engine.load(QUrl(QStringLiteral("qrc:/Source/UI/Android/Widgets/AndroidMainWindow.qml")));
 
-    PermissionHandler* handler = PermissionHandler::instance();
-    handler->requestPermissions();
+
 
 #endif
 

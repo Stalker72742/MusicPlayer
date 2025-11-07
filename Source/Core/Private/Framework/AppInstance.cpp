@@ -3,7 +3,9 @@
 //
 
 #include "AppInstance.h"
+#include "FileManager/FileManager.h"
 #include "PlayerSubsystem.h"
+#include "staticData.h"
 
 AppInstance * AppInstance::instance = nullptr;
 
@@ -22,6 +24,8 @@ void AppInstance::addSubsystem(SubsystemBase* subsystem)
 
 AppInstance::AppInstance(QObject *parent) {
 
+    addSubsystem(new staticData(this));
+    addSubsystem(new FileManager(this));
 }
 
 AppInstance::~AppInstance() {

@@ -54,7 +54,7 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
 #endif
 
     currentPlaylistPtr = playlist::constructDir(DefaultMusicFolder);
-    playerBackend->setSource(currentPlaylistPtr->getSongs()[0]->getSongPath());
+    //playerBackend->setSource(currentPlaylistPtr->getSongs()[0]->getSongPath());
 }
 PlayerSubsystem::~PlayerSubsystem() {
 
