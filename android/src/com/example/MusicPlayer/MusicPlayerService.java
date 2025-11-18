@@ -94,6 +94,21 @@ public class MusicPlayerService extends MediaBrowserServiceCompat {
         return false;
     }
 
+    public static boolean playPauseStatic() {
+        if (instance != null) {
+            instance.playPause();
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean getIsPlayingStatic() {
+        if (instance != null) {
+            return instance.isPlaying();
+        }
+        return false;
+    }
+
     public static boolean setVolumeStatic(float vol) {
         if (instance != null) {
             instance.setVolume(vol);
@@ -245,8 +260,8 @@ public class MusicPlayerService extends MediaBrowserServiceCompat {
             isPrepared = true;
             currentDuration = mp.getDuration();
             Log.d(TAG, "MediaPlayer prepared");
-            mp.start();
-            updateState(STATE_PLAYING);
+            //mp.start();
+            //updateState(STATE_PLAYING);
             updateMediaSessionMetadata();
         });
 
@@ -486,6 +501,22 @@ public class MusicPlayerService extends MediaBrowserServiceCompat {
         } catch (IOException e) {
             Log.e(TAG, "Error setting data source: " + e.getMessage());
             onError("Failed to load song: " + e.getMessage());
+        }
+    }
+
+    public void playPause() {
+        if (mediaPlayer == null) return;
+
+        if (isPlaying()) {
+            pause();
+            Log.d(TAG, "⏸️ PlayPause -> Paused");
+        } else {
+            if (isPrepared) {
+                resume(); // или play() если ты переименовал
+                Log.d(TAG, "▶️ PlayPause -> Playing");
+            } else {
+                Log.w(TAG, "⚠️ PlayPause called but not prepared yet");
+            }
         }
     }
 

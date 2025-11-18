@@ -17,7 +17,7 @@ public:
     FileManager(QObject* Parent);
 
 
-    static bool GetAllPlaylists(QList<QFileInfo>& OutFoundFiles);
+    static bool GetAllPlaylists(QStringList& OutFoundFiles);
 };
 
 

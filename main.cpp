@@ -2,6 +2,8 @@
 
 #include "AppInstance.h"
 #include "PlayerSubsystem.h"
+#include "Source/UI/Android/Widgets/Interfaces/PlaylistModel.h"
+#include "Source/UI/Android/Widgets/Interfaces/playerdata.h"
 
 #ifdef Q_OS_WIN
 #include "Source/UI/Windows/MainWindow/mainwindow.h"
@@ -13,7 +15,6 @@
 #include <QQmlApplicationEngine>
 #include <QGuiApplication>
 #include <QtQuickControls2/QQuickStyle>
-#include "Source/UI/Android/Widgets/Interfaces/filemanager.h"
 #include <QQmlContext>
 #endif
 
@@ -41,16 +42,17 @@ int main(int argc, char *argv[])
     handler->requestPermissions();
 
     AppInstance *w = AppInstance::getInstance();
-
     w->addSubsystem(new PlayerSubsystem( new AndroidJavaPlayer(nullptr), w));
 
+    PlaylistModel playlistModel(nullptr);
+    playerData playerData(nullptr);
+
     QQuickStyle::setStyle("Fusion");
+
     QQmlApplicationEngine engine;
-    fileManager fileManager;
-    engine.rootContext()->setContextProperty("fileManager", &fileManager);
-    engine.load(QUrl(QStringLiteral("qrc:/Source/UI/Android/Widgets/AndroidMainWindow.qml")));
-
-
+    engine.rootContext()->setContextProperty("playlistModel", &playlistModel);
+    engine.rootContext()->setContextProperty("playerData", &playerData);
+    engine.load(QUrl(QStringLiteral("qrc:/Source/UI/Android/Widgets/MainWindow/androidMainWindow.qml")));
 
 #endif
 

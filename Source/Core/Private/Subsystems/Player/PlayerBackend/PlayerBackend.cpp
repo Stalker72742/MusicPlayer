@@ -19,6 +19,11 @@ void playerBackend::unpause()
 {
 
 }
+void playerBackend::playPause()
+{
+
+}
+
 void playerBackend::setSource(const QString& source)
 {
 

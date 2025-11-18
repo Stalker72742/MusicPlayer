@@ -1,6 +1,11 @@
 <RCC>
     <qresource prefix="/">
-        <file>Source/UI/Android/Widgets/AndroidMainWindow.qml</file>
-        <file>Source/UI/Android/Widgets/PlaylistWidget.qml</file>
+        <file>Source/UI/Android/Widgets/MainWindow/Components/CurrentPlayingSong.qml</file>
+        <file>Source/UI/Android/Widgets/MainWindow/Components/qmldir</file>
+        <file>Source/UI/Android/Widgets/MainWindow/androidMainWindow.qml</file>
+        <file>Source/UI/Android/Widgets/MainWindow/PlaylistWidget.qml</file>
+        <file>Source/UI/Android/Widgets/MainWindow/qmldir</file>
+        <file>Source/UI/Android/Widgets/MainWindow/SongWidget.qml</file>
+        <file>Resources/next.png</file>
     </qresource>
 </RCC>

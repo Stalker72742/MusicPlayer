@@ -1,0 +1,5 @@
+module com.myapp.music
+
+PlaylistWidget 1.0 PlaylistWidget.qml
+SongWidget 1.0 SongWidget.qml
+CureentPlayingWidget 1.0 MainWindow/Components/CurrentPlayingSong.qml

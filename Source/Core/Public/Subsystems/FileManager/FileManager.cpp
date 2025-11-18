@@ -13,7 +13,7 @@
 FileManager::FileManager(QObject* Parent) : SubsystemBase(Parent)
 {
     QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    QFile AllMusicJson(path + staticData::allMediaConfigName);
+    QFile AllMusicJson(path + "/" + staticData::allMediaConfigName);
     QJsonObject playlist;
 
     playlist["SongName"] = "Path/To/Song/Local";
@@ -36,21 +36,28 @@ FileManager::FileManager(QObject* Parent) : SubsystemBase(Parent)
     const QJsonDocument doc(playlist);
     AllMusicJson.write(doc.toJson(QJsonDocument::Indented));
     AllMusicJson.close();
+
+    QFileInfo allMediaInfo(path + "/" + staticData::allMediaConfigName);
+    qDebug() << "AllMusicJson success at" << allMediaInfo.absoluteFilePath();
 }
 
-bool FileManager::GetAllPlaylists(QList<QFileInfo>& OutFoundFiles)
+bool FileManager::GetAllPlaylists(QStringList& OutFoundFiles)
 {
-    const QString medialibFolder = staticData::mediaLibFolder;
+    const QString medialibFolder = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
     QStringList filters;
     filters << "*.json";
 
     QDirIterator it(medialibFolder, filters, QDir::Files | QDir::Dirs);
 
+    qDebug() << "Trying to find playlists in " << medialibFolder;
+
     while(it.hasNext()){
 
-        it.next();
-        OutFoundFiles.append(it.fileInfo());
+        const QString filePath = it.next();
+        OutFoundFiles.append(filePath);
+
+        qDebug() << "Founded playlist " << filePath;
     }
 
     return !OutFoundFiles.empty();

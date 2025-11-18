@@ -18,7 +18,7 @@ public:
 
     void addSong(song* NewSong);
     QList<song*> getSongs() const { return songs; }
-    song* getCurrentSong() const { return songs[currentSongIndex]; }
+    song* getCurrentSong() const;
 
     song* next();
     song* prev();

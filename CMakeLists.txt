@@ -20,6 +20,7 @@ if(ANDROID)
 elseif(WIN32)
 
     find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 endif()
 
 add_subdirectory(Source/Core)
@@ -93,11 +94,13 @@ elseif (ANDROID)
             qml.qrc
             Source/UI/Android/Subsystems/androidjavaplayer.h
             Source/UI/Android/Subsystems/androidjavaplayer.cpp
-            Source/UI/Android/Widgets/Interfaces/playlistwidget.h Source/UI/Android/Widgets/Interfaces/playlistwidget.cpp
-            Source/UI/Android/Widgets/Interfaces/filemanager.h Source/UI/Android/Widgets/Interfaces/filemanager.cpp
+            Source/UI/Android/Widgets/Interfaces/playlistModel.cpp
+            Source/UI/Android/Widgets/Interfaces/playlistModel.h
+            Source/UI/Android/Widgets/Interfaces/playerdata.h Source/UI/Android/Widgets/Interfaces/playerdata.cpp
     )
 
-    if (NOT_QTCREATOR)
+target_link_libraries(SoundLink PRIVATE Qt6::Core)
+if (NOT_QTCREATOR)
 
         set_target_properties(${PROJECT_NAME} PROPERTIES
                 QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
@@ -109,7 +112,6 @@ elseif (ANDROID)
 
         set_target_properties(${PROJECT_NAME} PROPERTIES
             QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
-
         )
 
     endif ()

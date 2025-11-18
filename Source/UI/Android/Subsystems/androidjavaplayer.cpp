@@ -99,7 +99,14 @@ void AndroidJavaPlayer::pause() {
         currentState = EPlayerState::Stopped;
         stopPositionUpdates();
     }
+}
+void AndroidJavaPlayer::playPause()
+{
+    if (!playerService.isValid()) return;
 
+    QJniObject::callStaticMethod<jboolean>(
+        "com/example/MusicPlayer/MusicPlayerService",
+        "playPauseStatic");
 }
 
 void AndroidJavaPlayer::setVolume(float vol) {

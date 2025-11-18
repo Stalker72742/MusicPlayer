@@ -24,6 +24,19 @@ public:
         return qobject_cast<T*>(subsystems.last());
     }
 
+    template <typename T>
+    T* getSubsystem(){
+        for(SubsystemBase* subsystem : subsystems){
+            if(subsystem){
+                if(T* castedSubsys = qobject_cast<T*>(subsystem)){
+                    return castedSubsys;
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
     void addSubsystem(SubsystemBase* subsystem);
 
     template <typename mw>

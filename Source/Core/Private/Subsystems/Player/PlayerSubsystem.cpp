@@ -53,9 +53,9 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
     SetVolume(100);
 #endif
 
-    currentPlaylistPtr = playlist::constructDir(DefaultMusicFolder);
-    //playerBackend->setSource(currentPlaylistPtr->getSongs()[0]->getSongPath());
+    setCurrentPlaylist(playlist::constructDir(DefaultMusicFolder));
 }
+
 PlayerSubsystem::~PlayerSubsystem() {
 
     playerBackend->deleteLater();
@@ -67,6 +67,32 @@ void PlayerSubsystem::initJavaPlayer() {
 
 void PlayerSubsystem::registerJavaCallbacks() {
 
+}
+
+void PlayerSubsystem::SetSource(song* InSong)
+{
+    if (playerBackend && InSong)
+    {
+        playerBackend->setSource(InSong->getSongPath());
+        emit OnSongChanged(InSong);
+    }
+}
+
+void PlayerSubsystem::setCurrentPlaylist(playlist *InNewPlaylist)
+{
+    currentPlaylistPtr = InNewPlaylist;
+    emit onPlaylistChanged(currentPlaylistPtr);
+
+    if (currentPlaylistPtr)
+    {
+        if (currentPlaylistPtr->getSongs().size() > 0)
+        {
+            if (song* currentSong = currentPlaylistPtr->getSongs()[0])
+            {
+                SetSource(currentSong);
+            }
+        }
+    }
 }
 
 void PlayerSubsystem::updateMediaSessionState(const QString &state)
@@ -186,22 +212,20 @@ void PlayerSubsystem::PlayCurrentSong() {
 
     song* currentSong = currentPlaylistPtr->getCurrentSong();
 
-    if (playerBackend) {
-        QString songPath = currentSong->getSongPath();
+    if (playerBackend && currentSong) {
+        currentSong->getSongPath();
 
-        qDebug() << "Playing song via Java backend: " << songPath;
+        qDebug() << "Playing song via Java backend: " << currentSong->getSongPath();
         
-        playerBackend->setSource(songPath);
+        SetSource(currentSong);
         playerBackend->play();
-
-        emit playingSongChanged(currentSong);
-    } else {
+    } /*else {
         qDebug() << "Java player not valid, trying to get audio stream";
 
         if (!currentSong->getSongPath().startsWith("/")) {
             //connect(currentSong, &song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
         }
-    }
+    }*/
 }
 
 void PlayerSubsystem::Resume() {
@@ -249,11 +273,9 @@ void PlayerSubsystem::NextSong() {
 }
 
 void PlayerSubsystem::PreviousSong() {
-    CurrentSongIndex--;
+    currentPlaylistPtr->prev();
 
-    if (CurrentSongIndex < 0) {
-        CurrentSongIndex = getSongs().size() - 1;
-    }
+    qDebug() << "Start playing previous song";
 
     PlayCurrentSong();
 }
@@ -320,7 +342,9 @@ void PlayerSubsystem::onBackendStateChanged(EPlayerState inBackedState)
     case EPlayerState::Stopped:
         break;
     case EPlayerState::Finished:
-        playerBackend->setSource(currentPlaylistPtr->next()->getSongPath());
+
+        SetSource(currentPlaylistPtr->next());
+
         break;
     case EPlayerState::Error:
         break;
@@ -499,20 +523,9 @@ void PlayerSubsystem::addSongToQueue(song* Song) {
 
 void PlayerSubsystem::playPause(){
 
-    if(getSongs().empty()) return;
-
-    if(bPaused){
-        if (playerBackend) {
-            playerBackend->play();
-            bPaused = false;
-        } else {
-            PlayCurrentSong();
-        }
-    }else{
-        if (playerBackend) {
-            playerBackend->pause();
-            bPaused = true;
-        }
+    if (playerBackend)
+    {
+        playerBackend->playPause();
     }
 }
 

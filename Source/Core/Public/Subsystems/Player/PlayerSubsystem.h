@@ -100,6 +100,9 @@ signals:
 
     void playingSongChanged(song* currentPlayingSong);
 
+    void onPlaylistChanged(playlist* InPlaylist);
+    void OnSongChanged(song* Song);
+
 private:
 
     void checkMusicFolder();
@@ -134,6 +137,13 @@ private:
 
     int currentVolume = 50;
     qint64 currentDuration = 0;
+
+public:
+
+    void SetSource(song* InSong);
+
+    void setCurrentPlaylist(playlist* InNewPlaylist);
+    playlist* getCurrentPlaylist() const { return currentPlaylistPtr; }
 };
 
 #endif
