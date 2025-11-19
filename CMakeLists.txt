@@ -16,7 +16,7 @@ if(ANDROID)
         add_definitions(-DQ_OS_ANDROID)
     endif ()
 
-    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network Gui Qml Quick QuickControls2)
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network Gui Qml Quick QuickControls2 Core5Compat)
 elseif(WIN32)
 
     find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network)
@@ -99,7 +99,7 @@ elseif (ANDROID)
             Source/UI/Android/Widgets/Interfaces/playerdata.h Source/UI/Android/Widgets/Interfaces/playerdata.cpp
     )
 
-target_link_libraries(SoundLink PRIVATE Qt6::Core)
+target_link_libraries(SoundLink PRIVATE Qt6::Core Qt6::Core5Compat)
 if (NOT_QTCREATOR)
 
         set_target_properties(${PROJECT_NAME} PROPERTIES

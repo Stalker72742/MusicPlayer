@@ -35,9 +35,6 @@ int main(int argc, char *argv[])
 
     QGuiApplication a(argc, argv);
 
-    //androidMainWindow* win = new androidMainWindow();
-    //win->show();
-
     PermissionHandler* handler = PermissionHandler::instance();
     handler->requestPermissions();
 

@@ -7,5 +7,9 @@
         <file>Source/UI/Android/Widgets/MainWindow/qmldir</file>
         <file>Source/UI/Android/Widgets/MainWindow/SongWidget.qml</file>
         <file>Resources/next.png</file>
+        <file>Resources/EmptyImage.png</file>
+        <file>Resources/Medialib.png</file>
+        <file>Resources/Search.png</file>
+        <file>Resources/Settings.png</file>
     </qresource>
 </RCC>

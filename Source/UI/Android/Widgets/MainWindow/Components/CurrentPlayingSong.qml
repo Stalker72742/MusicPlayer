@@ -34,10 +34,11 @@ Rectangle {
             anchors.rightMargin: parent.width * 0.02
             spacing: parent.width * 0.02
 
-            Rectangle {
+            Image {
                 id: playingSongImage
 
-                color: "#555555"
+                source: "qrc:/Resources/EmptyImage.png"
+
                 Layout.alignment: Qt.AlignVCenter
 
                 Layout.preferredHeight: (root.height * 0.315) * 2
@@ -63,7 +64,7 @@ Rectangle {
                     width: parent.width
 
                     color: "#AAAAAA"
-                    text: "Enememyem"
+                    text: ""
                     elide: Text.ElideRight
                 }
             }
