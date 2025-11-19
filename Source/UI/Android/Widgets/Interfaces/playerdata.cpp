@@ -18,6 +18,7 @@ playerData::playerData(QObject* parent) : QObject{parent}
                 if (auto song = currentPlaylist->getCurrentSong())
                 {
                     setCurrentTrack(song->getName());
+                    setCurrentArtist("Unknown");
                 }
             }
         }
@@ -63,7 +64,10 @@ void playerData::setCurrentTrack(const QString &track)
 
 void playerData::setCurrentArtist(const QString &artist)
 {
+    m_currentArtist = artist;
+    emit currentArtistChanged();
 
+    qDebug() << "Current artist: " << m_currentArtist;
 }
 
 void playerData::OnPlayerSongChanged(song* InSong)

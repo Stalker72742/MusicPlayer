@@ -28,7 +28,7 @@ public:
 
 private:
     bool m_isPlaying = false;
-    QString m_currentTrack;
+    QString m_currentTrack {"Unknown"};
     QString m_currentArtist;
 
     PlayerSubsystem* player;

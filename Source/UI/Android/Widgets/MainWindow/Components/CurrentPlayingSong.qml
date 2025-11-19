@@ -56,6 +56,7 @@ Rectangle {
 
                     color: "#FFFFFF"
                     text: playerData.currentTrack
+                    font.pixelSize: 14
                     elide: Text.ElideRight
                 }
 
@@ -64,7 +65,8 @@ Rectangle {
                     width: parent.width
 
                     color: "#AAAAAA"
-                    text: ""
+                    text: playerData.currentArtist
+                    font.pixelSize: 12
                     elide: Text.ElideRight
                 }
             }
@@ -127,10 +129,28 @@ Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.leftMargin: 0
+            anchors.leftMargin: parent.width * 0.05
             anchors.topMargin: parent.height * 0.80
-            anchors.rightMargin: 0
+            anchors.rightMargin: parent.width * 0.05
             anchors.bottomMargin: 0
+
+            background: Rectangle {
+                x: currentSongDuration.leftPadding
+                y: currentSongDuration.topPadding + currentSongDuration.availableHeight / 2 - height / 2
+                implicitWidth: 200
+                implicitHeight: 4
+                width: currentSongDuration.availableWidth
+                height: implicitHeight
+                radius: 2
+                color: "#444444"
+
+                Rectangle {
+                    width: currentSongDuration.visualPosition * parent.width
+                    height: parent.height
+                    color: "#FFFFFF"
+                    radius: 2
+                }
+            }
 
             handle: Rectangle {
 
@@ -141,8 +161,8 @@ Rectangle {
                 implicitHeight: 14
                 radius: 7
 
-                color: currentSongDuration.pressed ? "#f0f0f0" : "#f6f6f6"
-                border.color: "#bdbebf"
+                color: "#FFFFFF"
+                border.color: "#FFFFFF"
             }
         }
     }
