@@ -2,12 +2,12 @@
 // Created by Stalker7274 on 07.11.2025.
 //
 
-#include "PlaylistModel.h"
-#include "FileManager/FileManager.h"
-#include <QJsonDocument>
-#include <QJsonArray>
+#include "playlistModel.h"
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include "FileManager/FileManager.h"
 
 PlaylistModel::PlaylistModel(std::shared_ptr<FileManager> fs, QObject* parent)
     : QAbstractListModel(parent)

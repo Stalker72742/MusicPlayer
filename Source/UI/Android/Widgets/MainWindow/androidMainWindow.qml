@@ -249,7 +249,7 @@ Window {
                             Image {
                                 id: searchIcon
 
-                                source: "qrc:/Resources/Search.png"
+                                source: "qrc:/SharedResources/Search.png"
 
                                 fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter
@@ -303,7 +303,7 @@ Window {
                             Image {
                                 id: medialibIcon
 
-                                source: "qrc:/Resources/Medialib.png"
+                                source: "qrc:/SharedResources/Medialib.png"
 
                                 fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter
@@ -356,7 +356,7 @@ Window {
                             Image {
                                 id: settingsIcon
 
-                                source: "qrc:/Resources/Settings.png"
+                                source: "qrc:/SharedResources/Settings.png"
 
                                 fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter

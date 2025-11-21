@@ -37,7 +37,7 @@ Rectangle {
             Image {
                 id: playingSongImage
 
-                source: "qrc:/Resources/EmptyImage.png"
+                source: "qrc:/SharedResources/EmptyImage.png"
 
                 Layout.alignment: Qt.AlignVCenter
 
@@ -80,7 +80,7 @@ Rectangle {
                 background: Image {
                     anchors.fill: parent
 
-                    source: "qrc:/Resources/next.png"
+                    source: "qrc:/PlayerIcons/next.png"
                     rotation: 180
                     fillMode: Image.PreserveAspectFit
                 }
@@ -110,7 +110,7 @@ Rectangle {
                 background: Image {
                     anchors.fill: parent
 
-                    source: "qrc:/Resources/next.png"
+                    source: "qrc:/PlayerIcons/next.png"
                     fillMode: Image.PreserveAspectFit
                 }
 

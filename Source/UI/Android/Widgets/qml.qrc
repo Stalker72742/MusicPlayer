@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>MainWindow/Components/CurrentPlayingSong.qml</file>
+        <file>MainWindow/Components/qmldir</file>
+        <file>MainWindow/androidMainWindow.qml</file>
+        <file>MainWindow/PlaylistWidget.qml</file>
+        <file>MainWindow/qmldir</file>
+        <file>MainWindow/SongWidget.qml</file>
+    </qresource>
+</RCC>

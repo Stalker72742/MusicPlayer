@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16...3.24)
 set(PROJECT_NAME "SoundLink")
 project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
@@ -47,6 +47,7 @@ if (WIN32)
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.cpp
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.h
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.ui
+            Resources/Windows/WinResources.qrc
     )
 
     target_include_directories(${PROJECT_NAME}
@@ -75,28 +76,15 @@ elseif (ANDROID)
             android/gradle/wrapper/gradle-wrapper.properties
             android/gradle.properties android/gradlew android/gradlew.bat
             android/src/com/example/MusicPlayer/MainActivity.java
-            Source/UI/Android/androidmainwindow.cpp
-            Source/UI/Android/androidmainwindow.h
-            Source/UI/Android/androidmainwindow.ui
-            Source/UI/Android/CurrentPlayingSong/currentplayingsong.cpp
-            Source/UI/Android/CurrentPlayingSong/currentplayingsong.h
-            Source/UI/Android/CurrentPlayingSong/currentplayingsong.ui
-            Source/UI/Android/MediaKeyHandler/mediakeyhandler.cpp
-            Source/UI/Android/MediaKeyHandler/mediakeyhandler.h
-            Source/UI/Android/MediaLib/medialibitemwidget.cpp
-            Source/UI/Android/MediaLib/medialibitemwidget.h
-            Source/UI/Android/MediaLib/medialibitemwidget.ui
-            Source/UI/Android/MediaLib/playlistsong.cpp
-            Source/UI/Android/MediaLib/playlistsong.h
-            Source/UI/Android/MediaLib/playlistsong.ui
-            Source/UI/Android/PermissionsHandler/permissionHandler.cpp
-            Source/UI/Android/PermissionsHandler/permissionHandler.h
-            qml.qrc
+            Source/UI/Android/Subsystems/PermissionsHandler/permissionHandler.cpp
+            Source/UI/Android/Subsystems/PermissionsHandler/permissionHandler.h
             Source/UI/Android/Subsystems/androidjavaplayer.h
             Source/UI/Android/Subsystems/androidjavaplayer.cpp
-            Source/UI/Android/Widgets/Interfaces/playlistModel.cpp
-            Source/UI/Android/Widgets/Interfaces/playlistModel.h
-            Source/UI/Android/Widgets/Interfaces/playerdata.h Source/UI/Android/Widgets/Interfaces/playerdata.cpp
+            Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.cpp
+            Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.h
+            Source/UI/Android/Subsystems/QMLInerfaces/playerdata.h Source/UI/Android/Subsystems/QMLInerfaces/playerdata.cpp
+            Source/UI/Android/Widgets/qml.qrc
+            Resources/Android/AndroidResources.qrc
     )
 
 target_link_libraries(SoundLink PRIVATE Qt6::Core Qt6::Core5Compat)
