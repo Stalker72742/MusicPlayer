@@ -27,6 +27,30 @@ class PlayerSubsystem : public SubsystemBase {
 public:
     explicit PlayerSubsystem(playerBackend* Backend, QObject* parent = nullptr);
 
+protected:
+
+
+    bool bIsPlaying;
+
+
+
+
+
+
+
+
+protected:
+
+
+    virtual void SetIsPlaying(bool isPlaying);
+
+
+public:
+
+    virtual bool isPlaying() const { return bIsPlaying; }
+
+public:
+
     ~PlayerSubsystem() override;
 
     void LoadSongs();
@@ -35,7 +59,7 @@ public:
 
     void Resume();
 
-    void Pause() const;
+    void Pause();
 
     void SetVolume(int volume);
 
@@ -102,6 +126,7 @@ signals:
 
     void onPlaylistChanged(playlist* InPlaylist);
     void OnSongChanged(song* Song);
+    void OnPlayingStateChanged(bool isPlaying);
 
 private:
 

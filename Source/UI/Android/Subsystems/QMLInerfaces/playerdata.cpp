@@ -12,6 +12,9 @@ playerData::playerData(QObject* parent) : QObject{parent}
         if(player){
 
             connect(player, &PlayerSubsystem::OnSongChanged, this, &playerData::OnPlayerSongChanged);
+            connect(player, &PlayerSubsystem::OnPlayingStateChanged, this, &playerData::OnPlayerStateChanged);
+
+            OnPlayerStateChanged(player->isPlaying());
 
             if(playlist* currentPlaylist = player->getCurrentPlaylist()){
 
@@ -76,4 +79,9 @@ void playerData::OnPlayerSongChanged(song* InSong)
     {
         setCurrentTrack(InSong->getName());
     }
+}
+void playerData::OnPlayerStateChanged(bool InIsPlaying)
+{
+    m_isPlaying = InIsPlaying;
+    emit isPlayingChanged();
 }

@@ -5,5 +5,7 @@
         <file>SharedResources/Search.png</file>
         <file>SharedResources/Settings.png</file>
         <file>PlayerIcons/next.png</file>
+        <file>PlayerIcons/Pause.png</file>
+        <file>PlayerIcons/Play.png</file>
     </qresource>
 </RCC>

@@ -40,6 +40,7 @@ private:
 public slots:
 
     void OnPlayerSongChanged(song* InSong);
+    void OnPlayerStateChanged(bool InIsPlaying);
 
 signals:
     void isPlayingChanged();

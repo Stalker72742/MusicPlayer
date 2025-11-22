@@ -56,6 +56,12 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
     setCurrentPlaylist(playlist::constructDir(DefaultMusicFolder));
 }
 
+void PlayerSubsystem::SetIsPlaying(bool isPlaying)
+{
+    bIsPlaying = isPlaying;
+    emit OnPlayingStateChanged(bIsPlaying);
+}
+
 PlayerSubsystem::~PlayerSubsystem() {
 
     playerBackend->deleteLater();
@@ -219,6 +225,8 @@ void PlayerSubsystem::PlayCurrentSong() {
         
         SetSource(currentSong);
         playerBackend->play();
+
+        SetIsPlaying(true);
     } /*else {
         qDebug() << "Java player not valid, trying to get audio stream";
 
@@ -238,10 +246,11 @@ void PlayerSubsystem::Resume() {
     }
 }
 
-void PlayerSubsystem::Pause() const {
+void PlayerSubsystem::Pause() {
 
     if (playerBackend) {
         playerBackend->pause();
+        SetIsPlaying(false);
     }
 }
 
@@ -526,6 +535,7 @@ void PlayerSubsystem::playPause(){
     if (playerBackend)
     {
         playerBackend->playPause();
+        SetIsPlaying(!bIsPlaying);
     }
 }
 

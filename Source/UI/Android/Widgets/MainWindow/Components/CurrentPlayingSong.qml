@@ -96,6 +96,24 @@ Rectangle {
                 Layout.preferredWidth: parent.width * 0.12
                 Layout.preferredHeight: Layout.preferredWidth
 
+                background: Rectangle{
+
+                    anchors.fill: parent
+                    radius: width / 2
+
+                    color: "#555555"
+
+                    Image {
+
+                        width: 20
+                        height: 20
+                        anchors.centerIn: parent
+                        fillMode: Image.PreserveAspectFit
+
+                        source: playerData.isPlaying ? "qrc:/PlayerIcons/Pause.png" : "qrc:/PlayerIcons/Play.png"
+                    }
+                }
+
                 onClicked: {
                     playerData.playPause()
                 }
