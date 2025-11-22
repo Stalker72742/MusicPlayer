@@ -26,7 +26,6 @@ protected:
 protected:
 
     virtual void SaveSettings();
-
     virtual void LoadSettings();
 
 public:

@@ -7,7 +7,9 @@
 
 SettingsSubsystem::SettingsSubsystem(QObject* parent)
 {
-    SettingsDataPath = QDir::currentPath() + "/Saved/SettingsData"; //TODO move to static data and make function ::GetSavedDataFolder
+    SettingsDataPath = QDir::currentPath() + "/Saved/SettingsData"; // TODO move to static data and make function ::GetSavedDataFolder
+
+    SettingsSubsystem::LoadSettings();
 }
 
 void SettingsSubsystem::LoadSettings()
@@ -32,7 +34,7 @@ void SettingsSubsystem::LoadSettings()
     {
         QString key;
         SettingData value;
-        
+
         stream >> key;
         stream >> value;
 

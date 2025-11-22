@@ -231,15 +231,8 @@ Window {
                         id: searchButton
 
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        //bottomPadding: 10
-                        //height: 50
-                        //leftPadding: 20
-                        //rightPadding: 20
-                        //topPadding: 10
-                        transformOrigin: Item.Center
-                        //width: 250
 
-                        Layout.preferredWidth: parent.width * 0.14
+                        Layout.preferredWidth: parent.width * 0.12
                         Layout.preferredHeight: Layout.preferredWidth
 
                         background: ColumnLayout {
@@ -253,8 +246,8 @@ Window {
 
                                 fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: 34
-                                Layout.preferredHeight: 34
+                                Layout.preferredWidth: 26
+                                Layout.preferredHeight: 26
                                 visible: false
                             }
 
@@ -264,8 +257,8 @@ Window {
                                     color: stackLayout.currentIndex === 0 ? "#FFFFFF" : "#808080"
 
                                     Layout.alignment: Qt.AlignHCenter
-                                    Layout.preferredWidth: 34
-                                    Layout.preferredHeight: 34
+                                    Layout.preferredWidth: 26
+                                    Layout.preferredHeight: 26
                             }
 
                             Label {
@@ -274,6 +267,7 @@ Window {
 
                                 color: stackLayout.currentIndex === 0 ? "#FFFFFF" : "#808080"
                                 text: "Search"
+                                font.pixelSize: 12
                             }
                         }
 
@@ -286,14 +280,8 @@ Window {
                         id: medialib
 
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        //bottomPadding: 10
-                        //height: 50
-                        //leftPadding: 20
-                        //rightPadding: 20
-                        //topPadding: 10
-                        //width: 250
 
-                        Layout.preferredWidth: parent.width * 0.14
+                        Layout.preferredWidth: parent.width * 0.12
                         Layout.preferredHeight: Layout.preferredWidth
 
                         background: ColumnLayout {
@@ -307,8 +295,8 @@ Window {
 
                                 fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: 34
-                                Layout.preferredHeight: 34
+                                Layout.preferredWidth: 26
+                                Layout.preferredHeight: 26
                                 visible: false
                             }
 
@@ -318,8 +306,8 @@ Window {
                                     color: stackLayout.currentIndex === 1 || stackLayout.currentIndex === 2  ? "#FFFFFF" : "#808080"
 
                                     Layout.alignment: Qt.AlignHCenter
-                                    Layout.preferredWidth: 34
-                                    Layout.preferredHeight: 34
+                                    Layout.preferredWidth: 26
+                                    Layout.preferredHeight: 26
                             }
 
                             Label {
@@ -328,6 +316,7 @@ Window {
 
                                 color: stackLayout.currentIndex === 1 || stackLayout.currentIndex === 2  ? "#FFFFFF" : "#808080"
                                 text: "Medialib"
+                                font.pixelSize: 12
                             }
                         }
 
@@ -339,14 +328,8 @@ Window {
                         id: settings
 
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        //bottomPadding: 10
-                        //height: 50
-                        //leftPadding: 20
-                        //rightPadding: 20
-                        //topPadding: 10
-                        //width: 250
 
-                        Layout.preferredWidth: parent.width * 0.14
+                        Layout.preferredWidth: parent.width * 0.12
                         Layout.preferredHeight: Layout.preferredWidth
 
                         background: ColumnLayout {
@@ -360,8 +343,8 @@ Window {
 
                                 fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: 34
-                                Layout.preferredHeight: 34
+                                Layout.preferredWidth: 26
+                                Layout.preferredHeight: 26
                                 visible: false
                             }
 
@@ -371,8 +354,8 @@ Window {
                                     color: stackLayout.currentIndex === -5 ? "#FFFFFF" : "#808080"
 
                                     Layout.alignment: Qt.AlignHCenter
-                                    Layout.preferredWidth: 34
-                                    Layout.preferredHeight: 34
+                                    Layout.preferredWidth: 26
+                                    Layout.preferredHeight: 26
                             }
 
                             Label {
@@ -381,6 +364,7 @@ Window {
 
                                 color: stackLayout.currentIndex === -5 ? "#FFFFFF" : "#808080"
                                 text: "Settings"
+                                font.pixelSize: 12
                             }
                         }
 

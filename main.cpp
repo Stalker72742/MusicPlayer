@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("playlistModel", &playlistModel);
     engine.rootContext()->setContextProperty("playerData", &playerData);
-    engine.load(QUrl(QStringLiteral("qrc:/Source/UI/Android/Widgets/MainWindow/androidMainWindow.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/MainWindow/androidMainWindow.qml")));
 
 #endif
 
