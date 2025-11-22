@@ -31,6 +31,10 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Public/Subsystems/FileManager/FileManager.h
         Public/Data/staticData.cpp
         Public/Data/staticData.h
+        Public/Subsystems/Settings/SettingsSubsystem.cpp
+        Public/Subsystems/Settings/SettingsSubsystem.h
+        Public/Subsystems/Settings/Data/SettingData.h
+        Public/Subsystems/Settings/Data/SettingType.h
 )
 
 target_link_libraries(MusicPlayerCore
