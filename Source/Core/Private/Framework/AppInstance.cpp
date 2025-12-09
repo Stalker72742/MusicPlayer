@@ -22,10 +22,9 @@ void AppInstance::addSubsystem(SubsystemBase* subsystem)
     subsystems.push_back(subsystem);
 }
 
-AppInstance::AppInstance(QObject *parent) {
+AppInstance::AppInstance() {
 
-    addSubsystem(new staticData(this));
-    addSubsystem(new FileManager(this));
+
 }
 
 AppInstance::~AppInstance() {

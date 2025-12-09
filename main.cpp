@@ -4,9 +4,10 @@
 #include "PlayerSubsystem.h"
 #include "Source/UI/Android/Subsystems/QMLInerfaces/playerdata.h"
 #include "Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.h"
+#include "windowsmediaplayer.h"
 
 #ifdef Q_OS_WIN
-#include "Source/UI/Windows/MainWindow/mainwindow.h"
+#include "Source/UI/NewWindows/MainWindow/MainWindow.h"
 #include <QApplication>
 #elifdef Q_OS_ANDROID
 #include "Source/UI/Android/Subsystems/androidjavaplayer.h"
@@ -19,15 +20,14 @@
 
 int main(int argc, char *argv[])
 {
-
-
 #ifdef Q_OS_WIN
-
-    AppInstance *w = AppInstance::getInstance();
 
     QApplication a(argc, argv);
 
-    mainWindow* win = new mainWindow(w);
+    AppInstance *w = AppInstance::getInstance();
+    w->addSubsystem(new PlayerSubsystem(new WindowsMediaPlayer(nullptr)));
+
+    MainWindow* win = new MainWindow();
     win->show();
 
 #elifdef  Q_OS_ANDROID

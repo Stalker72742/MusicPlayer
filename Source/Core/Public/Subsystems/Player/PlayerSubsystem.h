@@ -102,6 +102,10 @@ public:
 
     void playPause();
 
+    // Facade API for easy slider binding
+    void bindPositionSlider(QSlider* slider);
+    void bindVolumeSlider(QSlider* slider);
+
 public slots:
 
     void PlayerError(QMediaPlayer::Error Error, const QString &error);
@@ -127,6 +131,10 @@ signals:
     void onPlaylistChanged(playlist* InPlaylist);
     void OnSongChanged(song* Song);
     void OnPlayingStateChanged(bool isPlaying);
+
+    // Facade signals for sliders
+    void onPositionChanged(qint64 currentMs, qint64 totalMs);
+    void onVolumeChanged(int volume);
 
 private:
 

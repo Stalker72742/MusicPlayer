@@ -10,6 +10,8 @@
 #include <QDirIterator>
 #include <QJsonDocument>
 #include <AppInstance.h>
+#include <QStandardPaths>
+#include <QSlider>
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
 #endif
@@ -33,6 +35,10 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
     connect(updateTimer, &QTimer::timeout, this, &PlayerSubsystem::updateSliderPosition);
 
     connect(playerBackend, &playerBackend::onPlayerStateChanged, this, &PlayerSubsystem::onBackendStateChanged);
+    connect(playerBackend, &playerBackend::onUpdatePosition, this,
+        [this](playerPosition pos) {
+            emit onPositionChanged(pos.currentMs, pos.totalMs);
+        });
 
 #ifdef Q_OS_ANDROID
 
@@ -51,6 +57,15 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
     DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
 
     SetVolume(100);
+#elifdef Q_OS_WIN
+
+    // Get standard Windows Music folder
+    DefaultMusicFolder = QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
+    DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
+
+    qDebug() << "Windows Music folder:" << DefaultMusicFolder;
+
+    SetVolume(50);
 #endif
 
     setCurrentPlaylist(playlist::constructDir(DefaultMusicFolder));
@@ -255,9 +270,12 @@ void PlayerSubsystem::Pause() {
 }
 
 void PlayerSubsystem::SetVolume(const int volume) {
-    currentVolume = volume;
-    if (playerBackend) {
-        playerBackend->setVolume(static_cast<float>(volume));
+    if (currentVolume != volume) {
+        currentVolume = volume;
+        if (playerBackend) {
+            playerBackend->setVolume(static_cast<float>(volume));
+        }
+        emit onVolumeChanged(volume);
     }
 }
 
@@ -537,6 +555,73 @@ void PlayerSubsystem::playPause(){
         playerBackend->playPause();
         SetIsPlaying(!bIsPlaying);
     }
+}
+
+void PlayerSubsystem::bindPositionSlider(QSlider* slider)
+{
+    if (!slider) return;
+
+    // Setup slider range (0-100%)
+    slider->setRange(0, 100);
+    slider->setValue(0);
+
+    // Track if music was playing before dragging
+    bool* wasPlaying = new bool(false);
+
+    // Update slider when position changes (but not while dragging)
+    connect(this, &PlayerSubsystem::onPositionChanged, slider,
+        [slider](qint64 currentMs, qint64 totalMs) {
+            if (totalMs > 0 && !slider->isSliderDown()) {
+                int percentage = static_cast<int>((currentMs * 100) / totalMs);
+                slider->setValue(percentage);
+            }
+        });
+
+    // Pause playback when user starts dragging
+    connect(slider, &QSlider::sliderPressed, this, [this, wasPlaying]() {
+        *wasPlaying = bIsPlaying;
+        if (bIsPlaying) {
+            Pause();
+            qDebug() << "Paused for seeking";
+        }
+    });
+
+    // Seek and resume when user releases slider
+    connect(slider, &QSlider::sliderReleased, this, [this, slider, wasPlaying]() {
+        if (playerBackend) {
+            qint64 totalMs = playerBackend->getPosition().totalMs;
+            if (totalMs > 0) {
+                qint64 newPosition = (slider->value() * totalMs) / 100;
+                playerBackend->setPosition(newPosition);
+                qDebug() << "Seeked to:" << newPosition << "ms";
+            }
+        }
+
+        // Resume if it was playing before
+        if (*wasPlaying) {
+            Resume();
+            qDebug() << "Resumed after seeking";
+        }
+    });
+
+    qDebug() << "Position slider bound successfully";
+}
+
+void PlayerSubsystem::bindVolumeSlider(QSlider* slider)
+{
+    if (!slider) return;
+
+    // Setup slider range (0-100)
+    slider->setRange(0, 100);
+    slider->setValue(currentVolume);
+
+    // Update volume when slider changes
+    connect(slider, &QSlider::valueChanged, this, &PlayerSubsystem::SetVolume);
+
+    // Update slider when volume changes programmatically
+    connect(this, &PlayerSubsystem::onVolumeChanged, slider, &QSlider::setValue);
+
+    qDebug() << "Volume slider bound successfully";
 }
 
 // Static callbacks for Java

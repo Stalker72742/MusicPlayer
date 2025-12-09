@@ -8,7 +8,6 @@
 #include <QMouseEvent>
 //#include "ytSearcherSub.h"
 #include "AppInstance.h"
-#include "Components/titlebar.h"
 #include "PlayerSubsystem.h"
 #include "SubsystemBase.h"
 #include "medialibitem.h"
@@ -28,30 +27,30 @@ mainWindow::mainWindow(QObject *Parent) :
 
     parent = Parent;
 
-    setWindowFlags(Qt::FramelessWindowHint);
+    //setWindowFlags(Qt::FramelessWindowHint);
 
-    QWidget* titleBar = new TitleBar(this);
+    //QWidget* titleBar = new TitleBar(this);
 
-    setMenuWidget(titleBar);
+    //setMenuWidget(titleBar);
 
-    titleBar->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-
-    titleBar->setFixedHeight(60);
-
-    titleBar->setObjectName("TitleBar");
-
-    QTimer::singleShot(500,[titleBar] {
-
-        titleBar->setStyleSheet("QWidget#TitleBar {"
-        "border-top: none;"
-        "border-left: none;"
-        "border-right: none;"
-        "border-bottom: 15px solid white;"
-        "background-color: rgba(33, 33, 33, 255);"
-        "}"
-    );
-
-    });
+    // titleBar->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    //
+    // titleBar->setFixedHeight(60);
+    //
+    // titleBar->setObjectName("TitleBar");
+    //
+    // QTimer::singleShot(500,[titleBar] {
+    //
+    //     titleBar->setStyleSheet("QWidget#TitleBar {"
+    //     "border-top: none;"
+    //     "border-left: none;"
+    //     "border-right: none;"
+    //     "border-bottom: 15px solid white;"
+    //     "background-color: rgba(33, 33, 33, 255);"
+    //     "}"
+    // );
+    //
+    // });
 
     AppInstance* AppInstance = AppInstance::getInstance();
 
@@ -62,8 +61,21 @@ mainWindow::mainWindow(QObject *Parent) :
     if (!playerSubsystem) return;
 
     connect(playerSubsystem, &PlayerSubsystem::playlistChanged, this, &mainWindow::updatePlaylistItems);
-    connect(playerSubsystem, &PlayerSubsystem::updateMusicDuration, this, &mainWindow::updateTimeSlider);
     connect(playerSubsystem, &PlayerSubsystem::onShowMediaLib, this, &mainWindow::drawMediaLib);
+
+    // Update time label when position changes
+    connect(playerSubsystem, &PlayerSubsystem::onPositionChanged, this,
+        [this](qint64 currentMs, qint64 totalMs) {
+            qint64 seconds = currentMs / 1000;
+            qint64 minutes = seconds / 60;
+            seconds = seconds % 60;
+
+            QString str = QString("%1:%2")
+                .arg(minutes, 2, 10, QChar('0'))
+                .arg(seconds, 2, 10, QChar('0'));
+
+            ui->currentDurationLabel->setText(str);
+        });
 
     updatePlaylistItems();
 
@@ -72,9 +84,9 @@ mainWindow::mainWindow(QObject *Parent) :
     connect(ui->previousButton, &QPushButton::clicked, this, &mainWindow::playPrevious);
     //connect(ui->createPlaylistButton, &QPushButton::clicked, this, &mainWindow::createPlaylist);
 
-    connect(ui->soundSlider, &QSlider::valueChanged, playerSubsystem, &PlayerSubsystem::SetVolume);
-
-    ui->soundSlider->setValue(playerSubsystem->getVolume());
+    // Facade API - simple one-liners for slider binding
+    playerSubsystem->bindVolumeSlider(ui->soundSlider);
+    playerSubsystem->bindPositionSlider(ui->durationSlider);
 
     ui->mediatekaScrollArea->setLayout(new QVBoxLayout());
 
@@ -178,16 +190,7 @@ bool mainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr
 
 void mainWindow::playPause() {
 
-    if (bPaused) {
-
-        playerSubsystem->Resume();
-        bPaused = false;
-        
-    }else {
-
-        playerSubsystem->Pause();
-        bPaused = true;
-    }
+    playerSubsystem->playPause();
 }
 
 void mainWindow::playNext() const {

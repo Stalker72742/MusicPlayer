@@ -28,12 +28,6 @@ add_subdirectory(Source/Core)
 if (WIN32)
 
     qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
-            Source/UI/Windows/MainWindow/mainwindow.cpp
-            Source/UI/Windows/MainWindow/mainwindow.h
-            Source/UI/Windows/MainWindow/mainwindow.ui
-            Source/UI/Windows/MainWindow/Components/titlebar.cpp
-            Source/UI/Windows/MainWindow/Components/titlebar.h
-            Source/UI/Windows/MainWindow/Components/titlebar.ui
             Source/UI/Windows/MediaLib/addtoplaylist.cpp
             Source/UI/Windows/MediaLib/addtoplaylist.h
             Source/UI/Windows/MediaLib/addtoplaylist.ui
@@ -47,6 +41,14 @@ if (WIN32)
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.cpp
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.h
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.ui
+            Source/UI/Windows/Subsystems/windowsmediaplayer.h
+            Source/UI/Windows/Subsystems/windowsmediaplayer.cpp
+            Source/UI/NewWindows/MainWindow/MainWindow.cpp
+            Source/UI/NewWindows/MainWindow/MainWindow.h
+            Source/UI/NewWindows/BottomBar/BottomBar.cpp
+            Source/UI/NewWindows/BottomBar/BottomBar.h
+            Source/UI/NewWindows/TitleBar/TitleBar.cpp
+            Source/UI/NewWindows/TitleBar/TitleBar.h
             Resources/Windows/WinResources.qrc
     )
 
@@ -55,6 +57,10 @@ if (WIN32)
             Source/UI/Windows/MediaLib
             Source/UI/Windows/OldWidgets/Components
             Source/UI/Windows/OldWidgets/Playlist
+            Source/UI/NewWindows/MainWindow
+            Source/UI/NewWindows/BottomBar
+            Source/UI/NewWindows/TitleBar
+            Source/UI/Windows/Subsystems
     )
 
     target_link_libraries(${PROJECT_NAME}

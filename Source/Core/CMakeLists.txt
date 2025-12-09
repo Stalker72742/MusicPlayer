@@ -8,8 +8,8 @@ set(CMAKE_AUTOUIC ON)
 #find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Multimedia)
 set(CMAKE_PREFIX_PATH "D:/Qt/6.8.3/android_arm64_v8a")
 set(Qt6_DIR "D:/Qt/6.8.3/android_arm64_v8a/lib/cmake/Qt6")
-find_package(Qt6 COMPONENTS Core Network)
-find_package(Qt6 REQUIRED COMPONENTS Core Network)
+find_package(Qt6 COMPONENTS Core Network Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Widgets)
 
 add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Public/Framework/AppInstance.h
@@ -43,6 +43,7 @@ target_link_libraries(MusicPlayerCore
         Qt6::Multimedia
         Qt6::CorePrivate
         Qt6::Network
+        Qt6::Widgets
 )
 
 target_include_directories(MusicPlayerCore
