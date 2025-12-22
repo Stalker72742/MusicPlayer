@@ -11,17 +11,38 @@
 class SubsystemBase;
 
 class AppInstance : public QObject {
-Q_OBJECT
+    Q_OBJECT
+protected:
+    explicit AppInstance();
+    ~AppInstance() override;
+
+protected:
+
+    //virtual void Init();
+
 public:
 
     static AppInstance* getInstance();
 
-    [[nodiscard]] QList<SubsystemBase*> getSubsystems() const { return subsystems; }
+    QList<SubsystemBase*> getSubsystems() const { return subsystems; }
 
     template <typename T>
     T* createSubsystem() {
         subsystems.append(new T(this));
         return qobject_cast<T*>(subsystems.last());
+    }
+
+    template <typename T>
+    T* getSubsystem(){
+        for(SubsystemBase* subsystem : subsystems){
+            if(subsystem){
+                if(T* castedSubsys = qobject_cast<T*>(subsystem)){
+                    return castedSubsys;
+                }
+            }
+        }
+
+        return nullptr;
     }
 
     void addSubsystem(SubsystemBase* subsystem);
@@ -36,9 +57,7 @@ public:
     AppInstance(const AppInstance&) = delete;
     AppInstance& operator=(const AppInstance&) = delete;
 
-private:
-    explicit AppInstance(QObject* parent = nullptr);
-    ~AppInstance() override;
+protected:
 
     QList<SubsystemBase*> subsystems;
     static AppInstance* instance;

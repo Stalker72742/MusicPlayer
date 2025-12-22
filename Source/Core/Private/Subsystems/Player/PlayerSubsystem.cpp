@@ -10,6 +10,8 @@
 #include <QDirIterator>
 #include <QJsonDocument>
 #include <AppInstance.h>
+#include <QStandardPaths>
+#include <QSlider>
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
 #endif
@@ -33,6 +35,10 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
     connect(updateTimer, &QTimer::timeout, this, &PlayerSubsystem::updateSliderPosition);
 
     connect(playerBackend, &playerBackend::onPlayerStateChanged, this, &PlayerSubsystem::onBackendStateChanged);
+    connect(playerBackend, &playerBackend::onUpdatePosition, this,
+        [this](playerPosition pos) {
+            emit onPositionChanged(pos.currentMs, pos.totalMs);
+        });
 
 #ifdef Q_OS_ANDROID
 
@@ -51,11 +57,26 @@ PlayerSubsystem::PlayerSubsystem(::playerBackend* Backend, QObject *parent) {
     DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
 
     SetVolume(100);
+#elifdef Q_OS_WIN
+
+    // Get standard Windows Music folder
+    DefaultMusicFolder = QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
+    DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
+
+    qDebug() << "Windows Music folder:" << DefaultMusicFolder;
+
+    SetVolume(50);
 #endif
 
-    currentPlaylistPtr = playlist::constructDir(DefaultMusicFolder);
-    playerBackend->setSource(currentPlaylistPtr->getSongs()[0]->getSongPath());
+    setCurrentPlaylist(playlist::constructDir(DefaultMusicFolder));
 }
+
+void PlayerSubsystem::SetIsPlaying(bool isPlaying)
+{
+    bIsPlaying = isPlaying;
+    emit OnPlayingStateChanged(bIsPlaying);
+}
+
 PlayerSubsystem::~PlayerSubsystem() {
 
     playerBackend->deleteLater();
@@ -67,6 +88,32 @@ void PlayerSubsystem::initJavaPlayer() {
 
 void PlayerSubsystem::registerJavaCallbacks() {
 
+}
+
+void PlayerSubsystem::SetSource(song* InSong)
+{
+    if (playerBackend && InSong)
+    {
+        playerBackend->setSource(InSong->getSongPath());
+        emit OnSongChanged(InSong);
+    }
+}
+
+void PlayerSubsystem::setCurrentPlaylist(playlist *InNewPlaylist)
+{
+    currentPlaylistPtr = InNewPlaylist;
+    emit onPlaylistChanged(currentPlaylistPtr);
+
+    if (currentPlaylistPtr)
+    {
+        if (currentPlaylistPtr->getSongs().size() > 0)
+        {
+            if (song* currentSong = currentPlaylistPtr->getSongs()[0])
+            {
+                SetSource(currentSong);
+            }
+        }
+    }
 }
 
 void PlayerSubsystem::updateMediaSessionState(const QString &state)
@@ -186,22 +233,22 @@ void PlayerSubsystem::PlayCurrentSong() {
 
     song* currentSong = currentPlaylistPtr->getCurrentSong();
 
-    if (playerBackend) {
-        QString songPath = currentSong->getSongPath();
+    if (playerBackend && currentSong) {
+        currentSong->getSongPath();
 
-        qDebug() << "Playing song via Java backend: " << songPath;
+        qDebug() << "Playing song via Java backend: " << currentSong->getSongPath();
         
-        playerBackend->setSource(songPath);
+        SetSource(currentSong);
         playerBackend->play();
 
-        emit playingSongChanged(currentSong);
-    } else {
+        SetIsPlaying(true);
+    } /*else {
         qDebug() << "Java player not valid, trying to get audio stream";
 
         if (!currentSong->getSongPath().startsWith("/")) {
             //connect(currentSong, &song::audioStreamLoaded, this, &PlayerSubsystem::onAudioStreamLoaded);
         }
-    }
+    }*/
 }
 
 void PlayerSubsystem::Resume() {
@@ -214,17 +261,21 @@ void PlayerSubsystem::Resume() {
     }
 }
 
-void PlayerSubsystem::Pause() const {
+void PlayerSubsystem::Pause() {
 
     if (playerBackend) {
         playerBackend->pause();
+        SetIsPlaying(false);
     }
 }
 
 void PlayerSubsystem::SetVolume(const int volume) {
-    currentVolume = volume;
-    if (playerBackend) {
-        playerBackend->setVolume(static_cast<float>(volume));
+    if (currentVolume != volume) {
+        currentVolume = volume;
+        if (playerBackend) {
+            playerBackend->setVolume(static_cast<float>(volume));
+        }
+        emit onVolumeChanged(volume);
     }
 }
 
@@ -249,11 +300,9 @@ void PlayerSubsystem::NextSong() {
 }
 
 void PlayerSubsystem::PreviousSong() {
-    CurrentSongIndex--;
+    currentPlaylistPtr->prev();
 
-    if (CurrentSongIndex < 0) {
-        CurrentSongIndex = getSongs().size() - 1;
-    }
+    qDebug() << "Start playing previous song";
 
     PlayCurrentSong();
 }
@@ -320,7 +369,9 @@ void PlayerSubsystem::onBackendStateChanged(EPlayerState inBackedState)
     case EPlayerState::Stopped:
         break;
     case EPlayerState::Finished:
-        playerBackend->setSource(currentPlaylistPtr->next()->getSongPath());
+
+        SetSource(currentPlaylistPtr->next());
+
         break;
     case EPlayerState::Error:
         break;
@@ -499,21 +550,78 @@ void PlayerSubsystem::addSongToQueue(song* Song) {
 
 void PlayerSubsystem::playPause(){
 
-    if(getSongs().empty()) return;
-
-    if(bPaused){
-        if (playerBackend) {
-            playerBackend->play();
-            bPaused = false;
-        } else {
-            PlayCurrentSong();
-        }
-    }else{
-        if (playerBackend) {
-            playerBackend->pause();
-            bPaused = true;
-        }
+    if (playerBackend)
+    {
+        playerBackend->playPause();
+        SetIsPlaying(!bIsPlaying);
     }
+}
+
+void PlayerSubsystem::bindPositionSlider(QSlider* slider)
+{
+    if (!slider) return;
+
+    // Setup slider range (0-100%)
+    slider->setRange(0, 100);
+    slider->setValue(0);
+
+    // Track if music was playing before dragging
+    bool* wasPlaying = new bool(false);
+
+    // Update slider when position changes (but not while dragging)
+    connect(this, &PlayerSubsystem::onPositionChanged, slider,
+        [slider](qint64 currentMs, qint64 totalMs) {
+            if (totalMs > 0 && !slider->isSliderDown()) {
+                int percentage = static_cast<int>((currentMs * 100) / totalMs);
+                slider->setValue(percentage);
+            }
+        });
+
+    // Pause playback when user starts dragging
+    connect(slider, &QSlider::sliderPressed, this, [this, wasPlaying]() {
+        *wasPlaying = bIsPlaying;
+        if (bIsPlaying) {
+            Pause();
+            qDebug() << "Paused for seeking";
+        }
+    });
+
+    // Seek and resume when user releases slider
+    connect(slider, &QSlider::sliderReleased, this, [this, slider, wasPlaying]() {
+        if (playerBackend) {
+            qint64 totalMs = playerBackend->getPosition().totalMs;
+            if (totalMs > 0) {
+                qint64 newPosition = (slider->value() * totalMs) / 100;
+                playerBackend->setPosition(newPosition);
+                qDebug() << "Seeked to:" << newPosition << "ms";
+            }
+        }
+
+        // Resume if it was playing before
+        if (*wasPlaying) {
+            Resume();
+            qDebug() << "Resumed after seeking";
+        }
+    });
+
+    qDebug() << "Position slider bound successfully";
+}
+
+void PlayerSubsystem::bindVolumeSlider(QSlider* slider)
+{
+    if (!slider) return;
+
+    // Setup slider range (0-100)
+    slider->setRange(0, 100);
+    slider->setValue(currentVolume);
+
+    // Update volume when slider changes
+    connect(slider, &QSlider::valueChanged, this, &PlayerSubsystem::SetVolume);
+
+    // Update slider when volume changes programmatically
+    connect(this, &PlayerSubsystem::onVolumeChanged, slider, &QSlider::setValue);
+
+    qDebug() << "Volume slider bound successfully";
 }
 
 // Static callbacks for Java

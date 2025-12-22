@@ -2,8 +2,9 @@
 
 #include "androidjavaplayer.h"
 #include <private/qandroidextras_p.h>
-#include "SubsystemBase.h"
 #include "PlayerSubsystem.h"
+#include "SubObjects/playlist.h"
+#include "SubsystemBase.h"
 
 AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
     : playerBackend(parent) {
@@ -16,6 +17,7 @@ AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
         }
 
         playerService = QJniObject("android/content/Intent", "()V");
+
         playerService.callObjectMethod(
             "setClassName",
             "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;",
@@ -40,9 +42,21 @@ AndroidJavaPlayer::AndroidJavaPlayer(QObject* parent)
 
         QTimer::singleShot(300, [this](){
             setVolume(100);
-            setSource("/storage/emulated/0/Music/Judas.mp3");
+
+            if (const auto appInstance = AppInstance::getInstance())
+            {
+                if (const auto playerSubsys = appInstance->getSubsystem<PlayerSubsystem>())
+                {
+                    if (const auto playlist = playerSubsys->getCurrentPlaylist())
+                    {
+                        if (const auto song = playlist->getCurrentSong())
+                        {
+                            setSource(song->getSongPath());
+                        }
+                    }
+                }
+            }
         });
-        //play();
     });
 }
 
@@ -100,7 +114,14 @@ void AndroidJavaPlayer::pause() {
         currentState = EPlayerState::Stopped;
         stopPositionUpdates();
     }
+}
+void AndroidJavaPlayer::playPause()
+{
+    if (!playerService.isValid()) return;
 
+    QJniObject::callStaticMethod<jboolean>(
+        "com/example/MusicPlayer/MusicPlayerService",
+        "playPauseStatic");
 }
 
 void AndroidJavaPlayer::setVolume(float vol) {

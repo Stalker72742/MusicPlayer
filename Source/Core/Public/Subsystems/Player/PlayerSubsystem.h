@@ -27,6 +27,30 @@ class PlayerSubsystem : public SubsystemBase {
 public:
     explicit PlayerSubsystem(playerBackend* Backend, QObject* parent = nullptr);
 
+protected:
+
+
+    bool bIsPlaying;
+
+
+
+
+
+
+
+
+protected:
+
+
+    virtual void SetIsPlaying(bool isPlaying);
+
+
+public:
+
+    virtual bool isPlaying() const { return bIsPlaying; }
+
+public:
+
     ~PlayerSubsystem() override;
 
     void LoadSongs();
@@ -35,7 +59,7 @@ public:
 
     void Resume();
 
-    void Pause() const;
+    void Pause();
 
     void SetVolume(int volume);
 
@@ -78,6 +102,10 @@ public:
 
     void playPause();
 
+    // Facade API for easy slider binding
+    void bindPositionSlider(QSlider* slider);
+    void bindVolumeSlider(QSlider* slider);
+
 public slots:
 
     void PlayerError(QMediaPlayer::Error Error, const QString &error);
@@ -99,6 +127,14 @@ signals:
     void onShowMediaLib(QList<QString> songs);
 
     void playingSongChanged(song* currentPlayingSong);
+
+    void onPlaylistChanged(playlist* InPlaylist);
+    void OnSongChanged(song* Song);
+    void OnPlayingStateChanged(bool isPlaying);
+
+    // Facade signals for sliders
+    void onPositionChanged(qint64 currentMs, qint64 totalMs);
+    void onVolumeChanged(int volume);
 
 private:
 
@@ -134,6 +170,13 @@ private:
 
     int currentVolume = 50;
     qint64 currentDuration = 0;
+
+public:
+
+    void SetSource(song* InSong);
+
+    void setCurrentPlaylist(playlist* InNewPlaylist);
+    playlist* getCurrentPlaylist() const { return currentPlaylistPtr; }
 };
 
 #endif

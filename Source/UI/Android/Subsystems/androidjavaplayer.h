@@ -18,6 +18,7 @@ public:
     void setSource(const QString& source) override;
     void play() override;
     void pause() override;
+    void playPause() override;
 
     void setVolume(float volume) override;
     void setPosition(qint64 position) override;

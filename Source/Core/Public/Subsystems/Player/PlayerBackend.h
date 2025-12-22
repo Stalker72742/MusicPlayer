@@ -38,6 +38,7 @@ public:
     virtual void play() = 0;
     virtual void pause();
     virtual void unpause();
+    virtual void playPause();
     virtual void setSource(const QString& source);
     virtual void setVolume(float volume);
     virtual void setPosition(qint64 position);

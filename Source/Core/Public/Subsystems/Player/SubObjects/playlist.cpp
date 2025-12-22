@@ -22,6 +22,14 @@ void playlist::addSong(song* NewSong)
     songs.append(NewSong);
 }
 
+song *playlist::getCurrentSong() const
+{
+    if(songs.size() > currentSongIndex){
+        return songs[currentSongIndex];
+    }
+    return nullptr;
+}
+
 song* playlist::next()
 {
     currentSongIndex++;

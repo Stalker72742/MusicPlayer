@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16...3.24)
 set(PROJECT_NAME "SoundLink")
 project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
@@ -16,10 +16,11 @@ if(ANDROID)
         add_definitions(-DQ_OS_ANDROID)
     endif ()
 
-    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Gui Qml Quick QuickControls2)
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network Gui Qml Quick QuickControls2 Core5Compat)
 elseif(WIN32)
 
-    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia)
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 endif()
 
 add_subdirectory(Source/Core)
@@ -27,12 +28,6 @@ add_subdirectory(Source/Core)
 if (WIN32)
 
     qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
-            Source/UI/Windows/MainWindow/mainwindow.cpp
-            Source/UI/Windows/MainWindow/mainwindow.h
-            Source/UI/Windows/MainWindow/mainwindow.ui
-            Source/UI/Windows/MainWindow/Components/titlebar.cpp
-            Source/UI/Windows/MainWindow/Components/titlebar.h
-            Source/UI/Windows/MainWindow/Components/titlebar.ui
             Source/UI/Windows/MediaLib/addtoplaylist.cpp
             Source/UI/Windows/MediaLib/addtoplaylist.h
             Source/UI/Windows/MediaLib/addtoplaylist.ui
@@ -46,6 +41,15 @@ if (WIN32)
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.cpp
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.h
             Source/UI/Windows/OldWidgets/Playlist/playlistitem.ui
+            Source/UI/Windows/Subsystems/windowsmediaplayer.h
+            Source/UI/Windows/Subsystems/windowsmediaplayer.cpp
+            Source/UI/NewWindows/MainWindow/MainWindow.cpp
+            Source/UI/NewWindows/MainWindow/MainWindow.h
+            Source/UI/NewWindows/BottomBar/BottomBar.cpp
+            Source/UI/NewWindows/BottomBar/BottomBar.h
+            Source/UI/NewWindows/TitleBar/TitleBar.cpp
+            Source/UI/NewWindows/TitleBar/TitleBar.h
+            Resources/Windows/WinResources.qrc
     )
 
     target_include_directories(${PROJECT_NAME}
@@ -53,6 +57,10 @@ if (WIN32)
             Source/UI/Windows/MediaLib
             Source/UI/Windows/OldWidgets/Components
             Source/UI/Windows/OldWidgets/Playlist
+            Source/UI/NewWindows/MainWindow
+            Source/UI/NewWindows/BottomBar
+            Source/UI/NewWindows/TitleBar
+            Source/UI/Windows/Subsystems
     )
 
     target_link_libraries(${PROJECT_NAME}
@@ -61,6 +69,7 @@ if (WIN32)
             Qt6::Core
             Qt6::Widgets
             Qt6::Multimedia
+            Qt6::Network
     )
 elseif (ANDROID)
 
@@ -73,34 +82,31 @@ elseif (ANDROID)
             android/gradle/wrapper/gradle-wrapper.properties
             android/gradle.properties android/gradlew android/gradlew.bat
             android/src/com/example/MusicPlayer/MainActivity.java
-            Source/UI/Android/androidmainwindow.cpp
-            Source/UI/Android/androidmainwindow.h
-            Source/UI/Android/androidmainwindow.ui
-            Source/UI/Android/CurrentPlayingSong/currentplayingsong.cpp
-            Source/UI/Android/CurrentPlayingSong/currentplayingsong.h
-            Source/UI/Android/CurrentPlayingSong/currentplayingsong.ui
-            Source/UI/Android/MediaKeyHandler/mediakeyhandler.cpp
-            Source/UI/Android/MediaKeyHandler/mediakeyhandler.h
-            Source/UI/Android/MediaLib/medialibitemwidget.cpp
-            Source/UI/Android/MediaLib/medialibitemwidget.h
-            Source/UI/Android/MediaLib/medialibitemwidget.ui
-            Source/UI/Android/MediaLib/playlistsong.cpp
-            Source/UI/Android/MediaLib/playlistsong.h
-            Source/UI/Android/MediaLib/playlistsong.ui
-            Source/UI/Android/PermissionsHandler/permissionHandler.cpp
-            Source/UI/Android/PermissionsHandler/permissionHandler.h
-            qml.qrc
+            Source/UI/Android/Subsystems/PermissionsHandler/permissionHandler.cpp
+            Source/UI/Android/Subsystems/PermissionsHandler/permissionHandler.h
             Source/UI/Android/Subsystems/androidjavaplayer.h
             Source/UI/Android/Subsystems/androidjavaplayer.cpp
+            Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.cpp
+            Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.h
+            Source/UI/Android/Subsystems/QMLInerfaces/playerdata.h Source/UI/Android/Subsystems/QMLInerfaces/playerdata.cpp
+            Source/UI/Android/Widgets/qml.qrc
+            Resources/Android/AndroidResources.qrc
     )
 
-    if (NOT_QTCREATOR)
+target_link_libraries(SoundLink PRIVATE Qt6::Core Qt6::Core5Compat)
+if (NOT_QTCREATOR)
 
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+                QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
+                QT_ANDROID_MIN_SDK_VERSION 28
+                QT_ANDROID_TARGET_SDK_VERSION 34
+        )
+
+    else()
+
+        set_target_properties(${PROJECT_NAME} PROPERTIES
             QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
-            QT_ANDROID_MIN_SDK_VERSION 28
-            QT_ANDROID_TARGET_SDK_VERSION 34
-    )
+        )
 
     endif ()
 
@@ -124,18 +130,20 @@ elseif (ANDROID)
             "Source/UI/Platforms/Android/MediaLib"
             "Source/UI/Platforms/Android/Permissions"
             Source/UI/Platforms/Android/Subsystems
+             Source/Core/Public/Data
     )
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
             MusicPlayerCore
-            Qt::Core
+            Qt6::Core
             Qt6::CorePrivate
             Qt6::Widgets
             Qt6::Gui
             Qt6::Qml
             Qt6::Quick
             Qt6::QuickControls2
+            Qt6::Network
     )
 endif ()
 
