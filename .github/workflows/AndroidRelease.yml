@@ -21,25 +21,82 @@ jobs:
         
         /opt/qt/6.8.2/android_arm64_v8a/bin/qt-cmake .. \
           -DANDROID_ABI=arm64-v8a \
-          -DANDROID_PLATFORM=android-28 \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DQT_ANDROID_BUILD_ALL_ABIS=OFF
+          -DANDROID_PLATFORM=android-34 \
+          -DCMAKE_BUILD_TYPE=Release
         
         cmake --build . --parallel
-        
         cmake --build . --target apk
+    
+    - name: Create debug keystore
+      run: |
+        mkdir -p ~/.android
+        
+        # Создать debug keystore (стандартный для Android)
+        keytool -genkey -v \
+          -keystore ~/.android/debug.keystore \
+          -storepass android \
+          -alias androiddebugkey \
+          -keypass android \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -dname "CN=Android Debug,O=Android,C=US"
+    
+    - name: Sign APK
+      run: |
+        # Найти APK
+        APK_PATH=$(find build -name "*-release-unsigned.apk" -o -name "*.apk" | head -1)
+        echo "Found APK: $APK_PATH"
+        
+        # Подписать через jarsigner
+        jarsigner -verbose \
+          -keystore ~/.android/debug.keystore \
+          -storepass android \
+          -keypass android \
+          "$APK_PATH" \
+          androiddebugkey
+        
+        # Проверить подпись
+        jarsigner -verify -verbose "$APK_PATH"
+        
+        # Выровнять APK (zipalign)
+        ZIPALIGN=$(find /opt/android-sdk/build-tools -name "zipalign" | head -1)
+        
+        if [ -n "$ZIPALIGN" ]; then
+          echo "Aligning APK..."
+          $ZIPALIGN -v 4 "$APK_PATH" "${APK_PATH%.apk}-aligned.apk"
+          mv "${APK_PATH%.apk}-aligned.apk" "$APK_PATH"
+        fi
+        
+        # Переименовать в signed
+        SIGNED_APK="${APK_PATH%-unsigned.apk}-signed.apk"
+        if [ "$APK_PATH" != "$SIGNED_APK" ]; then
+          mv "$APK_PATH" "$SIGNED_APK"
+          echo "apk_path=$SIGNED_APK" >> $GITHUB_OUTPUT
+        else
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+        fi
+      id: sign_apk
     
     - name: Find APK
       id: find_apk
       run: |
-        APK_PATH=$(find build -name "*.apk" | head -1)
+        # Использовать подписанный APK
+        if [ -n "${{ steps.sign_apk.outputs.apk_path }}" ]; then
+          APK_PATH="${{ steps.sign_apk.outputs.apk_path }}"
+        else
+          APK_PATH=$(find build -name "*.apk" | head -1)
+        fi
+        
+        echo "Final APK: $APK_PATH"
+        ls -lh "$APK_PATH"
+        
         echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
-        echo "Found APK: $APK_PATH"
     
     - name: Upload APK as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: music-player-${{ github.ref_name }}
+        name: music-player-arm64-${{ github.ref_name }}
         path: ${{ steps.find_apk.outputs.apk_path }}
     
     - name: Create GitHub Release
@@ -47,6 +104,15 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: ${{ steps.find_apk.outputs.apk_path }}
+        name: "Music Player ${{ github.ref_name }}"
+        body: |
+          ## Music Player ${{ github.ref_name }}
+          
+          Android APK (ARM64, Debug signed)
+          
+          **Requirements:**
+          - Android 9.0+ (API 28+)
+          - ARM64 device (64-bit)
         draft: false
         prerelease: false
       env:
