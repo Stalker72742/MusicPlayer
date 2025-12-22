@@ -259,9 +259,11 @@ public class MusicPlayerService extends MediaBrowserServiceCompat {
         mediaPlayer.setOnPreparedListener(mp -> {
             isPrepared = true;
             currentDuration = mp.getDuration();
-            Log.d(TAG, "MediaPlayer prepared");
-            //mp.start();
-            //updateState(STATE_PLAYING);
+            Log.d(TAG, "MediaPlayer prepared, duration: " + currentDuration + "ms");
+
+            // Auto-start playback after prepare
+            mp.start();
+            updateState(STATE_PLAYING);
             updateMediaSessionMetadata();
         });
 
@@ -487,6 +489,10 @@ public class MusicPlayerService extends MediaBrowserServiceCompat {
 
             mediaPlayer.reset();
             isPrepared = false;
+            currentDuration = 0;
+
+            // Reset position in media session immediately
+            updateMediaSessionPlaybackState(PlaybackStateCompat.STATE_BUFFERING);
 
             if (songPath.startsWith("http")) {
                 mediaPlayer.setDataSource(songPath);
