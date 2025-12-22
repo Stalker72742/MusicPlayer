@@ -15,15 +15,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Build Multi-ABI APK
+    - name: Build APK
       run: |
         mkdir build && cd build
-    
+        
         /opt/qt/6.8.2/android_arm64_v8a/bin/qt-cmake .. \
+          -DANDROID_ABI=arm64-v8a \
+          -DANDROID_PLATFORM=android-28 \
           -DCMAKE_BUILD_TYPE=Release \
-          -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a;x86;x86_64"
-    
+          -DQT_ANDROID_BUILD_ALL_ABIS=OFF
+        
         cmake --build . --parallel
+        
         cmake --build . --target apk
     
     - name: Find APK
