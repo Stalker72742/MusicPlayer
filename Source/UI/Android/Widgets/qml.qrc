@@ -7,6 +7,5 @@
         <file>MainWindow/PlaylistWidget.qml</file>
         <file>MainWindow/SelectedPlaylistWidget.qml</file>
         <file>MainWindow/qmldir</file>
-        <file>MainWindow/SongWidget.qml</file>
     </qresource>
 </RCC>
