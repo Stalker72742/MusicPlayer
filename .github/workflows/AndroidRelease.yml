@@ -15,36 +15,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Debug - Check Qt installation
+    - name: Build Multi-ABI APK
       run: |
-        echo "=== Checking /opt directory ==="
-        ls -la /opt/ || echo "/opt not found"
-        
-        echo "=== Looking for qt-cmake ==="
-        find /opt -name "qt-cmake" 2>/dev/null || echo "qt-cmake not found"
-        
-        echo "=== Checking Qt bin directories ==="
-        find /opt -type d -name "bin" 2>/dev/null || echo "No bin dirs found"
-    
-    - name: Build APK
-      run: |
-        # Найти qt-cmake автоматически
-        QT_CMAKE=$(find /opt -name "qt-cmake" -type f | head -1)
-        
-        if [ -z "$QT_CMAKE" ]; then
-          echo "ERROR: qt-cmake not found!"
-          exit 1
-        fi
-        
-        echo "Found qt-cmake at: $QT_CMAKE"
-        
         mkdir build && cd build
-        
-        $QT_CMAKE .. \
-          -DANDROID_ABI=arm64-v8a \
-          -DANDROID_PLATFORM=android-28 \
-          -DCMAKE_BUILD_TYPE=Release
-        
+    
+        /opt/qt/6.8.2/android_arm64_v8a/bin/qt-cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a;x86;x86_64"
+    
         cmake --build . --parallel
         cmake --build . --target apk
     
@@ -66,5 +44,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: ${{ steps.find_apk.outputs.apk_path }}
+        draft: false
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
