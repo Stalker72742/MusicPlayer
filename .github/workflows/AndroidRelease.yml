@@ -36,7 +36,7 @@ jobs:
         echo "Found APK: $APK_PATH"
     
     - name: Upload APK as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: music-player-${{ github.ref_name }}
         path: ${{ steps.find_apk.outputs.apk_path }}
