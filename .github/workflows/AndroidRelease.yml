@@ -1,0 +1,52 @@
+name: Build Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'  # Триггерится на v0.1.0, v0.2.0 и т.д.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: carlonluca/qt-dev:6.8.2
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Build APK
+      run: |
+        mkdir build && cd build
+        
+        # Qt установлен в /opt/Qt-and-armv8a-6.8.2/
+        /opt/Qt-and-armv8a-6.8.2/bin/qt-cmake .. \
+          -DANDROID_ABI=arm64-v8a \
+          -DANDROID_PLATFORM=android-28 \
+          -DCMAKE_BUILD_TYPE=Release
+        
+        cmake --build . --parallel
+        cmake --build . --target apk
+    
+    - name: Find APK
+      id: find_apk
+      run: |
+        APK_PATH=$(find build -name "*.apk" | head -1)
+        echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+        echo "Found APK: $APK_PATH"
+    
+    - name: Upload APK as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: music-player-${{ github.ref_name }}
+        path: ${{ steps.find_apk.outputs.apk_path }}
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ${{ steps.find_apk.outputs.apk_path }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
