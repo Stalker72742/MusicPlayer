@@ -81,7 +81,6 @@ MainWindow::MainWindow() : QMainWindow(nullptr)
     installEventFilter(this);
 
 #ifdef Q_OS_WIN
-    // Регистрируем горячие клавиши для мультимедиа
     RegisterHotKey(reinterpret_cast<HWND>(winId()), 1, MOD_NOREPEAT, VK_MEDIA_PLAY_PAUSE);
     RegisterHotKey(reinterpret_cast<HWND>(winId()), 2, MOD_NOREPEAT, VK_MEDIA_NEXT_TRACK);
     RegisterHotKey(reinterpret_cast<HWND>(winId()), 3, MOD_NOREPEAT, VK_MEDIA_PREV_TRACK);

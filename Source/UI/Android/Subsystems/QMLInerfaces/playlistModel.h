@@ -5,19 +5,10 @@
 
 #include <QAbstractListModel>
 #include <QJsonObject>
+#include <QStringList>
 #include <memory>
-#include <vector>
-
 
 class FileManager;
-
-struct PlaylistData {
-    QString path;
-    QString name;
-    QString coverArt;
-    int trackCount;
-    QJsonObject rawData;
-};
 
 class PlaylistModel : public QAbstractListModel {
     Q_OBJECT
@@ -26,9 +17,7 @@ public:
     enum PlaylistRoles {
         PathRole = Qt::UserRole + 1,
         NameRole,
-        CoverArtRole,
-        TrackCountRole,
-        RawDataRole
+        TrackCountRole
     };
 
     explicit PlaylistModel(std::shared_ptr<FileManager> fs, QObject* parent = nullptr);
@@ -38,17 +27,14 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // Методы для работы с плейлистами
+    // Методы для работы с плейлистами (читают с диска)
     Q_INVOKABLE void refreshPlaylists();
-    Q_INVOKABLE QJsonObject getPlaylistAt(int index) const;
-    Q_INVOKABLE void loadPlaylist(const QString& path);
+    Q_INVOKABLE QVariantList getTracksByPlaylistName(const QString& name) const;
 
 signals:
     void playlistsLoaded();
     void errorOccurred(const QString& error);
 
 private:
-    std::vector<PlaylistData> m_playlists;
-
-    void parsePlaylistFiles(const QStringList& files);
+    QStringList m_playlistPaths;
 };

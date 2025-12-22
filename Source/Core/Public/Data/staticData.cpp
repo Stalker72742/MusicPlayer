@@ -29,7 +29,7 @@ staticData::staticData(QObject* Parent) : SubsystemBase(Parent)
             ).object()
         );
 
-    QString DefaultMusicFolder = environment.callObjectMethod("getAbsolutePath", "()Ljava/lang/String;").toString();
+    DefaultMusicFolder = environment.callObjectMethod("getAbsolutePath", "()Ljava/lang/String;").toString();
     mediaLibFolder = DefaultMusicFolder + "/Medialib";
 #endif
 }
@@ -37,3 +37,5 @@ staticData::staticData(QObject* Parent) : SubsystemBase(Parent)
 QString staticData::allMediaConfigName = "AllSongs.json";
 
 QString staticData::mediaLibFolder = "";
+
+QString staticData::DefaultMusicFolder = "";

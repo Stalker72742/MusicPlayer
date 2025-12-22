@@ -34,14 +34,7 @@ Window {
             StackLayout {
                 id: stackLayout
 
-                anchors.bottom: currentSong.top
-                anchors.bottomMargin: parent.height * 0.12
-                anchors.left: parent.left
-                anchors.leftMargin: 0
-                anchors.right: parent.right
-                anchors.rightMargin: 0
-                anchors.top: parent.top
-                anchors.topMargin: 0
+                anchors.fill: parent
                 currentIndex: 0
 
                 Item {
@@ -98,6 +91,7 @@ Window {
                     Layout.fillWidth: true
 
                     ScrollView {
+                        anchors.bottomMargin: parent.height * 0.22
                         anchors.fill: parent
                         anchors.margins: 16
 
@@ -105,24 +99,22 @@ Window {
                             id: playlistView
 
                             model: playlistModel
-
                             spacing: 16
 
                             delegate: Item {
+                                readonly property string itemPlaylistName: model.playlistName
+
                                 height: 90
                                 width: parent.width
 
-                                readonly property string itemPlaylistName: model.playlistName
-
-                                PlaylistWidget{
+                                PlaylistWidget {
                                     anchors.fill: parent
                                     anchors.margins: 5
-
-                                    playlistName: itemPlaylistName
                                     color: "#2a2a2a"
+                                    playlistName: itemPlaylistName
 
                                     onClicked: {
-                                        playlistPage.playlistName = itemPlaylistName
+                                        playlistPage.playlistName = itemPlaylistName;
 
                                         stackLayout.currentIndex = 2;
                                     }
@@ -134,22 +126,31 @@ Window {
                             }
                         }
                     }
-                }
+                }   
                 Item {
                     id: playlistPage
 
                     property string playlistName: "None"
+                    property var songsModel: []
 
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-                    anchors.fill: parent
+
+                    onPlaylistNameChanged: {
+                        if (playlistName !== "None") {
+                            songsModel = playlistModel.getTracksByPlaylistName(playlistName);
+                        }
+                    }
 
                     ColumnLayout {
                         Layout.fillHeight: true
                         Layout.fillWidth: true
                         anchors.fill: parent
+                        spacing: 0
 
                         Button {
+                            id: backButton
+
                             anchors.left: parent.left
                             anchors.leftMargin: parent.width * 0.02
                             anchors.top: parent.top
@@ -157,6 +158,8 @@ Window {
                             text: "Back"
 
                             onClicked: {
+                                playlistPage.playlistName = "None";
+                                playlistPage.songsModel = [];
                                 stackLayout.currentIndex = 1;
                             }
                         }
@@ -169,16 +172,16 @@ Window {
                             border.color: "#333333"
                             border.width: 1
                             color: "#2A2A2A"
-                            height: 200
+                            height: 150
                             radius: 15
-                            width: 200
+                            width: 150
 
                             Rectangle {
                                 anchors.centerIn: parent
                                 color: "#FFFFFF"
-                                height: 175
+                                height: 130
                                 radius: 15
-                                width: 175
+                                width: 130
                             }
                         }
                         Text {
@@ -186,29 +189,66 @@ Window {
 
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.top: playlistImage.bottom
-                            anchors.topMargin: parent.height * 0.015
+                            anchors.topMargin: parent.height * 0.01
                             color: "#FFFFFF"
+                            font.bold: true
+                            font.pixelSize: 18
                             text: playlistPage.playlistName
                         }
-                        Item {
-                            Layout.fillHeight: true
+                        Text {
+                            id: trackCountLabel
+
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.top: playlistNameLabel.bottom
+                            anchors.topMargin: 5
+                            color: "#999999"
+                            font.pixelSize: 12
+                            text: playlistPage.songsModel.length + " tracks"
+                        }
+                        ScrollView {
+                            id: songsScrollView
+
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: parent.height * 0.01
+                            anchors.left: parent.left
+                            anchors.margins: 16
+                            anchors.right: parent.right
+                            anchors.top: trackCountLabel.bottom
+                            anchors.topMargin: 15
+                            clip: true
+
+                            ListView {
+                                id: songsListView
+
+                                model: playlistPage.songsModel
+                                spacing: 10
+
+                                delegate: PlaylistSong {
+                                    songIndex: index
+                                    songPath: modelData.path || ""
+                                    songTitle: modelData.title || "Unknown"
+                                    width: songsListView.width
+
+                                    onClicked: {
+                                        console.log("Playing: " + songTitle + " from " + songPath);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-
-            CurrentPlayingSong{
+            CurrentPlayingSong {
                 id: currentSong
 
-                anchors.bottom: row.top
+                anchors.bottom: bottomButtonsRow.top
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.topMargin: parent.height * 0.78
             }
-
             Row {
-                id: row
+                id: bottomButtonsRow
 
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
@@ -220,7 +260,8 @@ Window {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#1A1A1A"
+                    color: "#000000"
+                    opacity: 0.3
                     z: -1
                 }
 
@@ -231,92 +272,73 @@ Window {
                         id: searchButton
 
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
-                        Layout.preferredWidth: parent.width * 0.12
                         Layout.preferredHeight: Layout.preferredWidth
+                        Layout.preferredWidth: parent.width * 0.12
 
                         background: ColumnLayout {
-
                             spacing: 5
 
                             Image {
                                 id: searchIcon
 
-                                source: "qrc:/SharedResources/Search.png"
-
-                                fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: 26
                                 Layout.preferredHeight: 26
+                                Layout.preferredWidth: 26
+                                fillMode: Image.PreserveAspectFit
+                                source: "qrc:/SharedResources/Search.png"
                                 visible: false
                             }
-
                             ColorOverlay {
-
-                                    source: searchIcon
-                                    color: stackLayout.currentIndex === 0 ? "#FFFFFF" : "#808080"
-
-                                    Layout.alignment: Qt.AlignHCenter
-                                    Layout.preferredWidth: 26
-                                    Layout.preferredHeight: 26
-                            }
-
-                            Label {
-
-                                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredHeight: 26
+                                Layout.preferredWidth: 26
                                 color: stackLayout.currentIndex === 0 ? "#FFFFFF" : "#808080"
-                                text: "Search"
+                                source: searchIcon
+                            }
+                            Label {
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                color: stackLayout.currentIndex === 0 ? "#FFFFFF" : "#808080"
                                 font.pixelSize: 12
+                                text: "Search"
                             }
                         }
 
                         onClicked: {
                             stackLayout.currentIndex = 0;
                         }
-
                     }
                     Button {
                         id: medialib
 
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
-                        Layout.preferredWidth: parent.width * 0.12
                         Layout.preferredHeight: Layout.preferredWidth
+                        Layout.preferredWidth: parent.width * 0.12
 
                         background: ColumnLayout {
-
                             spacing: 5
 
                             Image {
                                 id: medialibIcon
 
-                                source: "qrc:/SharedResources/Medialib.png"
-
-                                fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: 26
                                 Layout.preferredHeight: 26
+                                Layout.preferredWidth: 26
+                                fillMode: Image.PreserveAspectFit
+                                source: "qrc:/SharedResources/Medialib.png"
                                 visible: false
                             }
-
                             ColorOverlay {
-
-                                    source: medialibIcon
-                                    color: stackLayout.currentIndex === 1 || stackLayout.currentIndex === 2  ? "#FFFFFF" : "#808080"
-
-                                    Layout.alignment: Qt.AlignHCenter
-                                    Layout.preferredWidth: 26
-                                    Layout.preferredHeight: 26
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredHeight: 26
+                                Layout.preferredWidth: 26
+                                color: stackLayout.currentIndex === 1 || stackLayout.currentIndex === 2 ? "#FFFFFF" : "#808080"
+                                source: medialibIcon
                             }
-
                             Label {
-
                                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
-                                color: stackLayout.currentIndex === 1 || stackLayout.currentIndex === 2  ? "#FFFFFF" : "#808080"
-                                text: "Medialib"
+                                color: stackLayout.currentIndex === 1 || stackLayout.currentIndex === 2 ? "#FFFFFF" : "#808080"
                                 font.pixelSize: 12
+                                text: "Medialib"
                             }
                         }
 
@@ -328,49 +350,38 @@ Window {
                         id: settings
 
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
-                        Layout.preferredWidth: parent.width * 0.12
                         Layout.preferredHeight: Layout.preferredWidth
+                        Layout.preferredWidth: parent.width * 0.12
 
                         background: ColumnLayout {
-
                             spacing: 5
 
                             Image {
                                 id: settingsIcon
 
-                                source: "qrc:/SharedResources/Settings.png"
-
-                                fillMode: Image.PreserveAspectFit
                                 Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: 26
                                 Layout.preferredHeight: 26
+                                Layout.preferredWidth: 26
+                                fillMode: Image.PreserveAspectFit
+                                source: "qrc:/SharedResources/Settings.png"
                                 visible: false
                             }
-
                             ColorOverlay {
-
-                                    source: settingsIcon
-                                    color: stackLayout.currentIndex === -5 ? "#FFFFFF" : "#808080"
-
-                                    Layout.alignment: Qt.AlignHCenter
-                                    Layout.preferredWidth: 26
-                                    Layout.preferredHeight: 26
-                            }
-
-                            Label {
-
-                                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredHeight: 26
+                                Layout.preferredWidth: 26
                                 color: stackLayout.currentIndex === -5 ? "#FFFFFF" : "#808080"
-                                text: "Settings"
+                                source: settingsIcon
+                            }
+                            Label {
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                color: stackLayout.currentIndex === -5 ? "#FFFFFF" : "#808080"
                                 font.pixelSize: 12
+                                text: "Settings"
                             }
                         }
 
-                        onClicked: {
-
-                        }
+                        onClicked: {}
                     }
                 }
             }

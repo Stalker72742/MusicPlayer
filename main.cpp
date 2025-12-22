@@ -1,14 +1,17 @@
 
 
 #include "AppInstance.h"
+#include "FileManager/FileManager.h"
 #include "PlayerSubsystem.h"
 #include "Source/UI/Android/Subsystems/QMLInerfaces/playerdata.h"
 #include "Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.h"
-#include "windowsmediaplayer.h"
+#include "staticData.h"
+
 
 #ifdef Q_OS_WIN
 #include "Source/UI/NewWindows/MainWindow/MainWindow.h"
 #include <QApplication>
+#include "windowsmediaplayer.h"
 #elifdef Q_OS_ANDROID
 #include "Source/UI/Android/Subsystems/androidjavaplayer.h"
 #include "Source/UI/Android/Subsystems/PermissionsHandler/permissionHandler.h"
@@ -38,6 +41,8 @@ int main(int argc, char *argv[])
     handler->requestPermissions();
 
     AppInstance *w = AppInstance::getInstance();
+    w->addSubsystem(new staticData(nullptr));
+    w->addSubsystem(new FileManager(nullptr));
     w->addSubsystem(new PlayerSubsystem( new AndroidJavaPlayer(nullptr), w));
 
     PlaylistModel playlistModel(nullptr);

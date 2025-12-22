@@ -1,2 +1,3 @@
 module Components
 CurrentPlayingSong 1.0 CurrentPlayingSong.qml
+PlaylistSong 1.0 PlaylistSong.qml

@@ -16,6 +16,7 @@ public:
 
     staticData(QObject* Parent);
 
+    static QString DefaultMusicFolder;
     static QString mediaLibFolder;
     static QString allMediaConfigName;
 };
