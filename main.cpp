@@ -20,7 +20,6 @@
 #include <QQmlContext>
 #endif
 
-
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN
