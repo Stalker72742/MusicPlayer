@@ -7,7 +7,6 @@
 #include "Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.h"
 #include "staticData.h"
 
-
 #ifdef Q_OS_WIN
 #include "Source/UI/NewWindows/MainWindow/MainWindow.h"
 #include <QApplication>
