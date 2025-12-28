@@ -18,6 +18,7 @@
 #include <QGuiApplication>
 #include <QtQuickControls2/QQuickStyle>
 #include <QQmlContext>
+#include <QQuickWindow>
 #endif
 
 int main(int argc, char *argv[])
@@ -48,6 +49,7 @@ int main(int argc, char *argv[])
     playerData playerData(nullptr);
 
     QQuickStyle::setStyle("Fusion");
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("playlistModel", &playlistModel);

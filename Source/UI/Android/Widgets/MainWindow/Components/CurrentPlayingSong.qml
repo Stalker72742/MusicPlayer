@@ -14,7 +14,7 @@ Rectangle {
     anchors.rightMargin: 0
     anchors.bottomMargin: 0
 
-    color: "#2A2A2A"
+    color: "#252525"
 
     Column{
         anchors.bottom: parent.bottom

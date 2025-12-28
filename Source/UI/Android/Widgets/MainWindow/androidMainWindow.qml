@@ -34,7 +34,10 @@ Window {
             StackLayout {
                 id: stackLayout
 
-                anchors.fill: parent
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.bottomMargin: parent.height * 0.22
+
                 currentIndex: 0
 
                 Item {
@@ -163,27 +166,41 @@ Window {
                                 stackLayout.currentIndex = 1;
                             }
                         }
+
                         Rectangle {
                             id: playlistImage
 
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.top: parent.top
-                            anchors.topMargin: parent.height * 0.09
+                            Layout.preferredWidth: parent.width * 0.53
+                            Layout.preferredHeight: parent.width * 0.53
+
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.topMargin: parent.height * 0.05
+
                             border.color: "#333333"
                             border.width: 1
                             color: "#2A2A2A"
-                            height: 150
                             radius: 15
-                            width: 150
 
                             Rectangle {
-                                anchors.centerIn: parent
+                                anchors.fill: parent
+
                                 color: "#FFFFFF"
-                                height: 130
+
                                 radius: 15
-                                width: 130
+                                anchors.margins: parent.width * 0.05
+
+                                Image {
+                                    id: playingSongImage
+
+                                    source: "qrc:/SharedResources/EmptyImage.png"
+                                    anchors.fill: parent
+
+                                    sourceSize.width: 130
+                                    sourceSize.height: 130
+                                }
                             }
                         }
+
                         Text {
                             id: playlistNameLabel
 
@@ -192,7 +209,7 @@ Window {
                             anchors.topMargin: parent.height * 0.01
                             color: "#FFFFFF"
                             font.bold: true
-                            font.pixelSize: 18
+                            font.pixelSize: 22
                             text: playlistPage.playlistName
                         }
                         Text {
@@ -202,7 +219,7 @@ Window {
                             anchors.top: playlistNameLabel.bottom
                             anchors.topMargin: 5
                             color: "#999999"
-                            font.pixelSize: 12
+                            font.pixelSize: 18
                             text: playlistPage.songsModel.length + " tracks"
                         }
                         ScrollView {
@@ -261,7 +278,7 @@ Window {
                 Rectangle {
                     anchors.fill: parent
                     color: "#000000"
-                    opacity: 0.3
+                    opacity: 1
                     z: -1
                 }
 
@@ -285,8 +302,15 @@ Window {
                                 Layout.preferredHeight: 26
                                 Layout.preferredWidth: 26
                                 fillMode: Image.PreserveAspectFit
-                                source: "qrc:/SharedResources/Search.png"
+                                source: "qrc:/SharedResources/SearchSVG.svg"
                                 visible: false
+
+                                sourceSize.width: 26
+                                sourceSize.height: 26
+
+                                smooth: true
+                                antialiasing: true
+                                mipmap: true
                             }
                             ColorOverlay {
                                 Layout.alignment: Qt.AlignHCenter
@@ -326,6 +350,10 @@ Window {
                                 fillMode: Image.PreserveAspectFit
                                 source: "qrc:/SharedResources/Medialib.png"
                                 visible: false
+
+                                smooth: true
+                                antialiasing: true
+                                mipmap: true
                             }
                             ColorOverlay {
                                 Layout.alignment: Qt.AlignHCenter
@@ -365,6 +393,10 @@ Window {
                                 fillMode: Image.PreserveAspectFit
                                 source: "qrc:/SharedResources/Settings.png"
                                 visible: false
+
+                                smooth: true
+                                antialiasing: true
+                                mipmap: true
                             }
                             ColorOverlay {
                                 Layout.alignment: Qt.AlignHCenter

@@ -16,7 +16,7 @@ if(ANDROID)
         add_definitions(-DQ_OS_ANDROID)
     endif ()
 
-    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network Gui Qml Quick QuickControls2 Core5Compat)
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network Gui Qml Quick QuickControls2 Core5Compat Svg)
 elseif(WIN32)
 
     find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network)
@@ -144,6 +144,7 @@ if (NOT_QTCREATOR)
             Qt6::Quick
             Qt6::QuickControls2
             Qt6::Network
+            Qt6::Svg
     )
 endif ()
 

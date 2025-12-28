@@ -7,5 +7,6 @@
         <file>PlayerIcons/next.png</file>
         <file>PlayerIcons/Pause.png</file>
         <file>PlayerIcons/Play.png</file>
+        <file>SharedResources/SearchSVG.svg</file>
     </qresource>
 </RCC>
