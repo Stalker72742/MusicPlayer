@@ -19,7 +19,9 @@ rebuild.bat
 ```
 
 ### Шаг 3: Готово!
-Приложение запустится автоматически с новым UI!
+Приложение запустится автоматически и покажет **Hello World** окно!
+
+> **TestUI** будет выбран автоматически (приоритет 200) для демонстрации работы UI Plugin System!
 
 ---
 
@@ -38,21 +40,46 @@ rebuild.bat
 
 ## 🎨 Выбор UI
 
-### Новый UI (современный):
-```bash
-cmake .. -DUSE_NEW_UI=ON
+Доступно **3 UI модуля** (автоматически регистрируются):
+
+| UI | Приоритет | Описание |
+|----|-----------|----------|
+| **TestUI** | 200 | Простое Hello World окно (для тестирования) |
+| **NewWindows** | 100 | Современный UI с frameless окном |
+| **OldWindows** | 50 | Классический UI |
+
+По умолчанию выбирается **TestUI** (самый высокий приоритет).
+
+### Сменить UI через приоритет:
+
+Отредактируй приоритет в Factory файле:
+
+**TestUI** - `Source/UI/TestUI/TestUIFactory.cpp`:
+```cpp
+int getPriority() const override { return 200; }  // Самый высокий
 ```
 
-### Старый UI (классический):
-```bash
-cmake .. -DUSE_NEW_UI=OFF
+**NewWindows** - `Source/UI/NewWindows/NewWindowsFactory.cpp`:
+```cpp
+int getPriority() const override { return 100; }
 ```
+
+**OldWindows** - `Source/UI/Windows/OldWindowsFactory.cpp`:
+```cpp
+int getPriority() const override { return 50; }
+```
+
+Измени приоритет на нужный (больше = выше) и пересобери!
 
 ### Через конфиг (ui_config.json):
-Просто отредактируй `ui_config.json`:
 ```json
 {
   "ui_modules": [
+    {
+      "name": "TestUI",
+      "priority": 200,
+      "enabled": true
+    },
     {
       "name": "NewWindows",
       "priority": 100,
