@@ -1,0 +1,38 @@
+cmake_minimum_required(VERSION 3.16)
+project(TestUI)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+
+# TestUI Library - Simple Hello World test
+add_library(TestUI STATIC
+    # UI Factory (zero dependency)
+    TestUIFactory.h
+    TestUIFactory.cpp
+
+    # UI Components
+    TestMainWindow.h
+    TestMainWindow.cpp
+)
+
+target_link_libraries(TestUI
+    PUBLIC
+    Qt6::Core
+    Qt6::Widgets
+    MusicPlayerCore
+)
+
+target_include_directories(TestUI
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_compile_definitions(TestUI PRIVATE UI_LIBRARY_EXPORT)
+
+set_target_properties(TestUI PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+)

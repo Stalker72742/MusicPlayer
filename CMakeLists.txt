@@ -31,13 +31,17 @@ add_subdirectory(Source/Core)
 
 # Add UI libraries based on selection
 if (WIN32)
+    # Always build all UI libraries for plugin system
+    add_subdirectory(Source/UI/NewWindows)
+    add_subdirectory(Source/UI/Windows)
+    add_subdirectory(Source/UI/TestUI)
+
+    # Set which libraries to link (all of them for auto-registration)
+    set(WINDOWS_UI_LIBRARY NewWindowsUI OldWindowsUI TestUI)
+
     if(USE_NEW_UI)
-        add_subdirectory(Source/UI/NewWindows)
-        set(WINDOWS_UI_LIBRARY NewWindowsUI)
         add_definitions(-DUSE_NEW_UI)
     else()
-        add_subdirectory(Source/UI/Windows)
-        set(WINDOWS_UI_LIBRARY OldWindowsUI)
         add_definitions(-DUSE_OLD_UI)
     endif()
 endif()
