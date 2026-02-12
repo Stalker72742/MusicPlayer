@@ -4,6 +4,8 @@
 //
 
 #include "UIPluginSystem.h"
+#include "UIFactory.h"
+#include "AppInstance.h"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -20,15 +22,18 @@ UIPluginLoader::UIPluginLoader(QObject* parent)
 {
     m_currentPlatform = detectPlatform();
     qDebug() << "UIPluginLoader initialized for platform:" << m_currentPlatform;
+
+    // Auto-register factories from static registry
+    registerFactoriesFromRegistry();
 }
 
 UIPluginLoader::~UIPluginLoader()
 {
-    // Cleanup plugins
-    for (auto it = m_plugins.begin(); it != m_plugins.end(); ++it) {
-        if (it.value()) {
-            it.value()->shutdown();
-            delete it.value();
+    // Cleanup owned factories
+    for (IUIFactory* factory : m_ownedFactories) {
+        if (factory) {
+            factory->shutdown();
+            delete factory;
         }
     }
 }
@@ -46,6 +51,35 @@ QString UIPluginLoader::detectPlatform() const
 #else
     return "unknown";
 #endif
+}
+
+void UIPluginLoader::registerFactoriesFromRegistry()
+{
+    UIFactoryRegistry& registry = UIFactoryRegistry::instance();
+    QStringList factoryNames = registry.getAvailableFactories();
+
+    qDebug() << "Found" << factoryNames.count() << "registered UI factories:" << factoryNames;
+
+    for (const QString& name : factoryNames) {
+        IUIFactory* factory = registry.createFactory(name);
+        if (factory) {
+            registerFactory(name, factory);
+            m_ownedFactories.append(factory);  // We own this factory
+        }
+    }
+}
+
+void UIPluginLoader::registerFactory(const QString& name, IUIFactory* factory)
+{
+    UIConfig config;
+    config.name = name;
+    config.platform = QString::fromUtf8(factory->getPlatform());
+    config.priority = factory->getPriority();
+    config.enabled = true;
+    config.factory = factory;
+
+    addUIConfig(config);
+    qDebug() << "Registered UI factory:" << name << "platform:" << config.platform << "priority:" << config.priority;
 }
 
 bool UIPluginLoader::loadConfigFromFile(const QString& configPath)
@@ -96,7 +130,17 @@ bool UIPluginLoader::loadConfigFromJson(const QJsonObject& json)
             continue;
         }
 
-        addUIConfig(config);
+        // Try to find factory in registry
+        UIConfig* existing = getUIConfig(config.name);
+        if (existing && existing->factory) {
+            // Update existing config but keep factory
+            existing->priority = config.priority;
+            existing->enabled = config.enabled;
+            existing->settings = config.settings;
+            qDebug() << "Updated config for existing factory:" << config.name;
+        } else {
+            addUIConfig(config);
+        }
     }
 
     return true;
@@ -107,22 +151,6 @@ void UIPluginLoader::addUIConfig(const UIConfig& config)
     m_configs[config.name] = config;
     qDebug() << "Registered UI config:" << config.name << "for platform:" << config.platform;
     emit uiConfigLoaded(config.name);
-}
-
-void UIPluginLoader::registerUIModule(const QString& name, UIConfig::WindowFactory factory)
-{
-    if (m_configs.contains(name)) {
-        m_configs[name].factory = factory;
-        qDebug() << "Registered UI factory for:" << name;
-    } else {
-        // Create new config for this module
-        UIConfig config;
-        config.name = name;
-        config.platform = m_currentPlatform;
-        config.factory = factory;
-        config.enabled = true;
-        addUIConfig(config);
-    }
 }
 
 UIConfig* UIPluginLoader::selectBestUI(const QString& platform)
@@ -139,7 +167,7 @@ UIConfig* UIPluginLoader::selectBestUI(const QString& platform)
         // Check platform compatibility
         if (config.platform != "all" && config.platform != platform) continue;
 
-        // Check if factory or plugin is available
+        // Check if factory is available
         if (!config.factory && config.libraryPath.isEmpty()) continue;
 
         // Select highest priority
@@ -187,17 +215,18 @@ QWidget* UIPluginLoader::createUI(const QString& name)
 
     QWidget* window = nullptr;
 
-    // Try factory first (static linking)
+    // Try factory first
     if (config->factory) {
         qDebug() << "Creating UI using factory:" << name;
-        window = config->factory();
+        window = config->factory->createMainWindow();
     }
     // Try plugin loading (dynamic library)
     else if (!config->libraryPath.isEmpty()) {
         qDebug() << "Loading UI plugin from:" << config->libraryPath;
         if (loadPlugin(config->libraryPath)) {
-            if (m_plugins.contains(name)) {
-                window = m_plugins[name]->createMainWindow();
+            // After loading, factory should be set
+            if (config->factory) {
+                window = config->factory->createMainWindow();
             }
         }
     }
@@ -236,37 +265,39 @@ bool UIPluginLoader::loadPlugin(const QString& libraryPath)
     }
 
     // Get plugin entry point
-    typedef IUIModule* (*CreateModuleFunc)();
-    CreateModuleFunc createModule = (CreateModuleFunc)library.resolve("createUIModule");
+    typedef IUIFactory* (*CreateUIFactoryFunc)();
+    CreateUIFactoryFunc createFactory = (CreateUIFactoryFunc)library.resolve("createUIFactory");
 
-    if (!createModule) {
-        qDebug() << "Failed to resolve 'createUIModule' function in plugin:" << libraryPath;
+    if (!createFactory) {
+        qDebug() << "Failed to resolve 'createUIFactory' function in plugin:" << libraryPath;
         library.unload();
         return false;
     }
 
-    // Create module instance
-    IUIModule* module = createModule();
-    if (!module) {
-        qDebug() << "Failed to create module instance from plugin:" << libraryPath;
+    // Create factory instance
+    IUIFactory* factory = createFactory();
+    if (!factory) {
+        qDebug() << "Failed to create factory instance from plugin:" << libraryPath;
         library.unload();
         return false;
     }
 
-    QString moduleName = module->getName();
-    m_plugins[moduleName] = module;
+    QString moduleName = QString::fromUtf8(factory->getName());
+    registerFactory(moduleName, factory);
+    m_ownedFactories.append(factory);  // We own this factory
 
-    qDebug() << "Successfully loaded plugin:" << moduleName << "version:" << module->getVersion();
+    qDebug() << "Successfully loaded plugin:" << moduleName << "version:" << factory->getVersion();
     return true;
 }
 
 void UIPluginLoader::unloadPlugin(const QString& name)
 {
-    if (m_plugins.contains(name)) {
-        IUIModule* module = m_plugins[name];
-        module->shutdown();
-        delete module;
-        m_plugins.remove(name);
+    UIConfig* config = getUIConfig(name);
+    if (config && config->factory) {
+        config->factory->shutdown();
+        m_ownedFactories.removeOne(config->factory);
+        delete config->factory;
+        config->factory = nullptr;
         qDebug() << "Unloaded plugin:" << name;
     }
 }

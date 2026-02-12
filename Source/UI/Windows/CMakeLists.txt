@@ -9,6 +9,11 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
 # Old Windows UI Library
 add_library(OldWindowsUI STATIC
+    # UI Factory (zero dependency)
+    OldWindowsFactory.h
+    OldWindowsFactory.cpp
+
+    # UI Components
     MainWindow/mainwindow.cpp
     MainWindow/mainwindow.h
     MainWindow/Components/titlebar.cpp
@@ -36,6 +41,7 @@ target_link_libraries(OldWindowsUI
 
 target_include_directories(OldWindowsUI
     PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
     ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow/Components
     ${CMAKE_CURRENT_SOURCE_DIR}/MediaLib
@@ -43,6 +49,8 @@ target_include_directories(OldWindowsUI
     ${CMAKE_CURRENT_SOURCE_DIR}/OldWidgets/Playlist
     ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems
 )
+
+target_compile_definitions(OldWindowsUI PRIVATE UI_LIBRARY_EXPORT)
 
 set_target_properties(OldWindowsUI PROPERTIES
     CXX_STANDARD 23

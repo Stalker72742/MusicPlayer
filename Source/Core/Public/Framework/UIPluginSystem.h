@@ -13,7 +13,7 @@
 #include <QMap>
 #include <QVariant>
 #include <QJsonObject>
-#include <functional>
+#include "UIFactory.h"
 
 // Forward declarations
 class QMainWindow;
@@ -33,31 +33,56 @@ struct UIConfig {
     int priority = 0;                       // Priority for selection (higher = preferred)
     bool enabled = true;                    // Is this UI enabled?
 
-    // Factory function type for creating windows
-    using WindowFactory = std::function<QWidget*()>;
-    WindowFactory factory = nullptr;        // Factory function for static linking
+    // Factory instance (from registry or dynamic loading)
+    IUIFactory* factory = nullptr;
 };
 
 // ============================================================================
-// IUIModule - Interface for UI modules
+// UIPluginLoader - Loads and manages UI plugins/modules
 // ============================================================================
 
-class IUIModule {
+class UIPluginLoader : public QObject {
+    Q_OBJECT
 public:
-    virtual ~IUIModule() = default;
+    explicit UIPluginLoader(QObject* parent = nullptr);
+    ~UIPluginLoader() override;
 
-    // Create main window
-    virtual QWidget* createMainWindow() = 0;
+    // Configuration loading
+    bool loadConfigFromFile(const QString& configPath);
+    bool loadConfigFromJson(const QJsonObject& json);
+    void addUIConfig(const UIConfig& config);
 
-    // Get module info
-    virtual QString getName() const = 0;
-    virtual QString getVersion() const = 0;
-    virtual QString getPlatform() const = 0;
+    // UI Module registration (uses UIFactoryRegistry)
+    void registerFactoriesFromRegistry();
+    void registerFactory(const QString& name, IUIFactory* factory);
 
-    // Lifecycle hooks
-    virtual void initialize(AppInstance* app) = 0;
-    virtual void shutdown() = 0;
+    // UI Selection
+    UIConfig* selectBestUI(const QString& platform);
+    UIConfig* getUIConfig(const QString& name);
+    QStringList getAvailableUIs() const;
+
+    // UI Creation
+    QWidget* createUI(const QString& name);
+    QWidget* createDefaultUI();
+
+    // Plugin loading (for dynamic libraries)
+    bool loadPlugin(const QString& libraryPath);
+    void unloadPlugin(const QString& name);
+
+signals:
+    void uiConfigLoaded(const QString& name);
+    void uiCreated(const QString& name);
+    void pluginLoadError(const QString& name, const QString& error);
+
+private:
+    QMap<QString, UIConfig> m_configs;
+    QList<IUIFactory*> m_ownedFactories;  // Factories we need to delete
+
+    QString m_currentPlatform;
+    QString detectPlatform() const;
 };
+
+#endif // UIPLUGINSYSTEM_H
 
 // ============================================================================
 // UIPluginLoader - Loads and manages UI plugins/modules

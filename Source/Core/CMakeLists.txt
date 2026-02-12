@@ -15,6 +15,7 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         # Framework
         Public/Framework/AppInstance.h
         Private/Framework/AppInstance.cpp
+        Public/Framework/UIFactory.h
         Public/Framework/UIPluginSystem.h
         Private/Framework/UIPluginSystem.cpp
         Public/Framework/SubsystemBase.h

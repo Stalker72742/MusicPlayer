@@ -9,6 +9,11 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
 # NewWindows UI Library
 add_library(NewWindowsUI STATIC
+    # UI Factory (zero dependency)
+    NewWindowsFactory.h
+    NewWindowsFactory.cpp
+
+    # UI Components
     MainWindow/MainWindow.h
     MainWindow/MainWindow.cpp
     TitleBar/TitleBar.h
@@ -26,10 +31,13 @@ target_link_libraries(NewWindowsUI
 
 target_include_directories(NewWindowsUI
     PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
     ${CMAKE_CURRENT_SOURCE_DIR}/TitleBar
     ${CMAKE_CURRENT_SOURCE_DIR}/BottomBar
 )
+
+target_compile_definitions(NewWindowsUI PRIVATE UI_LIBRARY_EXPORT)
 
 # Platform-specific settings
 if(WIN32)

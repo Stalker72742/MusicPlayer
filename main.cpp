@@ -1,17 +1,14 @@
 
 #include "AppInstance.h"
+#include "UIPluginSystem.h"
 #include "FileManager/FileManager.h"
 #include "PlayerSubsystem.h"
 #include "staticData.h"
 
+// Platform-specific includes (subsystems only - NO UI!)
 #ifdef Q_OS_WIN
     #include <QApplication>
     #include "windowsmediaplayer.h"
-    #ifdef USE_NEW_UI
-        #include "MainWindow.h"  // NewWindows/MainWindow
-    #else
-        #include "mainwindow.h"  // Windows/mainwindow
-    #endif
 #elifdef Q_OS_ANDROID
     #include "androidjavaplayer.h"
     #include "permissionHandler.h"
@@ -24,7 +21,8 @@
 #endif
 
 // ============================================================================
-// NEW ARCHITECTURE - Using AppInstance pattern
+// ZERO-DEPENDENCY ARCHITECTURE - No direct UI includes!
+// UI modules are loaded through UIPluginSystem using factory pattern
 // ============================================================================
 
 int main(int argc, char *argv[])
@@ -38,12 +36,12 @@ int main(int argc, char *argv[])
     // Initialize subsystems
     appInstance->addSubsystem(new PlayerSubsystem(new WindowsMediaPlayer(nullptr)));
 
-    // Create and show main window using AppInstance
-    #ifdef USE_NEW_UI
-        appInstance->createApp<MainWindow>();
-    #else
-        appInstance->createApp<mainWindow>();
-    #endif
+    // Initialize UI Plugin System
+    appInstance->initializeUISystem();
+
+    // Create UI from config/registry (zero dependencies!)
+    // Factories are auto-registered via UI_AUTO_REGISTER macro
+    appInstance->createUIFromConfig();  // Auto-selects best UI for platform!
 
 #elifdef Q_OS_ANDROID
     QGuiApplication app(argc, argv);
