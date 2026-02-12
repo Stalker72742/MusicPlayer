@@ -45,6 +45,10 @@ target_include_directories(OldWindowsUI
     ${CMAKE_CURRENT_SOURCE_DIR}/OldWidgets/Components
     ${CMAKE_CURRENT_SOURCE_DIR}/OldWidgets/Playlist
     ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems
+    # Core library includes
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Framework
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems/Player
 )
 
 target_compile_definitions(OldWindowsUI PRIVATE UI_LIBRARY_EXPORT)

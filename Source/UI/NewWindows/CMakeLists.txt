@@ -35,6 +35,11 @@ target_include_directories(NewWindowsUI
     ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
     ${CMAKE_CURRENT_SOURCE_DIR}/TitleBar
     ${CMAKE_CURRENT_SOURCE_DIR}/BottomBar
+    # Core library includes (for UIFactory.h, AppInstance.h, etc.)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Framework
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems/Player
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Data
 )
 
 target_compile_definitions(NewWindowsUI PRIVATE UI_LIBRARY_EXPORT)
