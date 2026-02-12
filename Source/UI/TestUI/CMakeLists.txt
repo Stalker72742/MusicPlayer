@@ -37,4 +37,6 @@ target_compile_definitions(TestUI PRIVATE UI_LIBRARY_EXPORT)
 set_target_properties(TestUI PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
+    PREFIX ""  # Don't add "lib" prefix on Windows MinGW
+    OUTPUT_NAME "TestUI"
 )
