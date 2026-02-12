@@ -9,6 +9,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# UI Selection Option
+option(USE_NEW_UI "Use new modern UI instead of old UI (Windows only)" ON)
+option(USE_UI_PLUGINS "Enable dynamic UI plugin system" OFF)
+
 if(ANDROID)
 
     if (NOT_QTCREATOR)
@@ -25,47 +29,30 @@ endif()
 
 add_subdirectory(Source/Core)
 
+# Add UI libraries based on selection
+if (WIN32)
+    if(USE_NEW_UI)
+        add_subdirectory(Source/UI/NewWindows)
+        set(WINDOWS_UI_LIBRARY NewWindowsUI)
+        add_definitions(-DUSE_NEW_UI)
+    else()
+        add_subdirectory(Source/UI/Windows)
+        set(WINDOWS_UI_LIBRARY OldWindowsUI)
+        add_definitions(-DUSE_OLD_UI)
+    endif()
+endif()
+
 if (WIN32)
 
-    qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
-            Source/UI/Windows/MediaLib/addtoplaylist.cpp
-            Source/UI/Windows/MediaLib/addtoplaylist.h
-            Source/UI/Windows/MediaLib/addtoplaylist.ui
-            Source/UI/Windows/MediaLib/medialibitem.cpp
-            Source/UI/Windows/MediaLib/medialibitem.h
-            Source/UI/Windows/MediaLib/medialibitem.ui
-            Source/UI/Windows/OldWidgets/Components/foundedSongButton.cpp
-            Source/UI/Windows/OldWidgets/Components/foundedSongButton.h
-            Source/UI/Windows/OldWidgets/Components/musicbutton.cpp
-            Source/UI/Windows/OldWidgets/Components/musicbutton.h
-            Source/UI/Windows/OldWidgets/Playlist/playlistitem.cpp
-            Source/UI/Windows/OldWidgets/Playlist/playlistitem.h
-            Source/UI/Windows/OldWidgets/Playlist/playlistitem.ui
-            Source/UI/Windows/Subsystems/windowsmediaplayer.h
-            Source/UI/Windows/Subsystems/windowsmediaplayer.cpp
-            Source/UI/NewWindows/MainWindow/MainWindow.cpp
-            Source/UI/NewWindows/MainWindow/MainWindow.h
-            Source/UI/NewWindows/BottomBar/BottomBar.cpp
-            Source/UI/NewWindows/BottomBar/BottomBar.h
-            Source/UI/NewWindows/TitleBar/TitleBar.cpp
-            Source/UI/NewWindows/TitleBar/TitleBar.h
+    qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION
+            main.cpp
             Resources/Windows/WinResources.qrc
-    )
-
-    target_include_directories(${PROJECT_NAME}
-            PUBLIC
-            Source/UI/Windows/MediaLib
-            Source/UI/Windows/OldWidgets/Components
-            Source/UI/Windows/OldWidgets/Playlist
-            Source/UI/NewWindows/MainWindow
-            Source/UI/NewWindows/BottomBar
-            Source/UI/NewWindows/TitleBar
-            Source/UI/Windows/Subsystems
     )
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
             MusicPlayerCore
+            ${WINDOWS_UI_LIBRARY}
             Qt6::Core
             Qt6::Widgets
             Qt6::Multimedia

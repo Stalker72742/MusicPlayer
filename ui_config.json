@@ -1,0 +1,40 @@
+{
+  "ui_modules": [
+    {
+      "name": "NewWindows",
+      "platform": "windows",
+      "main_window_class": "MainWindow",
+      "priority": 100,
+      "enabled": true,
+      "settings": {
+        "theme": "dark",
+        "frameless": true,
+        "default_size": {
+          "width": 1200,
+          "height": 800
+        }
+      }
+    },
+    {
+      "name": "OldWindows",
+      "platform": "windows",
+      "main_window_class": "mainWindow",
+      "priority": 50,
+      "enabled": true,
+      "settings": {
+        "theme": "default"
+      }
+    },
+    {
+      "name": "Android",
+      "platform": "android",
+      "main_window_class": "QQmlApplicationEngine",
+      "priority": 100,
+      "enabled": true,
+      "settings": {
+        "qml_path": "qrc:/MainWindow/androidMainWindow.qml",
+        "style": "Fusion"
+      }
+    }
+  ]
+}

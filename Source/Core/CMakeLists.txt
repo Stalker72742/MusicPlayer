@@ -12,29 +12,37 @@ find_package(Qt6 COMPONENTS Core Network Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Core Network Widgets)
 
 add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
+        # Framework
         Public/Framework/AppInstance.h
         Private/Framework/AppInstance.cpp
-        Public/Subsystems/ytSearcher.h
-        Private/Subsystems/ytSearcher.cpp
+        Public/Framework/UIPluginSystem.h
+        Private/Framework/UIPluginSystem.cpp
+        Public/Framework/SubsystemBase.h
+        Private/Framework/SubsystemBase.cpp
+
+        # Player Subsystem
         Public/Subsystems/Player/PlayerSubsystem.h
         Private/Subsystems/Player/PlayerSubsystem.cpp
-        Public/Subsystems/Player/SubObjects/song.h
-        Private/Subsystems/Player/song.cpp
-        Private/Framework/SubsystemBase.cpp
-        Public/Framework/SubsystemBase.h
         Public/Subsystems/Player/PlayerBackend.h
         Private/Subsystems/Player/PlayerBackend/PlayerBackend.cpp
+        Public/Subsystems/Player/SubObjects/song.h
+        Private/Subsystems/Player/song.cpp
         Public/Subsystems/Player/SubObjects/playlist.cpp
         Public/Subsystems/Player/SubObjects/playlist.h
 
+        # Other Subsystems
+        Public/Subsystems/ytSearcher.h
+        Private/Subsystems/ytSearcher.cpp
         Public/Subsystems/FileManager/FileManager.cpp
         Public/Subsystems/FileManager/FileManager.h
-        Public/Data/staticData.cpp
-        Public/Data/staticData.h
         Public/Subsystems/Settings/SettingsSubsystem.cpp
         Public/Subsystems/Settings/SettingsSubsystem.h
         Public/Subsystems/Settings/Data/SettingData.h
         Public/Subsystems/Settings/Data/SettingType.h
+
+        # Data
+        Public/Data/staticData.cpp
+        Public/Data/staticData.h
 )
 
 target_link_libraries(MusicPlayerCore

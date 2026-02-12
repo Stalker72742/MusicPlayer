@@ -1,26 +1,91 @@
 
-
 #include "AppInstance.h"
 #include "FileManager/FileManager.h"
 #include "PlayerSubsystem.h"
-#include "Source/UI/Android/Subsystems/QMLInerfaces/playerdata.h"
-#include "Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.h"
 #include "staticData.h"
 
 #ifdef Q_OS_WIN
-#include "Source/UI/NewWindows/MainWindow/MainWindow.h"
-#include <QApplication>
-#include "windowsmediaplayer.h"
+    #include <QApplication>
+    #include "windowsmediaplayer.h"
+    #ifdef USE_NEW_UI
+        #include "MainWindow.h"  // NewWindows/MainWindow
+    #else
+        #include "mainwindow.h"  // Windows/mainwindow
+    #endif
 #elifdef Q_OS_ANDROID
-#include "Source/UI/Android/Subsystems/androidjavaplayer.h"
-#include "Source/UI/Android/Subsystems/PermissionsHandler/permissionHandler.h"
-#include <QQmlApplicationEngine>
-#include <QGuiApplication>
-#include <QtQuickControls2/QQuickStyle>
-#include <QQmlContext>
+    #include "androidjavaplayer.h"
+    #include "permissionHandler.h"
+    #include "playerdata.h"
+    #include "playlistModel.h"
+    #include <QQmlApplicationEngine>
+    #include <QGuiApplication>
+    #include <QtQuickControls2/QQuickStyle>
+    #include <QQmlContext>
 #endif
 
+// ============================================================================
+// NEW ARCHITECTURE - Using AppInstance pattern
+// ============================================================================
+
 int main(int argc, char *argv[])
+{
+#ifdef Q_OS_WIN
+    QApplication app(argc, argv);
+
+    // Get AppInstance singleton
+    AppInstance* appInstance = AppInstance::getInstance();
+
+    // Initialize subsystems
+    appInstance->addSubsystem(new PlayerSubsystem(new WindowsMediaPlayer(nullptr)));
+
+    // Create and show main window using AppInstance
+    #ifdef USE_NEW_UI
+        appInstance->createApp<MainWindow>();
+    #else
+        appInstance->createApp<mainWindow>();
+    #endif
+
+#elifdef Q_OS_ANDROID
+    QGuiApplication app(argc, argv);
+
+    // Request permissions first
+    PermissionHandler* handler = PermissionHandler::instance();
+    handler->requestPermissions();
+
+    // Get AppInstance singleton
+    AppInstance* appInstance = AppInstance::getInstance();
+
+    // Initialize subsystems
+    appInstance->addSubsystem(new staticData(nullptr));
+    appInstance->addSubsystem(new FileManager(nullptr));
+    appInstance->addSubsystem(new PlayerSubsystem(new AndroidJavaPlayer(nullptr), appInstance));
+
+    // Initialize QML models
+    PlaylistModel playlistModel(nullptr);
+    playerData playerDataModel(nullptr);
+
+    // Setup QML engine
+    QQuickStyle::setStyle("Fusion");
+    QQmlApplicationEngine engine;
+
+    // Register context properties
+    engine.rootContext()->setContextProperty("playlistModel", &playlistModel);
+    engine.rootContext()->setContextProperty("playerData", &playerDataModel);
+
+    // Load QML
+    engine.load(QUrl(QStringLiteral("qrc:/MainWindow/androidMainWindow.qml")));
+
+#endif
+
+    return app.exec();
+}
+
+
+// ============================================================================
+// OLD ARCHITECTURE - Commented out for reference
+// ============================================================================
+/*
+int main_old(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN
 
@@ -58,3 +123,4 @@ int main(int argc, char *argv[])
 
     return a.exec();
 }
+*/

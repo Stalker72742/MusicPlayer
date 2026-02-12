@@ -9,6 +9,8 @@
 #include <QObject>
 
 class SubsystemBase;
+class UIPluginLoader;
+class QWidget;
 
 class AppInstance : public QObject {
     Q_OBJECT
@@ -47,12 +49,19 @@ public:
 
     void addSubsystem(SubsystemBase* subsystem);
 
+    // Window creation - template version (original)
     template <typename mw>
     void createApp() {
-
         mw *window = new mw();
+        mainWindow = window;
         window->show();
     }
+
+    // UI Plugin System
+    UIPluginLoader* getUILoader() const { return uiLoader; }
+    void initializeUISystem(bool usePlugins = false);
+    QWidget* createUIFromConfig(const QString& uiName = "");
+    QWidget* getMainWindow() const { return mainWindow; }
 
     AppInstance(const AppInstance&) = delete;
     AppInstance& operator=(const AppInstance&) = delete;
@@ -60,6 +69,9 @@ public:
 protected:
 
     QList<SubsystemBase*> subsystems;
+    UIPluginLoader* uiLoader = nullptr;
+    QWidget* mainWindow = nullptr;
+
     static AppInstance* instance;
 };
 
