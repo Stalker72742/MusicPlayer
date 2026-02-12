@@ -49,6 +49,13 @@ target_include_directories(OldWindowsUI
 
 target_compile_definitions(OldWindowsUI PRIVATE UI_LIBRARY_EXPORT)
 
+# Windows-specific: Auto-export all symbols (like MusicPlayerCore)
+if(WIN32)
+    set_target_properties(OldWindowsUI PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+endif()
+
 set_target_properties(OldWindowsUI PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON

@@ -34,6 +34,13 @@ target_include_directories(TestUI
 # Export symbols for .dll
 target_compile_definitions(TestUI PRIVATE UI_LIBRARY_EXPORT)
 
+# Windows-specific: Auto-export all symbols (like MusicPlayerCore)
+if(WIN32)
+    set_target_properties(TestUI PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+endif()
+
 set_target_properties(TestUI PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
