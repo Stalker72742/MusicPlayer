@@ -42,6 +42,11 @@ target_compile_definitions(NewWindowsUI PRIVATE UI_LIBRARY_EXPORT)
 # Platform-specific settings
 if(WIN32)
     target_link_libraries(NewWindowsUI PRIVATE dwmapi)
+
+    # Auto-export all symbols for Windows DLL (like MusicPlayerCore)
+    set_target_properties(NewWindowsUI PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
 endif()
 
 set_target_properties(NewWindowsUI PROPERTIES
