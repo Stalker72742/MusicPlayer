@@ -8,7 +8,7 @@
 // Platform-specific includes (subsystems only - NO UI!)
 #ifdef Q_OS_WIN
     #include <QApplication>
-    #include "windowsmediaplayer.h"
+    //#include "windowsmediaplayer.h"
 #elifdef Q_OS_ANDROID
     #include "androidjavaplayer.h"
     #include "permissionHandler.h"
@@ -34,14 +34,14 @@ int main(int argc, char *argv[])
     AppInstance* appInstance = AppInstance::getInstance();
 
     // Initialize subsystems
-    appInstance->addSubsystem(new PlayerSubsystem(new WindowsMediaPlayer(nullptr)));
+    //appInstance->addSubsystem(new PlayerSubsystem(new WindowsMediaPlayer(nullptr)));
 
     // Initialize UI Plugin System
     appInstance->initializeUISystem();
 
     // Create UI from config/registry (zero dependencies!)
     // Factories are auto-registered via UI_AUTO_REGISTER macro
-    appInstance->createUIFromConfig();  // Auto-selects best UI for platform!
+    appInstance->createUIFromConfig("NewWindows");  // Auto-selects best UI for platform!
 
 #elifdef Q_OS_ANDROID
     QGuiApplication app(argc, argv);
