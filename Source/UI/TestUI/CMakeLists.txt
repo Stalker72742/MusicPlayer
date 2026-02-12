@@ -29,6 +29,9 @@ target_link_libraries(TestUI
 target_include_directories(TestUI
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+    # Core library includes
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Framework
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems
 )
 
 # Export symbols for .dll
