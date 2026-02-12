@@ -8,7 +8,8 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
 # TestUI Library - Simple Hello World test
-add_library(TestUI STATIC
+# SHARED library for dynamic loading (.dll on Windows)
+add_library(TestUI SHARED
     # UI Factory (zero dependency)
     TestUIFactory.h
     TestUIFactory.cpp
@@ -30,6 +31,7 @@ target_include_directories(TestUI
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+# Export symbols for .dll
 target_compile_definitions(TestUI PRIVATE UI_LIBRARY_EXPORT)
 
 set_target_properties(TestUI PROPERTIES

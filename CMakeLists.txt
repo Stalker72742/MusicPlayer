@@ -31,13 +31,14 @@ add_subdirectory(Source/Core)
 
 # Add UI libraries based on selection
 if (WIN32)
-    # Always build all UI libraries for plugin system
+    # Build all UI libraries as SHARED (.dll) for dynamic loading
     add_subdirectory(Source/UI/NewWindows)
     add_subdirectory(Source/UI/Windows)
     add_subdirectory(Source/UI/TestUI)
 
-    # Set which libraries to link (all of them for auto-registration)
-    set(WINDOWS_UI_LIBRARY NewWindowsUI OldWindowsUI TestUI)
+    # Don't link UI libraries - they will be loaded dynamically!
+    # UIPluginLoader will load .dll files at runtime
+    set(WINDOWS_UI_LIBRARY)  # Empty - no static linking
 
     if(USE_NEW_UI)
         add_definitions(-DUSE_NEW_UI)
