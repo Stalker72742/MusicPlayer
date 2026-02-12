@@ -16,8 +16,6 @@ add_library(OldWindowsUI STATIC
     # UI Components
     MainWindow/mainwindow.cpp
     MainWindow/mainwindow.h
-    MainWindow/Components/titlebar.cpp
-    MainWindow/Components/titlebar.h
     MediaLib/addtoplaylist.cpp
     MediaLib/addtoplaylist.h
     MediaLib/medialibitem.cpp
@@ -43,7 +41,6 @@ target_include_directories(OldWindowsUI
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
-    ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow/Components
     ${CMAKE_CURRENT_SOURCE_DIR}/MediaLib
     ${CMAKE_CURRENT_SOURCE_DIR}/OldWidgets/Components
     ${CMAKE_CURRENT_SOURCE_DIR}/OldWidgets/Playlist
