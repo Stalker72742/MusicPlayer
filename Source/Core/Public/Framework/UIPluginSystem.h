@@ -68,6 +68,7 @@ public:
     // Plugin loading (for dynamic libraries)
     bool loadPlugin(const QString& libraryPath);
     void unloadPlugin(const QString& name);
+    int scanForPlugins(const QString& pluginDir = "");  // Auto-scan for .dll/.so files
 
 signals:
     void uiConfigLoaded(const QString& name);

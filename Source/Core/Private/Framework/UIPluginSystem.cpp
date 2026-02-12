@@ -12,6 +12,7 @@
 #include <QDebug>
 #include <QLibrary>
 #include <QDir>
+#include <QCoreApplication>
 
 // ============================================================================
 // UIPluginLoader Implementation
@@ -300,4 +301,48 @@ void UIPluginLoader::unloadPlugin(const QString& name)
         config->factory = nullptr;
         qDebug() << "Unloaded plugin:" << name;
     }
+}
+
+int UIPluginLoader::scanForPlugins(const QString& pluginDir)
+{
+    QString searchDir = pluginDir;
+    if (searchDir.isEmpty()) {
+        // Use application directory by default
+        searchDir = QCoreApplication::applicationDirPath();
+    }
+
+    qDebug() << "Scanning for UI plugins in:" << searchDir;
+
+    QDir dir(searchDir);
+    if (!dir.exists()) {
+        qDebug() << "Plugin directory does not exist:" << searchDir;
+        return 0;
+    }
+
+    // Look for UI .dll/.so files (TestUI.dll, NewWindowsUI.dll, OldWindowsUI.dll)
+    QStringList filters;
+#ifdef Q_OS_WIN
+    filters << "*UI.dll" << "TestUI.dll";
+#else
+    filters << "lib*UI.so" << "libTestUI.so";
+#endif
+
+    QStringList pluginFiles = dir.entryList(filters, QDir::Files);
+    qDebug() << "Found" << pluginFiles.count() << "potential UI plugin files:" << pluginFiles;
+
+    int loadedCount = 0;
+    for (const QString& fileName : pluginFiles) {
+        QString fullPath = dir.absoluteFilePath(fileName);
+        qDebug() << "Attempting to load plugin:" << fullPath;
+
+        if (loadPlugin(fullPath)) {
+            loadedCount++;
+            qDebug() << "Successfully loaded plugin:" << fileName;
+        } else {
+            qDebug() << "Failed to load plugin:" << fileName;
+        }
+    }
+
+    qDebug() << "Loaded" << loadedCount << "UI plugins from" << searchDir;
+    return loadedCount;
 }

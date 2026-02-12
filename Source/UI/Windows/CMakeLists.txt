@@ -7,8 +7,8 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
-# Old Windows UI Library
-add_library(OldWindowsUI STATIC
+# Old Windows UI Library - SHARED for dynamic loading
+add_library(OldWindowsUI SHARED
     # UI Factory (zero dependency)
     OldWindowsFactory.h
     OldWindowsFactory.cpp

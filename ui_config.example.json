@@ -1,0 +1,135 @@
+{
+  "$schema": "UI Configuration Schema v1.0",
+  "description": "UI Plugin System Configuration - Defines available UI modules and their settings",
+
+  "ui_modules": [
+    {
+      "name": "TestUI",
+      "platform": "windows",
+      "main_window_class": "TestMainWindow",
+      "priority": 200,
+      "enabled": true,
+      "description": "Simple white Hello World window for testing plugin system",
+      "settings": {
+        "theme": "light",
+        "window_title": "Hello World - Test UI",
+        "default_size": {
+          "width": 800,
+          "height": 600
+        },
+        "background_color": "#FFFFFF",
+        "text_color": "#2196F3"
+      }
+    },
+    {
+      "name": "NewWindows",
+      "platform": "windows",
+      "main_window_class": "MainWindow",
+      "priority": 100,
+      "enabled": true,
+      "description": "Modern Windows UI with frameless design and dark theme",
+      "settings": {
+        "theme": "dark",
+        "frameless": true,
+        "default_size": {
+          "width": 1200,
+          "height": 800
+        },
+        "min_size": {
+          "width": 800,
+          "height": 600
+        },
+        "opacity": 1.0,
+        "effects": {
+          "blur": true,
+          "shadow": true,
+          "animations": true
+        },
+        "colors": {
+          "primary": "#1E88E5",
+          "background": "#1E1E1E",
+          "surface": "#2D2D2D",
+          "text": "#FFFFFF"
+        }
+      }
+    },
+    {
+      "name": "OldWindows",
+      "platform": "windows",
+      "main_window_class": "mainWindow",
+      "priority": 50,
+      "enabled": true,
+      "description": "Classic Windows UI with standard window frame",
+      "settings": {
+        "theme": "default",
+        "frameless": false,
+        "default_size": {
+          "width": 1000,
+          "height": 700
+        },
+        "show_menubar": true,
+        "show_statusbar": true
+      }
+    },
+    {
+      "name": "Android",
+      "platform": "android",
+      "main_window_class": "QQmlApplicationEngine",
+      "priority": 100,
+      "enabled": true,
+      "description": "QML-based Android UI with Material Design",
+      "settings": {
+        "qml_path": "qrc:/MainWindow/androidMainWindow.qml",
+        "style": "Fusion",
+        "theme": "dark",
+        "orientation": "portrait",
+        "fullscreen": false,
+        "features": {
+          "gestures": true,
+          "haptic_feedback": true,
+          "notifications": true
+        }
+      }
+    }
+  ],
+
+  "global_settings": {
+    "auto_select_ui": true,
+    "fallback_ui": "OldWindows",
+    "log_level": "info",
+    "cache_enabled": true,
+    "hot_reload": false
+  },
+
+  "platform_mapping": {
+    "windows": ["TestUI", "NewWindows", "OldWindows"],
+    "android": ["Android"],
+    "linux": ["NewWindows"],
+    "macos": ["NewWindows"]
+  },
+
+  "_documentation": {
+    "fields": {
+      "name": "Unique identifier for the UI module (must match factory name)",
+      "platform": "Target platform: 'windows', 'android', 'linux', 'macos', or 'all'",
+      "main_window_class": "Main window class name (for documentation only)",
+      "priority": "Selection priority (higher = preferred). Range: 0-1000",
+      "enabled": "Whether this UI is available for selection",
+      "library_path": "(Optional) Path to dynamic library (.dll/.so) for plugin mode",
+      "settings": "Custom settings object passed to UI factory on initialization"
+    },
+    "priority_system": {
+      "200+": "Test/Development UIs - highest priority",
+      "100-199": "Production UIs - default priority",
+      "50-99": "Legacy/Fallback UIs - low priority",
+      "0-49": "Experimental/Disabled UIs - lowest priority"
+    },
+    "selection_logic": [
+      "1. Filter UIs by current platform",
+      "2. Filter enabled UIs only",
+      "3. Select UI with highest priority",
+      "4. If tie, select first registered",
+      "5. If none found, use fallback_ui"
+    ]
+  }
+}

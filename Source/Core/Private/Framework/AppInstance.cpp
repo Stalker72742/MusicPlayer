@@ -48,6 +48,11 @@ void AppInstance::initializeUISystem(bool usePlugins)
 
     uiLoader = new UIPluginLoader(this);
 
+    // Scan for .dll/.so UI plugin files in application directory
+    qDebug() << "Scanning for dynamic UI plugins (.dll files)...";
+    int pluginCount = uiLoader->scanForPlugins();
+    qDebug() << "Loaded" << pluginCount << "UI plugin(s) from DLL files";
+
     // Try to load config from file
     QString configPath = QDir::currentPath() + "/ui_config.json";
     if (QFile::exists(configPath)) {
