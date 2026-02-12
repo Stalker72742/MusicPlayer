@@ -47,4 +47,6 @@ endif()
 set_target_properties(NewWindowsUI PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
+    PREFIX ""  # Don't add "lib" prefix on Windows MinGW
+    OUTPUT_NAME "NewWindowsUI"
 )

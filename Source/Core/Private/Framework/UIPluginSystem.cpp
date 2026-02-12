@@ -320,11 +320,12 @@ int UIPluginLoader::scanForPlugins(const QString& pluginDir)
     }
 
     // Look for UI .dll/.so files (TestUI.dll, NewWindowsUI.dll, OldWindowsUI.dll)
+    // Exclude Qt libraries!
     QStringList filters;
 #ifdef Q_OS_WIN
-    filters << "*UI.dll" << "TestUI.dll";
+    filters << "TestUI.dll" << "NewWindowsUI.dll" << "OldWindowsUI.dll";
 #else
-    filters << "lib*UI.so" << "libTestUI.so";
+    filters << "libTestUI.so" << "libNewWindowsUI.so" << "libOldWindowsUI.so";
 #endif
 
     QStringList pluginFiles = dir.entryList(filters, QDir::Files);
