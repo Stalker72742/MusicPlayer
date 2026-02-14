@@ -36,9 +36,9 @@ if (WIN32)
     add_subdirectory(Source/UI/Windows)
     add_subdirectory(Source/UI/TestUI)
 
-    # Don't link UI libraries - they will be loaded dynamically!
-    # UIPluginLoader will load .dll files at runtime
-    set(WINDOWS_UI_LIBRARY)  # Empty - no static linking
+    # Don't link UI libraries statically - they will be loaded dynamically!
+    # But keep list for dependencies
+    set(WINDOWS_UI_LIBRARY NewWindowsUI OldWindowsUI TestUI)
 
     if(USE_NEW_UI)
         add_definitions(-DUSE_NEW_UI)
@@ -62,6 +62,28 @@ if (WIN32)
             Qt6::Widgets
             Qt6::Multimedia
             Qt6::Network
+    )
+
+    # Auto-copy UI plugin DLLs to executable directory after build
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:NewWindowsUI>
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMENT "Copying NewWindowsUI.dll to executable directory"
+    )
+
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:TestUI>
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMENT "Copying TestUI.dll to executable directory"
+    )
+
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:OldWindowsUI>
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMENT "Copying OldWindowsUI.dll to executable directory"
     )
 elseif (ANDROID)
 

@@ -26,8 +26,12 @@ target_link_libraries(NewWindowsUI
     PUBLIC
     Qt6::Core
     Qt6::Widgets
-    MusicPlayerCore
 )
+
+# Link with MusicPlayerCore only when building from root project
+if(TARGET MusicPlayerCore)
+    target_link_libraries(NewWindowsUI PRIVATE MusicPlayerCore)
+endif()
 
 target_include_directories(NewWindowsUI
     PUBLIC
