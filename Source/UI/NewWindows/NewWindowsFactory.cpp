@@ -1,47 +1,40 @@
-//
-// Created for MusicPlayer
-// NewWindows UI Factory implementation
-//
-
 #include "NewWindowsFactory.h"
-#include "MainWindow.h"  // Include ONLY in .cpp!
+#include "Something/QmlWindowWrapper.h"   // <-- теперь здесь, не MainWindow
 #include "AppInstance.h"
 #include <QDebug>
 
 NewWindowsFactory::NewWindowsFactory()
 {
-    qDebug() << "NewWindowsFactory created";
+    qDebug() << "[NewWindowsFactory] created";
 }
 
 NewWindowsFactory::~NewWindowsFactory()
 {
-    qDebug() << "NewWindowsFactory destroyed";
+    qDebug() << "[NewWindowsFactory] destroyed";
 }
 
 QWidget* NewWindowsFactory::createMainWindow()
 {
-    qDebug() << "Creating NewWindows MainWindow";
-    return new MainWindow();
+    qDebug() << "[NewWindowsFactory] creating QML window";
+    auto* wrapper = new QmlWindowWrapper();
+
+    // Хочешь передать модели в QML — делай здесь:
+    // wrapper->setContextProperty("playerData", AppInstance::getInstance()->getSubsystem<PlayerSubsystem>());
+
+    return wrapper;
 }
 
 void NewWindowsFactory::initialize(AppInstance* app)
 {
     m_appInstance = app;
-    qDebug() << "NewWindows UI initialized with AppInstance";
+    qDebug() << "[NewWindowsFactory] initialized";
 }
 
 void NewWindowsFactory::shutdown()
 {
-    qDebug() << "NewWindows UI shutting down";
     m_appInstance = nullptr;
+    qDebug() << "[NewWindowsFactory] shutdown";
 }
 
-// ============================================================================
-// Export function for dynamic loading OR static registration
-// ============================================================================
-
-// For dynamic loading (.dll/.so)
 UI_REGISTER_FACTORY(NewWindowsFactory, "NewWindows")
-
-// For static linking - auto-registers on startup
 UI_AUTO_REGISTER(NewWindowsFactory, "NewWindows")

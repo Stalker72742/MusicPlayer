@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Widgets/WindowsMainWindow.qml</file>
+    </qresource>
+</RCC>

@@ -5,62 +5,37 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Qml Quick QuickControls2)
 
-# NewWindows UI Library - SHARED for dynamic loading
 add_library(NewWindowsUI SHARED
-    # UI Factory (zero dependency)
-    NewWindowsFactory.h
-    NewWindowsFactory.cpp
-
-    # UI Components
-    MainWindow/MainWindow.h
-    MainWindow/MainWindow.cpp
-    TitleBar/TitleBar.h
-    TitleBar/TitleBar.cpp
-    BottomBar/BottomBar.h
-    BottomBar/BottomBar.cpp
+        NewWindowsModule.h
+        NewWindowsModule.cpp
+        qml.qrc
 )
 
 target_link_libraries(NewWindowsUI
-    PUBLIC
-    Qt6::Core
-    Qt6::Widgets
+        PUBLIC  Qt6::Core Qt6::Widgets Qt6::Qml Qt6::Quick Qt6::QuickControls2
+        PRIVATE MusicPlayerCore
 )
-
-# Link with MusicPlayerCore only when building from root project
-if(TARGET MusicPlayerCore)
-    target_link_libraries(NewWindowsUI PRIVATE MusicPlayerCore)
-endif()
 
 target_include_directories(NewWindowsUI
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
-    ${CMAKE_CURRENT_SOURCE_DIR}/TitleBar
-    ${CMAKE_CURRENT_SOURCE_DIR}/BottomBar
-    # Core library includes (for UIFactory.h, AppInstance.h, etc.)
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Framework
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems/Player
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Data
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
+        # Core headers — IModuleInterface, AppInstance, SubsystemBase
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Framework
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Data
 )
 
-target_compile_definitions(NewWindowsUI PRIVATE UI_LIBRARY_EXPORT)
-
-# Platform-specific settings
 if(WIN32)
     target_link_libraries(NewWindowsUI PRIVATE dwmapi)
-
-    # Auto-export all symbols for Windows DLL (like MusicPlayerCore)
-    set_target_properties(NewWindowsUI PROPERTIES
-        WINDOWS_EXPORT_ALL_SYMBOLS ON
-    )
+    set_target_properties(NewWindowsUI PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
 set_target_properties(NewWindowsUI PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-    PREFIX ""  # Don't add "lib" prefix on Windows MinGW
-    OUTPUT_NAME "NewWindowsUI"
+        CXX_STANDARD 23
+        CXX_STANDARD_REQUIRED ON
+        PREFIX ""
+        OUTPUT_NAME "NewWindowsUI"
 )

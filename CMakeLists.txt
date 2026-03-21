@@ -4,267 +4,45 @@ project(${PROJECT_NAME} VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-# UI Selection Option
-option(USE_NEW_UI "Use new modern UI instead of old UI (Windows only)" ON)
-option(USE_UI_PLUGINS "Enable dynamic UI plugin system" OFF)
-
-if(ANDROID)
-
-    if (NOT_QTCREATOR)
-
-        add_definitions(-DQ_OS_ANDROID)
-    endif ()
-
-    find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network Gui Qml Quick QuickControls2 Core5Compat Svg)
-elseif(WIN32)
-
+if(WIN32)
     find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia Network)
-find_package(Qt6 REQUIRED COMPONENTS Core)
 endif()
 
+# Core — MusicPlayerCore.dll + IModuleInterface живёт здесь
 add_subdirectory(Source/Core)
 
-# Add UI libraries based on selection
-if (WIN32)
-    # Build all UI libraries as SHARED (.dll) for dynamic loading
+if(WIN32)
+    # UI модули — каждый отдельная .dll со своей точкой входа
     add_subdirectory(Source/UI/NewWindows)
-    add_subdirectory(Source/UI/Windows)
-    add_subdirectory(Source/UI/TestUI)
-
-    # Don't link UI libraries statically - they will be loaded dynamically!
-    # But keep list for dependencies
-    set(WINDOWS_UI_LIBRARY NewWindowsUI OldWindowsUI TestUI)
-
-    if(USE_NEW_UI)
-        add_definitions(-DUSE_NEW_UI)
-    else()
-        add_definitions(-DUSE_OLD_UI)
-    endif()
-endif()
-
-if (WIN32)
 
     qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION
             main.cpp
-            Resources/Windows/WinResources.qrc
+            # ресурсы, qrc и тд — только здесь, никакого UI кода
+    )
+
+    target_include_directories(${PROJECT_NAME} PRIVATE
+            Source/Core/Public/Framework    # IModuleInterface, AppInstance
+            Source/UI/NewWindows            # NewWindowsModule.h
     )
 
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
             MusicPlayerCore
-            ${WINDOWS_UI_LIBRARY}
+            NewWindowsUI    # нужен чтобы NewWindowsModule.h был доступен и dll собралась
             Qt6::Core
             Qt6::Widgets
-            Qt6::Multimedia
-            Qt6::Network
     )
 
-    # Auto-copy UI plugin DLLs to executable directory after build
+    # Копируем .dll рядом с exe
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:NewWindowsUI>
             $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMENT "Copying NewWindowsUI.dll to executable directory"
     )
 
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:TestUI>
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMENT "Copying TestUI.dll to executable directory"
-    )
-
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:OldWindowsUI>
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMENT "Copying OldWindowsUI.dll to executable directory"
-    )
-elseif (ANDROID)
-
-    qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION main.cpp
-            android/AndroidManifest.xml
-            android/build.gradle
-            android/res/values/libs.xml
-            android/res/xml/qtprovider_paths.xml
-            android/gradle/wrapper/gradle-wrapper.jar
-            android/gradle/wrapper/gradle-wrapper.properties
-            android/gradle.properties android/gradlew android/gradlew.bat
-            android/src/com/example/MusicPlayer/MainActivity.java
-            Source/UI/Android/Subsystems/PermissionsHandler/permissionHandler.cpp
-            Source/UI/Android/Subsystems/PermissionsHandler/permissionHandler.h
-            Source/UI/Android/Subsystems/androidjavaplayer.h
-            Source/UI/Android/Subsystems/androidjavaplayer.cpp
-            Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.cpp
-            Source/UI/Android/Subsystems/QMLInerfaces/playlistModel.h
-            Source/UI/Android/Subsystems/QMLInerfaces/playerdata.h Source/UI/Android/Subsystems/QMLInerfaces/playerdata.cpp
-            Source/UI/Android/Widgets/qml.qrc
-            Resources/Android/AndroidResources.qrc
-    )
-
-target_link_libraries(SoundLink PRIVATE Qt6::Core Qt6::Core5Compat)
-if (NOT_QTCREATOR)
-
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-                QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
-                QT_ANDROID_MIN_SDK_VERSION 28
-                QT_ANDROID_TARGET_SDK_VERSION 34
-        )
-
-    else()
-
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
-        )
-
-    endif ()
-
-    target_include_directories(${PROJECT_NAME}
-            PRIVATE
-            Source/Core/Private/Framework
-            Source/Core/Private/Libs
-            Source/Core/Private/Subsystems
-            Source/Core/Private/Subsystems/Player
-            Source/Core/Public/Data
-            Source/Core/Public/Framework
-            Source/Core/Public/Libs
-            Source/Core/Public/Subsystems
-            Source/Core/Public/Subsystems/Player
-            PUBLIC
-            "Source/Libs/ffmpeg/build/arm64-v8a/include"
-            "Source/Libs/Oboe/include"
-            "Source/UI/Platforms/Android"
-            "Source/UI/Platforms/Android/CurrentPlayingSong"
-            "Source/UI/Platforms/Android/MediaKeyHandler"
-            "Source/UI/Platforms/Android/MediaLib"
-            "Source/UI/Platforms/Android/Permissions"
-            Source/UI/Platforms/Android/Subsystems
-             Source/Core/Public/Data
-    )
-
-    target_link_libraries(${PROJECT_NAME}
-            PRIVATE
-            MusicPlayerCore
-            Qt6::Core
-            Qt6::CorePrivate
-            Qt6::Widgets
-            Qt6::Gui
-            Qt6::Qml
-            Qt6::Quick
-            Qt6::QuickControls2
-            Qt6::Network
-            Qt6::Svg
-    )
-endif ()
-
-include(GNUInstallDirs)
-install(TARGETS ${PROJECT_NAME}
-        BUNDLE DESTINATION .
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-qt_finalize_executable(${PROJECT_NAME})
-
-if(NOT_QTCREATOR)
-
-if(WIN32)
-
-    get_target_property(QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
-    get_filename_component(QT_BIN_DIR "${QMAKE_EXECUTABLE}" DIRECTORY)
-    find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${QT_BIN_DIR}")
-
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${WINDEPLOYQT_EXECUTABLE}
-            --verbose 2
-            --no-translations
-            --no-system-d3d-compiler
-            --no-opengl-sw
-            $<TARGET_FILE:${PROJECT_NAME}>
-            COMMENT "Развертывание Qt библиотек рядом с exe"
-    )
-
-    set(DLL_FILES
-            "D:/Qt/Tools/mingw1310_64/bin/libgcc_s_seh-1.dll"
-            "D:/Qt/Tools/mingw1310_64/bin/libstdc++-6.dll"
-            "D:/Qt/Tools/mingw1310_64/bin/libwinpthread-1.dll"
-            "$<TARGET_FILE:MusicPlayerCore>"
-    )
-
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_FILES}
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    )
-
-    get_target_property(QT6_MULTIMEDIA_LOCATION Qt6::Multimedia IMPORTED_LOCATION_RELEASE)
-    if(NOT QT6_MULTIMEDIA_LOCATION)
-        get_target_property(QT6_MULTIMEDIA_LOCATION Qt6::Multimedia IMPORTED_LOCATION)
-    endif()
-
-    if(QT6_MULTIMEDIA_LOCATION)
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${QT6_MULTIMEDIA_LOCATION}
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-                COMMENT "Принудительное копирование Qt6Multimedia.dll"
-        )
-    endif()
-
-    set(DEPLOY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Release")
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${DEPLOY_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:${PROJECT_NAME}>" "${DEPLOY_DIR}/"
-            COMMAND ${WINDEPLOYQT_EXECUTABLE}
-            "${DEPLOY_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
-            --no-translations
-            --no-compiler-runtime
-            --verbose 2
-    )
-
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_FILES}
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>" "${DEPLOY_DIR}/"
-    )
-
-    if(QT6_MULTIMEDIA_LOCATION)
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${QT6_MULTIMEDIA_LOCATION}
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>" "${DEPLOY_DIR}/"
-        )
-    endif()
-
-elseif(ANDROID)
-
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/android-build/libs/${ANDROID_ABI}"
-
-            COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}_${ANDROID_ABI}.so"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>" "${CMAKE_CURRENT_BINARY_DIR}/android-build/libs/${ANDROID_ABI}"
-
-            COMMAND D:/Qt/6.8.3/mingw_64/bin/androiddeployqt.exe
-            --input ${CMAKE_BINARY_DIR}/android-${PROJECT_NAME}-deployment-settings.json
-            --output ${CMAKE_BINARY_DIR}/android-build
-            --android-platform android-34
-            --jdk "C:/Program Files/Java/jdk-23"
-            --gradle
-            --apk
-            --verbose
-
-            COMMAND adb install -r "${CMAKE_CURRENT_BINARY_DIR}/android-build/build/outputs/apk/debug/android-build-debug.apk"
-
-            DEPENDS ${PROJECT_NAME}
-    )
-
-else ()
-    message("Update cmake code for new platform")
-endif ()
-
+    qt_finalize_executable(${PROJECT_NAME})
 endif()
