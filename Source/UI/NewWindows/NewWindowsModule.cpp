@@ -1,22 +1,15 @@
 #include "NewWindowsModule.h"
-#include "AppInstance.h"
 
-#include <QMainWindow>
-#include <QQuickStyle>
 #include <QQmlApplicationEngine>
 #include "Something/QmlWindowWrapper.h"
 #include "UIPluginSystem.h"
 
 void NewWindowsModule::StartupModule()
 {
-    // Здесь вся инициализация модуля:
-    // субсистемы, сервисы, и создание UI — всё тут
-    AppInstance* app = AppInstance::getInstance();
-
     // Пример: зарегать субсистему специфичную для этого UI
     // app->addSubsystem(new SomeSubsystem());
 
-    QQuickStyle::setStyle("Fusion");
+    //QQuickStyle::setStyle("Fusion");
 
     // engine — child этого объекта, удалится сам
     auto m_engine = new QQmlApplicationEngine();

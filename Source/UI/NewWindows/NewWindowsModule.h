@@ -1,6 +1,6 @@
 #pragma once
-#include "IModuleInterface.h"
 
+#include "IModuleInterface.h"
 
 class QWidget;
 

@@ -5,11 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-#find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Multimedia)
-set(CMAKE_PREFIX_PATH "D:/Qt/6.8.3/android_arm64_v8a")
-set(Qt6_DIR "D:/Qt/6.8.3/android_arm64_v8a/lib/cmake/Qt6")
-find_package(Qt6 COMPONENTS Core Network Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Core Network Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Multimedia Widgets)
 
 add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         # Framework
@@ -64,40 +60,24 @@ target_include_directories(MusicPlayerCore
         Public/Subsystems/Player
 )
 
-if(PLATFORM_WINDOWS)
-    target_link_libraries(MusicPlayerCore PRIVATE
-            winmm
-            ole32
-            user32
-            advapi32
-    )
+target_link_libraries(MusicPlayerCore PRIVATE
+        winmm
+        ole32
+        user32
+        advapi32
+)
 
-    target_compile_definitions(MusicPlayerCore
-            PRIVATE
-            MusicPlayerCore_EXPORTS
-            QT_WIDGETS_LIB
-            INTERFACE
-            MusicPlayerCore_IMPORTS
-    )
+target_compile_definitions(MusicPlayerCore
+        PRIVATE
+        MusicPlayerCore_EXPORTS
+        QT_WIDGETS_LIB
+        INTERFACE
+        MusicPlayerCore_IMPORTS
+)
 
-    set_target_properties(MusicPlayerCore PROPERTIES
-            WINDOWS_EXPORT_ALL_SYMBOLS ON
-    )
-
-elseif(PLATFORM_ANDROID)
-    target_link_libraries(MusicPlayerCore PRIVATE
-            Qt6::Core
-            Qt6::Multimedia
-            Qt6::Network
-            android
-            log
-            OpenSLES
-    )
-    target_compile_definitions(MusicPlayerCore PRIVATE
-            ANDROID_PLATFORM
-            QT_ANDROID
-    )
-endif()
+set_target_properties(MusicPlayerCore PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         VERSION ${PROJECT_VERSION}

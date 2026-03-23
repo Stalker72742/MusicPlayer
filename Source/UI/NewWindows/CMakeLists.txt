@@ -13,6 +13,13 @@ add_library(NewWindowsUI SHARED
         qml.qrc
 )
 
+set_target_properties(NewWindowsUI PROPERTIES
+        CXX_STANDARD 23
+        CXX_STANDARD_REQUIRED ON
+        PREFIX ""
+        OUTPUT_NAME "NewWindowsUI"
+)
+
 target_link_libraries(NewWindowsUI
         PUBLIC  Qt6::Core Qt6::Widgets Qt6::Qml Qt6::Quick Qt6::QuickControls2
         PRIVATE MusicPlayerCore
@@ -22,7 +29,6 @@ target_include_directories(NewWindowsUI
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
-        # Core headers — IModuleInterface, AppInstance, SubsystemBase
         ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Framework
         ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems
         ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Data
@@ -33,9 +39,11 @@ if(WIN32)
     set_target_properties(NewWindowsUI PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
-set_target_properties(NewWindowsUI PROPERTIES
-        CXX_STANDARD 23
-        CXX_STANDARD_REQUIRED ON
-        PREFIX ""
-        OUTPUT_NAME "NewWindowsUI"
+find_program(WINDEPLOYQT windeployqt HINTS "${Qt6_DIR}/../../../bin")
+
+add_custom_command(TARGET NewWindowsUI POST_BUILD
+        COMMAND ${WINDEPLOYQT}
+        --qmldir "${CMAKE_CURRENT_SOURCE_DIR}"
+        $<TARGET_FILE:NewWindowsUI>
+        COMMENT "Running windeployqt on NewWindowsUI.dll"
 )

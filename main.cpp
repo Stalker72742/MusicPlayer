@@ -1,21 +1,17 @@
-#include "IModuleInterface.h"
-#include "AppInstance.h"
+#include <QApplication>
 
-#ifdef Q_OS_WIN
-    #include <QApplication>
-    #include "NewWindowsModule.h"
-#endif
+#include "Source/Core/Public/Framework/AppInstance.h"
+#include "Source/Core/Public/Framework/IModuleInterface.h"
+#include "Source/UI/NewWindows/NewWindowsModule.h"
 
 int main(int argc, char* argv[])
 {
-#ifdef Q_OS_WIN
     QApplication app(argc, argv);
 
     // Инициализируем субсистемы ядра
     AppInstance* appInstance = AppInstance::getInstance();
-    // appInstance->addSubsystem(new PlayerSubsystem(...));
+    //appInstance->addSubsystem(new PlayerSubsystem(...));
 
-    // Регистрируем и загружаем модуль — он сам создаст UI внутри StartupModule
     ModuleManager::Get().RegisterModule("NewWindows", []() -> IModuleInterface* {
         return new NewWindowsModule();
     });
@@ -25,5 +21,4 @@ int main(int argc, char* argv[])
 
     ModuleManager::Get().ShutdownAllModules();
     return result;
-#endif
 }
