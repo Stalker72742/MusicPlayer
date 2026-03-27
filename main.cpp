@@ -8,9 +8,7 @@ int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
-    // Инициализируем субсистемы ядра
     AppInstance* appInstance = AppInstance::getInstance();
-    //appInstance->addSubsystem(new PlayerSubsystem(...));
 
     ModuleManager::Get().RegisterModule("NewWindows", []() -> IModuleInterface* {
         return new NewWindowsModule();
@@ -18,6 +16,7 @@ int main(int argc, char* argv[])
     ModuleManager::Get().LoadModule("NewWindows");
 
     const int result = app.exec();
+
 
     ModuleManager::Get().ShutdownAllModules();
     return result;
