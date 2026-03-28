@@ -1,7 +1,8 @@
 .idea/*
 .claude/*
-cmake-build-debug-mingw-1/*
-cmake-build-release-mingw-msys/*
+build/*
+out/*
+CMakeUserPresets.json
 
 # C++ objects and libs
 *.slo

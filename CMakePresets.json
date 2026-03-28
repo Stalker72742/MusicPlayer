@@ -2,32 +2,18 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "Windows",
-            "displayName": "Windows config",
-            "cacheVariables": {
-                "CMAKE_PREFIX_PATH": "D:/Qt/6.8.3/mingw_64"
-            }
-        },
-        {
             "name": "Qt MinGW",
             "displayName": "GCC 13.1.0 x86_64-w64-mingw32",
-            "description": "Using compilers: C = d:\\Qt\\Tools\\mingw1310_64\\bin\\gcc.exe, CXX = d:\\Qt\\Tools\\mingw1310_64\\bin\\g++.exe",
-            "generator": "MinGW Makefiles",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "d:/Qt/Tools/mingw1310_64/bin/gcc.exe",
-                "CMAKE_CXX_COMPILER": "d:/Qt/Tools/mingw1310_64/bin/g++.exe",
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_PREFIX_PATH": "D:/Qt/6.8.3/mingw_64"
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         }
     ],
     "buildPresets": [
         {
             "name": "Qt MinGW",
-            "description": "",
-            "displayName": "",
             "configurePreset": "Qt MinGW"
         }
     ]
