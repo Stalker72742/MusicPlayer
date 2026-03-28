@@ -9,19 +9,21 @@ Rectangle {
 
     signal clicked
 
-    color: hovered ? (isClose ? "#f38ba8" : "#313244") : "transparent"
+    color: hovered ? (isClose ? "#CC0000" : "#303030") : "transparent"
     height: 36
     width: 46
 
     Text {
         anchors.centerIn: parent
-        color: root.hovered && root.isClose ? "#1e1e2e" : "#cdd6f4"
+        color: root.hovered ? "#EEEEEE" : "#BBB"
         font.pixelSize: 14
         text: root.text
     }
+
     HoverHandler {
         onHoveredChanged: root.hovered = hovered
     }
+
     TapHandler {
         onTapped: root.clicked()
     }

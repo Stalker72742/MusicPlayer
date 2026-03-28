@@ -22,8 +22,8 @@ ApplicationWindow {
     Rectangle {
         id: titleBar
 
-        color: "#1e1e2e"
-        height: 36
+        color: "#141414"
+        height: 40
 
         anchors {
             left: parent.left
@@ -39,6 +39,7 @@ ApplicationWindow {
                     root.startSystemMove();
             }
         }
+        
         RowLayout {
             anchors.fill: parent
             spacing: 0
@@ -47,12 +48,32 @@ ApplicationWindow {
             Item {
                 width: 12
             }
-            Rectangle {
-                Layout.alignment: Qt.AlignVCenter
-                color: "#cba6f7"
+            // Rectangle {
+            //     Layout.alignment: Qt.AlignVCenter
+            //     color: "#888888"
+            //     height: 16
+            //     radius: 4
+            //     width: 16
+            // }
+
+            Canvas{
+
                 height: 16
-                radius: 4
                 width: 16
+                
+                onPaint: {
+                    let ctx = getContext("2d");
+                    ctx.strokeStyle = "#888888";
+                    ctx.lineWidth = 1.5;
+
+                    for (let i = 0; i < 3; i++) {
+                        let y = 3 + i * 5;
+                        ctx.beginPath();
+                        ctx.moveTo(2, y);
+                        ctx.lineTo(14, y); 
+                        ctx.stroke();
+                    }
+                }
             }
             Item {
                 width: 8
