@@ -40,6 +40,9 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         # Data
         Public/Data/staticData.cpp
         Public/Data/staticData.h
+        Private/Framework/IModuleInterface.cpp
+        Public/Framework/PluginLoader.cpp
+        Public/Framework/PluginLoader.h
 )
 
 target_link_libraries(MusicPlayerCore

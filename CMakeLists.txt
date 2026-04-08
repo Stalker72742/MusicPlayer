@@ -32,6 +32,10 @@ target_link_libraries(${PROJECT_NAME}
         Qt6::Core
         Qt6::Widgets
         MusicPlayerCore
+)
+
+#Mods as target dependencies
+add_dependencies(${PROJECT_NAME}
         NewWindowsUI
 )
 

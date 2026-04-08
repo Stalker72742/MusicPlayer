@@ -79,8 +79,23 @@ public:
         return dynamic_cast<T*>(GetModule(name));
     }
 
+    bool TryLoadModule(const QString& InModName, bool bFindRecursive = true);
+
 private:
     ModuleManager() = default;
     QMap<QString, ModuleFactory>                    m_factories;
     QMap<QString, QSharedPointer<IModuleInterface>> m_modules;
 };
+
+class IPlugin {
+public:
+    virtual ~IPlugin() = default;
+    virtual void init() = 0;
+    virtual void shutdown() = 0;
+    virtual QString name() const = 0;
+};
+
+#define PLUGIN_API extern "C" __declspec(dllexport)
+
+using CreatePluginFn  = IPlugin*(*)();
+using DestroyPluginFn = void(*)(IPlugin*);
