@@ -44,6 +44,8 @@
 #ifndef TOMLPLUSPLUS_HPP
 #define TOMLPLUSPLUS_HPP
 
+#pragma once
+
 #define INCLUDE_TOMLPLUSPLUS_H // old guard name used pre-v3
 #define TOMLPLUSPLUS_H		   // guard name used in the legacy toml.h
 

@@ -28,10 +28,12 @@ class PluginLoader {
 public:
     // Загружает DLL и создаёт объект
     // Возвращает nullptr если что-то пошло не так
-    static LoadedPlugin load(const std::string& path);
+    static LoadedPlugin load(const QString& path);
 
     // Шатдаун + выгрузка DLL
     static void unload(LoadedPlugin& plugin);
+
+    static void FindAndLoadPlugins();
 };
 
 #endif //SOUNDLINK_PLUGINLOADER_H

@@ -5,16 +5,19 @@
 #include "PluginLoader.h"
 
 #include <iostream>
+#include <QDirIterator>
 
 
-LoadedPlugin PluginLoader::load(const std::string &path) {
+LoadedPlugin PluginLoader::load(const QString& path) {
 
     LoadedPlugin result;
 
+    std::string stdPath = path.toStdString();
+
 #ifdef _WIN32
-    result.handle = LoadLibraryA(path.c_str());
+    result.handle = LoadLibraryA(stdPath.c_str());
     if (!result.handle) {
-        std::cerr << "[PluginLoader] LoadLibrary failed: " << path
+        std::cerr << "[PluginLoader] LoadLibrary failed: " << stdPath
                   << " (error " << GetLastError() << ")\n";
         return result;
     }
@@ -33,7 +36,7 @@ LoadedPlugin PluginLoader::load(const std::string &path) {
 #endif
 
     if (!create || !destroy) {
-        std::cerr << "[PluginLoader] Missing createPlugin/destroyPlugin in: " << path << "\n";
+        std::cerr << "[PluginLoader] Missing createPlugin/destroyPlugin in: " << stdPath << "\n";
         unload(result);
         return result;
     }
@@ -60,4 +63,22 @@ void PluginLoader::unload(LoadedPlugin &plugin) {
 #endif
 
     plugin.handle = nullptr;
+}
+
+void PluginLoader::FindAndLoadPlugins() {
+
+    QDirIterator it(QDir::currentPath() + "/Plugins", {"*.dll", "*Windows*"}, QDir::Files);
+
+    while (it.hasNext()) {
+
+        const QString& pluginPath = it.next();
+
+        const auto plugin = load("Plugins/" + it.fileInfo().fileName());
+
+        if (plugin.instance) {
+
+            qDebug() << "Loaded plugin: " << plugin.instance->name();
+            plugin.instance->init();
+        }
+    }
 }

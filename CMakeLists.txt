@@ -69,6 +69,6 @@ add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND python ${CMAKE_SOURCE_DIR}/scripts/post_build.py
         --source "${CMAKE_BINARY_DIR}/Source"
-        --dest   ${CMAKE_BINARY_DIR}
+        --dest   "${CMAKE_BINARY_DIR}"
         COMMENT "Copying DLLs..."
 )
