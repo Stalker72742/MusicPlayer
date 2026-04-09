@@ -233,7 +233,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 
 ```cmake
 # 1. Build all UI libraries
-add_subdirectory(Source/UI/NewWindows)
+add_subdirectory(Source/UI/NewWindowsUI)
 add_subdirectory(Source/UI/Windows)
 add_subdirectory(Source/UI/TestUI)
 

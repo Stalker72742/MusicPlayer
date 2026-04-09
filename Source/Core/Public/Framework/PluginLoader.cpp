@@ -67,13 +67,20 @@ void PluginLoader::unload(LoadedPlugin &plugin) {
 
 void PluginLoader::FindAndLoadPlugins() {
 
-    QDirIterator it(QDir::currentPath() + "/Plugins", {"*.dll", "*Windows*"}, QDir::Files);
+    QDirIterator it( QDir::currentPath() + "/Plugins", {"*.dll"},
+        QDir::Files, QDirIterator::Subdirectories );
 
     while (it.hasNext()) {
 
         const QString& pluginPath = it.next();
 
-        const auto plugin = load("Plugins/" + it.fileInfo().fileName());
+        if (pluginPath.contains("Qml")) {
+            break;
+        }
+
+        const auto plugin = load(it.fileInfo().filePath().remove(QDir::currentPath() + "/"));
+
+        qDebug() << "Trying to load: " << it.fileInfo().filePath().remove(QDir::currentPath());
 
         if (plugin.instance) {
 
