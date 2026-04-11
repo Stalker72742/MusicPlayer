@@ -21,11 +21,11 @@ add_subdirectory(Source/UI/NewWindowsUI)
 #Target creation and target settings
 qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION
         main.cpp
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/UI/NewWindowsUI/Resources/app.rc"
 )
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC
-        Qt6::Multimedia
         Qt6::Core
         Qt6::Widgets
         MusicPlayerCore
@@ -62,13 +62,6 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         "${CMAKE_BINARY_DIR}/libMusicPlayerCore.dll"
 )
 
-
-install(TARGETS ${PROJECT_NAME}
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-)
-
 set(PLUGINS "NewWindowsUI;Tray")
 
 string(REPLACE ";" " " PLUGINS_STR "${PLUGINS}")
@@ -80,4 +73,10 @@ add_custom_command(
         --source   "${CMAKE_SOURCE_DIR}/Source"
         --binaryDir ${CMAKE_BINARY_DIR}
         --plugins ${PLUGINS}
+)
+
+install(TARGETS ${PROJECT_NAME}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
 )

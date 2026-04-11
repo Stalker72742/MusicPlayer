@@ -46,7 +46,7 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
 )
 
 target_link_libraries(MusicPlayerCore
-        PUBLIC
+        PRIVATE
         Qt6::Core
         Qt6::Multimedia
         Qt6::CorePrivate

@@ -1,5 +1,8 @@
 #include "NewWindowsModule.h"
 
+#include <QDirIterator>
+#include <QFile>
+#include <qguiapplication.h>
 #include <QQmlApplicationEngine>
 #include "Something/QmlWindowWrapper.h"
 #include "UIPluginSystem.h"
@@ -36,7 +39,13 @@ void NewWindowsModule::init() {
     else
         qDebug() << "[NewWindows] QML OK";
 
-    qDebug() << "[NewWindowsModule] StartupModule";
+    QGuiApplication::setWindowIcon(QIcon("/icons/ApplicationIcon/AppIcon.ico"));
+
+    qDebug() << "Find icon result: " << QFile::exists("/icons/ApplicationIcon/AppIcon.ico");
+
+    QDirIterator it(":", QDirIterator::Subdirectories);
+    while (it.hasNext())
+        qDebug() << it.next();
 }
 
 void NewWindowsModule::shutdown() {

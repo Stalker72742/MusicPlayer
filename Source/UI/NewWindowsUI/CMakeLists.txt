@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+set(PROJECT_NAME "NewWindowsUI")
 project(NewWindowsUI)
 
 set(CMAKE_AUTOMOC ON)
@@ -10,6 +11,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Qml Quick QuickControls2)
 add_library(NewWindowsUI SHARED
         NewWindowsModule.h
         NewWindowsModule.cpp
+        Resources/Resources.qrc
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/app.rc"
         qml.qrc
 )
 
@@ -21,8 +24,8 @@ set_target_properties(NewWindowsUI PROPERTIES
 )
 
 target_link_libraries(NewWindowsUI
-        PUBLIC  Qt6::Core Qt6::Widgets Qt6::Qml Qt6::Quick Qt6::QuickControls2
-        PRIVATE MusicPlayerCore
+        PRIVATE
+        Qt6::Core Qt6::Widgets Qt6::Qml Qt6::Quick Qt6::QuickControls2 MusicPlayerCore
 )
 
 target_include_directories(NewWindowsUI

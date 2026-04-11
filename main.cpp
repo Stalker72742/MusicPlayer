@@ -1,17 +1,17 @@
 #include <QApplication>
 
 #include "PluginLoader.h"
-#include "Source/Core/Public/Framework/AppInstance.h"
+#include "AppInstance.h"
 
 int main(int argc, char* argv[])
 {
-    QApplication app(argc, argv);
+    QGuiApplication app(argc, argv);
+
     AppInstance* appInstance = AppInstance::getInstance();
 
     PluginLoader::FindAndLoadPlugins();
 
     const int result = app.exec();
-    //ModuleManager::Get().ShutdownAllModules();
 
     return result;
 }

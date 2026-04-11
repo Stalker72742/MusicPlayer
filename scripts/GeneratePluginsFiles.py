@@ -21,7 +21,8 @@ def FindAndCopyPluginToDest(source: Path, dest: Path, binary: Path, pluginName: 
     destPath = dest / pluginName
     destBinary = destPath / "Binaries"
 
-    destBinary.mkdir(parents=True, exist_ok=True)
+    if not destBinary.exists():
+        destBinary.mkdir(parents=True, exist_ok=True)
 
     for dll in dlls:
         destDir = destPath / "Binaries" / dll.name
@@ -55,6 +56,10 @@ if __name__ == "__main__":
         print(f"[ERROR] source do not exists: {source}")
         exit(1)
 
+    print("Start copying plugins")
+
     for plugin in plugins:
+        print(f"  [copy] {plugin}  to  ->  {dest}")
         FindAndCopyPluginToDest(dest=dest, source=source, binary=binary, pluginName=plugin)
 
+    print("Copying done")

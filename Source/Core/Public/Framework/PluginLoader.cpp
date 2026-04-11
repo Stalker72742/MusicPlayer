@@ -10,6 +10,15 @@
 
 LoadedPlugin PluginLoader::load(const QString& path) {
 
+    QString name = QFileInfo(path).fileName().toLower();
+    const bool isQtDll =  name.startsWith("qt") ||
+           name.startsWith("qml") ||
+           name.startsWith("qtquick");
+
+    if (isQtDll) {
+        return LoadedPlugin();
+    }
+
     LoadedPlugin result;
 
     std::string stdPath = path.toStdString();
@@ -73,10 +82,6 @@ void PluginLoader::FindAndLoadPlugins() {
     while (it.hasNext()) {
 
         const QString& pluginPath = it.next();
-
-        if (pluginPath.contains("Qml")) {
-            break;
-        }
 
         const auto plugin = load(it.fileInfo().filePath().remove(QDir::currentPath() + "/"));
 
