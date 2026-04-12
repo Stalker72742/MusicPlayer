@@ -21,7 +21,7 @@ add_subdirectory(Source/UI/NewWindowsUI)
 #Target creation and target settings
 qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION
         main.cpp
-        "${CMAKE_CURRENT_SOURCE_DIR}/Source/UI/NewWindowsUI/Resources/app.rc"
+        Resources/app.rc
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -53,6 +53,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         --qmldir ${CMAKE_SOURCE_DIR}
         --multimedia
         --quick
+        --no-translations
         $<TARGET_FILE:${PROJECT_NAME}>
 )
 

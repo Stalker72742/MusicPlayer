@@ -38,14 +38,6 @@ void NewWindowsModule::init() {
         qCritical() << "[NewWindows] QML load FAILED — проверь qrc и путь";
     else
         qDebug() << "[NewWindows] QML OK";
-
-    QGuiApplication::setWindowIcon(QIcon("/icons/ApplicationIcon/AppIcon.ico"));
-
-    qDebug() << "Find icon result: " << QFile::exists("/icons/ApplicationIcon/AppIcon.ico");
-
-    QDirIterator it(":", QDirIterator::Subdirectories);
-    while (it.hasNext())
-        qDebug() << it.next();
 }
 
 void NewWindowsModule::shutdown() {
