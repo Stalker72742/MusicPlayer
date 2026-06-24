@@ -1,9 +1,11 @@
 .idea/*
 .claude/*
 .vscode/*
+.venv/*
 build/*
+*/build/*
 out/*
-CMakeUserPresets.json
+source/CMakeUserPresets.json
 
 # C++ objects and libs
 *.slo
@@ -59,5 +61,3 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
-
-build/*

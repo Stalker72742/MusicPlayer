@@ -3,7 +3,6 @@
 //
 
 #include "FileManager.h"
-#include "staticData.h"
 #include <QDirIterator>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -12,46 +11,46 @@
 
 FileManager::FileManager(QObject* Parent) : SubsystemBase(Parent)
 {
-    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    QFile AllMusicJson(path + "/" + staticData::allMediaConfigName);
-    QJsonObject playlist;
-
-    QStringList filters;
-    filters << "*.mp3";
-
-    QDirIterator it(staticData::DefaultMusicFolder, filters, QDir::Files | QDir::Dirs);
-
-    while(it.hasNext()){
-        QString file = it.next();
-
-        QFileInfo fileInfo(file);
-
-        playlist[fileInfo.baseName()] = file;
-
-        qDebug() << "Added " << fileInfo.baseName() << " " << file << " to all songs playlist";
-    }
-
-    QFileInfo fileInfo(AllMusicJson);
-    QDir dir = fileInfo.absoluteDir();
-
-    if (!dir.exists()) {
-        if (!dir.mkpath(".")) {
-            qDebug() << "Unable to make directory:" << dir.path();
-            return;
-        }
-    }
-
-    if (!AllMusicJson.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qDebug() << "Fail to save file:" << AllMusicJson.errorString();
-        return;
-    }
-
-    const QJsonDocument doc(playlist);
-    AllMusicJson.write(doc.toJson(QJsonDocument::Indented));
-    AllMusicJson.close();
-
-    QFileInfo allMediaInfo(path + "/" + staticData::allMediaConfigName);
-    qDebug() << "AllMusicJson success at" << allMediaInfo.absoluteFilePath();
+    // QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    // QFile AllMusicJson(path + "/" + staticData::allMediaConfigName);
+    // QJsonObject playlist;
+    //
+    // QStringList filters;
+    // filters << "*.mp3";
+    //
+    // QDirIterator it(staticData::DefaultMusicFolder, filters, QDir::Files | QDir::Dirs);
+    //
+    // while(it.hasNext()){
+    //     QString file = it.next();
+    //
+    //     QFileInfo fileInfo(file);
+    //
+    //     playlist[fileInfo.baseName()] = file;
+    //
+    //     qDebug() << "Added " << fileInfo.baseName() << " " << file << " to all songs playlist";
+    // }
+    //
+    // QFileInfo fileInfo(AllMusicJson);
+    // QDir dir = fileInfo.absoluteDir();
+    //
+    // if (!dir.exists()) {
+    //     if (!dir.mkpath(".")) {
+    //         qDebug() << "Unable to make directory:" << dir.path();
+    //         return;
+    //     }
+    // }
+    //
+    // if (!AllMusicJson.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    //     qDebug() << "Fail to save file:" << AllMusicJson.errorString();
+    //     return;
+    // }
+    //
+    // const QJsonDocument doc(playlist);
+    // AllMusicJson.write(doc.toJson(QJsonDocument::Indented));
+    // AllMusicJson.close();
+    //
+    // QFileInfo allMediaInfo(path + "/" + staticData::allMediaConfigName);
+    // qDebug() << "AllMusicJson success at" << allMediaInfo.absoluteFilePath();
 }
 
 bool FileManager::GetAllPlaylists(QStringList& OutFoundFiles)

@@ -82,7 +82,6 @@ void PluginLoader::FindAndLoadPlugins() {
     while (it.hasNext()) {
 
         const QString& pluginPath = it.next();
-
         const auto plugin = load(it.fileInfo().filePath().remove(QDir::currentPath() + "/"));
 
         qDebug() << "Trying to load: " << it.fileInfo().filePath().remove(QDir::currentPath());

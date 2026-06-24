@@ -1,0 +1,52 @@
+cmake_minimum_required(VERSION 3.16)
+set(PROJECT_NAME "windowsUI")
+project(${PROJECT_NAME})
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Qml Quick QuickControls2)
+
+add_library(${PROJECT_NAME} SHARED
+        NewWindowsModule.h
+        NewWindowsModule.cpp
+        Resources/Resources.qrc
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/app.rc"
+        qml.qrc
+)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 23
+        CXX_STANDARD_REQUIRED ON
+        PREFIX ""
+        OUTPUT_NAME ${PROJECT_NAME}
+)
+
+target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+        Qt6::Core Qt6::Widgets Qt6::Qml Qt6::Quick Qt6::QuickControls2 MusicPlayerCore
+)
+
+target_include_directories(${PROJECT_NAME}
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Framework
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Subsystems
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Public/Data
+)
+
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dwmapi)
+    set_target_properties(${PROJECT_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+
+find_program(WINDEPLOYQT windeployqt HINTS "${Qt6_DIR}/../../../bin")
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${WINDEPLOYQT}
+        --qmldir "${CMAKE_CURRENT_SOURCE_DIR}"
+        $<TARGET_FILE:${PROJECT_NAME}>
+        COMMENT "Running windeployqt on ${PROJECT_NAME}.dll"
+)

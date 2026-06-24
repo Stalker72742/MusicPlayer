@@ -11,9 +11,6 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         # Framework
         Public/Framework/AppInstance.h
         Private/Framework/AppInstance.cpp
-        Public/Framework/UIFactory.h
-        Public/Framework/UIPluginSystem.h
-        Private/Framework/UIPluginSystem.cpp
         Public/Framework/SubsystemBase.h
         Private/Framework/SubsystemBase.cpp
 
@@ -28,8 +25,6 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Public/Subsystems/Player/SubObjects/playlist.h
 
         # Other Subsystems
-        Public/Subsystems/ytSearcher.h
-        Private/Subsystems/ytSearcher.cpp
         Public/Subsystems/FileManager/FileManager.cpp
         Public/Subsystems/FileManager/FileManager.h
         Public/Subsystems/Settings/SettingsSubsystem.cpp
@@ -38,9 +33,6 @@ add_library(MusicPlayerCore SHARED Public/Subsystems/Player/Data/songPath.h
         Public/Subsystems/Settings/Data/SettingType.h
 
         # Data
-        Public/Data/staticData.cpp
-        Public/Data/staticData.h
-        Private/Framework/IModuleInterface.cpp
         Public/Framework/PluginLoader.cpp
         Public/Framework/PluginLoader.h
 )

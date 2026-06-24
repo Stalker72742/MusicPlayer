@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>Widgets/WindowsMainWindow.qml</file>
-        <file>Widgets/TitleBarButton.qml</file>
-    </qresource>
-</RCC>

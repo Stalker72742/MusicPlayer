@@ -8,8 +8,6 @@
 #include <QIODevice>
 #include <QString>
 #include "SettingType.h"
-#include "staticData.h"
-
 
 struct SettingData
 {

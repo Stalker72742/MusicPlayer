@@ -1,0 +1,23 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Widgets/WindowsMainWindow.qml</file>
+        <file>Widgets/Theme.qml</file>
+        <file>Widgets/Components/AppIcon.qml</file>
+        <file>Widgets/Components/IconButton.qml</file>
+        <file>Widgets/Components/TitleBarButton.qml</file>
+        <file>Widgets/Components/SearchField.qml</file>
+        <file>Widgets/Components/TabPill.qml</file>
+        <file>Widgets/Components/NavItem.qml</file>
+        <file>Widgets/Components/NavSection.qml</file>
+        <file>Widgets/Components/PlaybackButton.qml</file>
+        <file>Widgets/Components/PlayButton.qml</file>
+        <file>Widgets/Components/ProgressSlider.qml</file>
+        <file>Widgets/Components/AlbumArt.qml</file>
+        <file>Widgets/Components/TrackRow.qml</file>
+        <file>Widgets/Sections/AppTitleBar.qml</file>
+        <file>Widgets/Sections/SideBar.qml</file>
+        <file>Widgets/Sections/LibraryView.qml</file>
+        <file>Widgets/Sections/PlayerBar.qml</file>
+        <file>Widgets/Sections/ResizeHandle.qml</file>
+    </qresource>
+</RCC>
