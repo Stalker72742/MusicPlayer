@@ -9,7 +9,8 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
 add_library(${PROJECT_NAME} SHARED
-
+        TrayModule.h
+        TrayModule.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -36,11 +37,11 @@ if(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
-#find_program(WINDEPLOYQT windeployqt HINTS "${Qt6_DIR}/../../../bin")
-#
-#add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#        COMMAND ${WINDEPLOYQT}
-#        --qmldir "${CMAKE_CURRENT_SOURCE_DIR}"
-#        $<TARGET_FILE:${PROJECT_NAME}>
-#        COMMENT "Running windeployqt on Tray.dll"
-#)
+find_program(WINDEPLOYQT windeployqt HINTS "${Qt6_DIR}/../../../bin")
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${WINDEPLOYQT}
+        --qmldir "${CMAKE_CURRENT_SOURCE_DIR}"
+        $<TARGET_FILE:${PROJECT_NAME}>
+        COMMENT "Running windeployqt on Tray.dll"
+)

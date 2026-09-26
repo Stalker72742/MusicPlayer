@@ -7,6 +7,7 @@
 #include <iostream>
 #include <QDirIterator>
 
+QList<LoadedPlugin> PluginLoader::loadedPlugins = {};
 
 LoadedPlugin PluginLoader::load(const QString& path) {
 
@@ -82,14 +83,25 @@ void PluginLoader::FindAndLoadPlugins() {
     while (it.hasNext()) {
 
         const QString& pluginPath = it.next();
-        const auto plugin = load(it.fileInfo().filePath().remove(QDir::currentPath() + "/"));
+        const auto& plugin = load(it.fileInfo().filePath().remove(QDir::currentPath() + "/"));
 
         qDebug() << "Trying to load: " << it.fileInfo().filePath().remove(QDir::currentPath());
+
+    	QDirIterator it = QDirIterator(QDir(":/"));
+
+    	while(it.hasNext())
+    	{
+    		qDebug()<<it.next();
+    	}
 
         if (plugin.instance) {
 
             qDebug() << "Loaded plugin: " << plugin.instance->name();
-            plugin.instance->init();
+            loadedPlugins.append(plugin);
         }
+    }
+
+    for (auto loaded_plugin : loadedPlugins) {
+        loaded_plugin.instance->init();
     }
 }

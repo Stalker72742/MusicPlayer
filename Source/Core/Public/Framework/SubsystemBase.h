@@ -10,7 +10,13 @@
 
 class PlayerSubsystem;
 
-class SubsystemBase : public QObject
+#ifdef MYLIB_BUILD
+#  define MYLIB_EXPORT Q_DECL_EXPORT
+#else
+#  define MYLIB_EXPORT Q_DECL_IMPORT
+#endif
+
+class MYLIB_EXPORT SubsystemBase : public QObject
 {
     Q_OBJECT
 public:

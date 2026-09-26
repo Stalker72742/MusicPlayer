@@ -10,7 +10,7 @@ Item {
     property int trackCount: 0
     property int albumCount: 0
     property string currentTab: "all"
-    property var tracksModel: ListModel {}
+    property var tracksModel: MedialibModel {}
 
     signal tabChanged(string tab)
     signal trackActivated(int index)
@@ -177,12 +177,8 @@ Item {
                 index: model.idx
                 title: model.title
                 artist: model.artist
-                album: model.album
                 dateAdded: model.dateAdded
                 duration: model.duration
-                artTint: model.artTint
-                playing: model.playing === true
-                liked: model.liked === true
 
                 indexColWidth: root.indexCol
                 albumColWidth: root.albumCol

@@ -11,10 +11,14 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Qml Quick QuickControls2)
 add_library(${PROJECT_NAME} SHARED
         NewWindowsModule.h
         NewWindowsModule.cpp
-        Resources/Resources.qrc
+        #Resources/Resources.qrc
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/app.rc"
+        Models/MedialibModel.cpp
+        Models/MedialibModel.h
         qml.qrc
 )
+
+#qt_add_resources(QML_QRC qml.qrc)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD 23
@@ -25,7 +29,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
-        Qt6::Core Qt6::Widgets Qt6::Qml Qt6::Quick Qt6::QuickControls2 MusicPlayerCore
+        Qt6::Core
+        Qt6::Widgets
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
+        MusicPlayerCore
 )
 
 target_include_directories(${PROJECT_NAME}

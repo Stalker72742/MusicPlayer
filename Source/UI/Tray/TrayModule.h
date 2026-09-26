@@ -1,25 +1,37 @@
+
 #pragma once
+
+#include <qaction.h>
+#include <QSystemTrayIcon>
 
 #include "IModuleInterface.h"
 
-class QWidget;
-
-class TrayModule : public IModuleInterface, public IPlugin
+class TrayModule : public QObject, public IPlugin
 {
+    Q_OBJECT
+protected:
+
+	QSystemTrayIcon* trayIcon {nullptr};
+	QMenu* trayMenu {nullptr};
+	QAction* showAction {nullptr};
+	QAction* hideAction {nullptr};
+	QAction* quitAction {nullptr};
+
+protected slots:
+
+    void onTrayActivated(QSystemTrayIcon::ActivationReason reason);
+    void showActionTriggered(bool checked);
+	void hideActionTriggered(bool checked);
+	void quitActionTriggered(bool checked);
+
+protected:
+
+    void showWindow();
+    void hideWindow();
+    void invertVisibility();
+
 public:
-  void StartupModule() override;
-  void ShutdownModule() override;
-  QString GetModuleName() const override { return QStringLiteral("NewWindows"); }
-  void init() override;
-  void shutdown() override;
-  QString name() const override { return QStringLiteral("NewWindows"); }
-
+    void init() override;
+    void shutdown() override;
+    QString name() const override { return QStringLiteral("Tray"); }
 };
-
-PLUGIN_API IPlugin* createPlugin() {
-  return new TrayModule();
-}
-
-PLUGIN_API void destroyPlugin(IPlugin* plugin) {
-  delete plugin;
-}

@@ -5,6 +5,8 @@
 #include "AppInstance.h"
 #include <QWidget>
 
+#include "eventDispatcher/EventDispatcher.h"
+
 AppInstance * AppInstance::instance = nullptr;
 
 AppInstance* AppInstance::getInstance() {

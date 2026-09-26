@@ -5,9 +5,7 @@
 #ifndef SOUNDLINK_PLUGINLOADER_H
 #define SOUNDLINK_PLUGINLOADER_H
 
-#include "IModuleInterface.h"
-#include <string>
-
+#include <QList>
 #include "IModuleInterface.h"
 
 #ifdef _WIN32
@@ -24,7 +22,18 @@ struct LoadedPlugin {
     LibHandle     handle  = nullptr;
 };
 
-class PluginLoader {
+#ifdef MYLIB_BUILD
+#  define MYLIB_EXPORT Q_DECL_EXPORT
+#else
+#  define MYLIB_EXPORT Q_DECL_IMPORT
+#endif
+
+class MYLIB_EXPORT PluginLoader {
+
+protected:
+
+    static QList<LoadedPlugin> loadedPlugins;
+
 public:
     // Загружает DLL и создаёт объект
     // Возвращает nullptr если что-то пошло не так

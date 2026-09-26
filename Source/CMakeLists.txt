@@ -17,11 +17,11 @@ add_subdirectory(core)
 
 #Base libs and mods
 add_subdirectory(ui/windowsUI)
+add_subdirectory(ui/tray)
 
 #Target creation and target settings
 qt_add_executable(${PROJECT_NAME} MANUAL_FINALIZATION
         main.cpp
-        ../resources/app.rc
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -34,11 +34,12 @@ target_link_libraries(${PROJECT_NAME}
 #Mods as target dependencies
 add_dependencies(${PROJECT_NAME}
         windowsUI
+        Tray
 )
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC
-        "${CMAKE_SOURCE_DIR}/Source/Core/Public/Framework"
+        "${CMAKE_SOURCE_DIR}/source/Core/Public/Framework"
 )
 
 qt_finalize_executable(${PROJECT_NAME})
@@ -59,8 +60,14 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        "${CMAKE_BINARY_DIR}/Source/Core/libMusicPlayerCore.dll"
+        "${CMAKE_BINARY_DIR}/core/libMusicPlayerCore.dll"
         "${CMAKE_BINARY_DIR}/libMusicPlayerCore.dll"
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:QTomlUtils>
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 set(PLUGINS "windowsUI;Tray")

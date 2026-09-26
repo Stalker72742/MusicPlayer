@@ -10,17 +10,12 @@ protected:
 
   QQmlApplicationEngine *m_engine {nullptr};
 
+protected:
+
+    void messageReceived(const QString& message);
+
 public:
     void init() override;
     void shutdown() override;
     QString name() const override { return QStringLiteral("WindowsUI"); }
-
 };
-
-PLUGIN_API IPlugin* createPlugin() {
-  return new NewWindowsModule();
-}
-
-PLUGIN_API void destroyPlugin(IPlugin* plugin) {
-  delete plugin;
-}
