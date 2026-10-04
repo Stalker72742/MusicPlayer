@@ -1,0 +1,6 @@
+[submodule "third_party/QTomlUtils"]
+	path = third_party/QTomlUtils
+	url = https://github.com/Stalker72742/QTomlUtils.git
+[submodule "third_party/QAppUpdater"]
+	path = third_party/QAppUpdater
+	url = https://github.com/Stalker72742/QAppUpdater.git

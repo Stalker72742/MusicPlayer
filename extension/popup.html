@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SoundLink</title>
+<style>
+    :root { color-scheme: dark; }
+    body {
+        margin: 0;
+        width: 300px;
+        padding: 16px;
+        background: #0E0E10;
+        color: #ECECEC;
+        font: 13px "Segoe UI", system-ui, sans-serif;
+    }
+    h1 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+    .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #54545A; flex: none; }
+    .dot.ok { background: #4CC38A; }
+    .dot.warn { background: #E0A845; }
+    .muted { color: #7A7A80; font-size: 12px; line-height: 1.4; }
+    .error { color: #E04545; font-size: 12px; }
+    section { border-top: 1px solid #222; margin-top: 12px; padding-top: 12px; }
+    input[type=text] {
+        flex: 1;
+        min-width: 0;
+        padding: 6px 8px;
+        border: 1px solid #26262A;
+        border-radius: 6px;
+        background: #16161A;
+        color: #ECECEC;
+        font: 16px Consolas, monospace;
+        letter-spacing: 4px;
+    }
+    button {
+        padding: 6px 12px;
+        border: 0;
+        border-radius: 6px;
+        background: #ECECEC;
+        color: #0E0E10;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    button.secondary { background: #16161A; color: #ECECEC; border: 1px solid #26262A; }
+    label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+    [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<h1>SoundLink</h1>
+
+<div class="row"><span id="appDot" class="dot"></span><span id="appText">Looking for SoundLink…</span></div>
+<div class="row"><span id="tokenDot" class="dot"></span><span id="tokenText"></span></div>
+
+<section id="pairing" hidden>
+    <div class="muted">Enter the 6-digit code SoundLink shows in Settings › Online.</div>
+    <div class="row">
+        <input id="code" type="text" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="000000">
+        <button id="pair">Pair</button>
+    </div>
+    <div id="pairError" class="error"></div>
+</section>
+
+<section>
+    <label>
+        <input id="shareCookies" type="checkbox">
+        <span>
+            Share YouTube cookies when needed
+            <div class="muted">Only if the app asks: when this browser is logged in to YouTube or the token alone is not enough. Off keeps your account out of it.</div>
+        </span>
+    </label>
+</section>
+
+<section id="offline" hidden>
+    <button id="reconnect" class="secondary">Look for SoundLink now</button>
+</section>
+
+<script src="popup.js"></script>
+</body>
+</html>
