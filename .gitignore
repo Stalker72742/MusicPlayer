@@ -5,6 +5,8 @@
 build/*
 */build/*
 out/*
+dist/
+packages/
 source/CMakeUserPresets.json
 
 # C++ objects and libs
@@ -61,3 +63,4 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+docs/

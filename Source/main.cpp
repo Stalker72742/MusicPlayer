@@ -1,19 +1,25 @@
 #include <QApplication>
+#include <QLoggingCategory>
 
-#include "PluginLoader.h"
-#include "AppConfigs.h"
+#include <QAppUpdater/InstallLayout.h>
+
 #include "AppInstance.h"
-#include "eventDispatcher/EventDispatcher.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
+    QLoggingCategory::setFilterRules(
+        QStringLiteral("qt.multimedia.ffmpeg*.info=false\n"
+                       "qt.multimedia.ffmpeg*.debug=false"));
+
     QApplication app(argc, argv);
+    QApplication::setApplicationName(QStringLiteral("SoundLink"));
+    QApplication::setApplicationVersion(QStringLiteral(SOUNDLINK_VERSION));
 
-    AppConfigs::RegisterAppConfigs();
+    QAppUpdater::InstallLayout::removeLeftovers(QAppUpdater::InstallLayout::rootDir());
 
-    AppInstance* appInstance = AppInstance::getInstance();
-    appInstance->addSubsystem(new eventDisp());
-
-    PluginLoader::FindAndLoadPlugins();
+    AppInstance appInstance;
+    if (!appInstance.init())
+        return -1;
 
     return QApplication::exec();
 }

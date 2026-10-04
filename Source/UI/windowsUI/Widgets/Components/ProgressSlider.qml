@@ -1,6 +1,7 @@
 import QtQuick
 import SoundLink 1.0
 
+// Never writes `value` itself, so a binding to a model stays intact; the owner reacts to moved().
 Item {
     id: root
 
@@ -13,9 +14,17 @@ Item {
     property bool  hovered: hover.hovered
     property bool  dragging: drag.active
 
+    // While dragging, show where the pointer is even if the owner applies moved() with a delay.
+    property real dragValue: 0.0
+    readonly property real shownValue: Math.max(0, Math.min(1, dragging ? dragValue : value))
+
     signal moved(real value)
 
     implicitHeight: 14
+
+    function valueAt(x) {
+        return Math.max(0, Math.min(1, x / root.width));
+    }
 
     Rectangle {
         id: track
@@ -28,19 +37,17 @@ Item {
     }
 
     Rectangle {
-        id: fill
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: track.left
         height: root.trackHeight
         radius: height / 2
-        width: track.width * Math.max(0, Math.min(1, root.value))
+        width: track.width * root.shownValue
         color: root.fillColor
     }
 
     Rectangle {
-        id: handle
         anchors.verticalCenter: parent.verticalCenter
-        x: track.x + track.width * Math.max(0, Math.min(1, root.value)) - width / 2
+        x: track.x + track.width * root.shownValue - width / 2
         width: 12
         height: 12
         radius: 6
@@ -55,24 +62,16 @@ Item {
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
 
     TapHandler {
-        onTapped: (eventPoint) => {
-            const v = Math.max(0, Math.min(1, eventPoint.position.x / root.width));
-            root.value = v;
-            root.moved(v);
-        }
+        onTapped: (eventPoint) => root.moved(root.valueAt(eventPoint.position.x))
     }
 
     DragHandler {
         id: drag
         target: null
-        onActiveTranslationChanged: {
-            // not used directly; we use centroid below
-        }
         onCentroidChanged: {
             if (active) {
-                const v = Math.max(0, Math.min(1, centroid.position.x / root.width));
-                root.value = v;
-                root.moved(v);
+                root.dragValue = root.valueAt(centroid.position.x);
+                root.moved(root.dragValue);
             }
         }
     }

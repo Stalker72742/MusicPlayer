@@ -5,36 +5,52 @@
 #ifndef MUSICPLAYER_SUBSYSTEMBASE_H
 #define MUSICPLAYER_SUBSYSTEMBASE_H
 
-#include "AppInstance.h"
 #include <QDebug>
+#include <QObject>
 
-class PlayerSubsystem;
-
-#ifdef MYLIB_BUILD
-#  define MYLIB_EXPORT Q_DECL_EXPORT
-#else
-#  define MYLIB_EXPORT Q_DECL_IMPORT
-#endif
-
-class MYLIB_EXPORT SubsystemBase : public QObject
+/// @brief Non-template base of every subsystem: hooks Deinitialize() to application shutdown.
+class SubsystemBase : public QObject
 {
     Q_OBJECT
+
+protected:
+    /// @brief Connects Deinitialize() to QCoreApplication::aboutToQuit. Requires a QCoreApplication.
+    SubsystemBase();
+
+    /// @brief Called on QCoreApplication::aboutToQuit.
+    ///
+    /// Release anything that must not outlive the application here (network, processes, pending saves):
+    /// the subsystem itself is destroyed only at static destruction, after QApplication.
+    virtual void Deinitialize() {}
+};
+
+/// @brief Singleton subsystem (CRTP, Meyers singleton), created on the first Get().
+///
+/// Usage:
+/// @code
+/// class MySubsystem : public Subsystem<MySubsystem>
+/// {
+///     Q_OBJECT
+///     friend class Subsystem<MySubsystem>;
+///     MySubsystem();
+/// };
+///
+/// MySubsystem::Get().DoSomething();
+/// @endcode
+/// @tparam T The subsystem class itself.
+template <typename T>
+class Subsystem : public SubsystemBase
+{
 public:
-
-    explicit SubsystemBase(QObject* parent = nullptr);
-
-    template <typename T>
-    static T* GetSubsystem() {
-        for (auto subsystem : AppInstance::getInstance()->getSubsystems()) {
-            if (T* var = qobject_cast<T*>(subsystem)) {
-                return var;
-            }
-        }
-
-        qWarning() << "Failed to find subsystem. Returning nullptr";
-
-        return nullptr;
+    /// @brief The single instance, created on first use (only after QApplication).
+    static T& Get()
+    {
+        static T instance;
+        return instance;
     }
+
+protected:
+    Subsystem() = default;
 };
 
 #endif // MUSICPLAYER_SUBSYSTEMBASE_H

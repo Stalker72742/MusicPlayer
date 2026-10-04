@@ -1,0 +1,28 @@
+# Doxygen config for SoundLink. Run from the repository root: doxygen Doxyfile
+# Only values that differ from Doxygen's defaults are listed.
+
+PROJECT_NAME           = SoundLink
+PROJECT_BRIEF          = "Desktop music player: local library, YouTube streaming and downloads"
+OUTPUT_DIRECTORY       = docs
+
+INPUT                  = source/core source/ui README.md
+FILE_PATTERNS          = *.h
+RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */build/*
+USE_MDFILE_AS_MAINPAGE = README.md
+
+JAVADOC_AUTOBRIEF      = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+HIDE_UNDOC_MEMBERS     = NO
+SORT_MEMBER_DOCS       = NO
+
+MACRO_EXPANSION        = YES
+PREDEFINED             = QML_ELEMENT= QML_SINGLETON= "QML_UNCREATABLE(x)=" "Q_ENUM(x)=" Q_INVOKABLE=
+WARN_IF_UNDOCUMENTED   = NO
+
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HTML_DYNAMIC_SECTIONS  = YES
+GENERATE_TREEVIEW      = YES

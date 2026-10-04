@@ -82,6 +82,128 @@ Item {
                 });
                 break;
 
+            case "home":
+                stroke(c => {
+                    c.moveTo(u(4), u(11));
+                    c.lineTo(u(12), u(4));
+                    c.lineTo(u(20), u(11));
+                });
+                stroke(c => {
+                    c.moveTo(u(6), u(9.5));
+                    c.lineTo(u(6), u(20));
+                    c.lineTo(u(10), u(20));
+                    c.lineTo(u(10), u(14));
+                    c.lineTo(u(14), u(14));
+                    c.lineTo(u(14), u(20));
+                    c.lineTo(u(18), u(20));
+                    c.lineTo(u(18), u(9.5));
+                });
+                break;
+
+            case "globe": // online
+                ctx.beginPath();
+                ctx.arc(cx, cy, u(9), 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(cx - u(4), cy - u(9), u(8), u(18));
+                ctx.stroke();
+                stroke(c => { c.moveTo(u(3), cy); c.lineTo(u(21), cy); });
+                break;
+
+            case "plus":
+                stroke(c => { c.moveTo(u(12), u(5)); c.lineTo(u(12), u(19)); });
+                stroke(c => { c.moveTo(u(5), u(12)); c.lineTo(u(19), u(12)); });
+                break;
+
+            case "check":
+                stroke(c => { c.moveTo(u(5), u(12.5)); c.lineTo(u(10), u(17.5)); c.lineTo(u(19), u(7)); });
+                break;
+
+            case "link":
+                stroke(c => {
+                    c.moveTo(u(10), u(14));
+                    c.lineTo(u(14), u(10));
+                });
+                stroke(c => {
+                    c.moveTo(u(11), u(7));
+                    c.lineTo(u(13.5), u(4.5));
+                    c.arc(u(16.5), u(7.5), u(4.2), -Math.PI * 0.75, Math.PI * 0.25);
+                    c.lineTo(u(17), u(13));
+                });
+                stroke(c => {
+                    c.moveTo(u(13), u(17));
+                    c.lineTo(u(10.5), u(19.5));
+                    c.arc(u(7.5), u(16.5), u(4.2), Math.PI * 0.25, Math.PI * 1.25);
+                    c.lineTo(u(7), u(11));
+                });
+                break;
+
+            case "external":
+                stroke(c => {
+                    c.moveTo(u(11), u(5));
+                    c.lineTo(u(5), u(5));
+                    c.lineTo(u(5), u(19));
+                    c.lineTo(u(19), u(19));
+                    c.lineTo(u(19), u(13));
+                });
+                stroke(c => { c.moveTo(u(12), u(12)); c.lineTo(u(20), u(4)); });
+                stroke(c => { c.moveTo(u(14), u(4)); c.lineTo(u(20), u(4)); c.lineTo(u(20), u(10)); });
+                break;
+
+            case "trash":
+                stroke(c => { c.moveTo(u(4), u(7)); c.lineTo(u(20), u(7)); });
+                stroke(c => { c.moveTo(u(9), u(7)); c.lineTo(u(9), u(4)); c.lineTo(u(15), u(4)); c.lineTo(u(15), u(7)); });
+                stroke(c => { c.moveTo(u(6), u(7)); c.lineTo(u(7), u(20)); c.lineTo(u(17), u(20)); c.lineTo(u(18), u(7)); });
+                break;
+
+            case "folder":
+                stroke(c => {
+                    c.moveTo(u(3), u(6));
+                    c.lineTo(u(9), u(6));
+                    c.lineTo(u(11), u(8));
+                    c.lineTo(u(21), u(8));
+                    c.lineTo(u(21), u(19));
+                    c.lineTo(u(3), u(19));
+                    c.closePath();
+                });
+                break;
+
+            case "funnel": // smart playlists
+                stroke(c => {
+                    c.moveTo(u(4), u(5));
+                    c.lineTo(u(20), u(5));
+                    c.lineTo(u(14), u(12.5));
+                    c.lineTo(u(14), u(19));
+                    c.lineTo(u(10), u(17));
+                    c.lineTo(u(10), u(12.5));
+                    c.closePath();
+                });
+                break;
+
+            case "tag":
+                stroke(c => {
+                    c.moveTo(u(4), u(4));
+                    c.lineTo(u(12), u(4));
+                    c.lineTo(u(20.5), u(12.5));
+                    c.lineTo(u(12.5), u(20.5));
+                    c.lineTo(u(4), u(12));
+                    c.closePath();
+                });
+                ctx.beginPath();
+                ctx.arc(u(8.5), u(8.5), u(1.4), 0, Math.PI * 2);
+                ctx.fill();
+                break;
+
+            case "grip": // drag handle, two columns of dots
+                for (let row = 0; row < 3; ++row) {
+                    for (let column = 0; column < 2; ++column) {
+                        ctx.beginPath();
+                        ctx.arc(u(9 + column * 6), u(6 + row * 6), u(1.5), 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                break;
+
             case "list": // playlists
                 ctx.strokeRect(u(4), u(5), u(16), u(14));
                 stroke(c => { c.moveTo(u(8), u(9)); c.lineTo(u(17), u(9)); });

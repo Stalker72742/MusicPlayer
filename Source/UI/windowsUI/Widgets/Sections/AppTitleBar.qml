@@ -1,15 +1,26 @@
 import QtQuick
 import SoundLink 1.0
-import "../Components"
 
 Rectangle {
     id: root
 
     property var window: null
-    property alias searchText: search.text
     property bool maximized: false
 
-    signal menuClicked
+    // Ctrl+K and SearchViewModel.focusSearch() land here.
+    function focusSearch() {
+        search.focusInput();
+    }
+
+    function closeSearch() {
+        suggestions.close();
+        search.clearFocus();
+    }
+
+    function activateSuggestion(row) {
+        if (SearchViewModel.activate(row))
+            closeSearch();
+    }
 
     implicitHeight: Theme.metrics.titleBarHeight
     height: Theme.metrics.titleBarHeight
@@ -32,24 +43,49 @@ Rectangle {
         }
     }
 
-    IconButton {
-        id: menuBtn
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 6
-        implicitWidth: 36
-        implicitHeight: 32
-        iconName: "menu"
-        iconSize: 16
-        onClicked: root.menuClicked()
-    }
-
     SearchField {
         id: search
         anchors.centerIn: parent
         width: Math.min(560, parent.width * 0.45)
         height: 30
-        placeholder: "Search tracks, albums, artists..."
+        placeholder: "Search YouTube, your library, settings..."
+        shortcutHint: "Ctrl+K"
+
+        // Two-way with SearchViewModel.query: typing writes it, completions and clearing come back.
+        text: SearchViewModel.query
+        onTextEdited: (value) => SearchViewModel.query = value
+
+        // Suggestions depend on the current screen.
+        onInputFocusedChanged: if (inputFocused) SearchViewModel.refresh()
+        onAccepted: root.activateSuggestion(suggestions.currentIndex)
+        onUpPressed: suggestions.moveCurrent(-1)
+        onDownPressed: suggestions.moveCurrent(1)
+        onTabPressed: SearchViewModel.complete(suggestions.currentIndex)
+        onEscapePressed: {
+            if (SearchViewModel.query.length > 0 && suggestions.opened)
+                SearchViewModel.query = "";
+            else
+                root.closeSearch();
+        }
+    }
+
+    SearchSuggestions {
+        id: suggestions
+        parent: search
+        x: 0
+        y: search.height + 6
+        width: search.width
+
+        // Shown while the field has focus and there is something to suggest.
+        visible: search.inputFocused && SearchViewModel.suggestions.count > 0
+
+        onActivated: (row) => root.activateSuggestion(row)
+        onClosed: search.clearFocus()
+    }
+
+    Connections {
+        target: SearchViewModel
+        function onFocusRequested() { root.focusSearch(); }
     }
 
     Row {

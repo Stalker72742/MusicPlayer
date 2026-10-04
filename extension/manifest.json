@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "SoundLink Bridge",
+  "version": "0.1.1",
+  "description": "Lets the SoundLink music player play YouTube music with this browser's YouTube session.",
+  "permissions": ["storage", "alarms", "webRequest", "cookies"],
+  "host_permissions": ["*://*.youtube.com/*", "*://*.googlevideo.com/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/*", "*://m.youtube.com/*", "*://music.youtube.com/*"],
+      "js": ["page.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://www.youtube.com/*", "*://m.youtube.com/*", "*://music.youtube.com/*"],
+      "js": ["relay.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "SoundLink",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "soundlink-bridge@stalker72742",
+      "strict_min_version": "128.0"
+    }
+  }
+}

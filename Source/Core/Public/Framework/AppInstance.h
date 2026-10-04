@@ -1,79 +1,65 @@
 //
 // Created by Stalker7274 on 17.04.2025.
 //
-#pragma once
 
-#ifndef APPINSTANCE_H
-#define APPINSTANCE_H
+#pragma once
 
 #include <QObject>
 
-class SubsystemBase;
-class UIPluginLoader;
-class QWidget;
+class QQmlApplicationEngine;
+namespace QAppUpdater { class AppControlServer; }
+class QQuickWindow;
+class SystemMediaControls;
+class TrayIcon;
 
-#ifdef MYLIB_BUILD
-#  define MYLIB_EXPORT Q_DECL_EXPORT
-#else
-#  define MYLIB_EXPORT Q_DECL_IMPORT
-#endif
-
-class MYLIB_EXPORT AppInstance : public QObject {
+/// @brief Owns the UI: the QML engine with the main window, the tray icon and the OS media controls.
+///
+/// Subsystems are independent singletons and are not owned here. Create one instance on the stack
+/// in main() after QApplication.
+class AppInstance : public QObject
+{
     Q_OBJECT
-protected:
-    explicit AppInstance();
-    ~AppInstance() override;
-
-protected:
-
-    //virtual void Init();
 
 public:
-
-    static AppInstance* getInstance();
-
-    QList<SubsystemBase*> getSubsystems() const { return subsystems; }
-
-    template <typename T>
-    T* createSubsystem() {
-        subsystems.append(new T(this));
-        return qobject_cast<T*>(subsystems.last());
-    }
-
-    template <typename T>
-    T* getSubsystem(){
-        for(SubsystemBase* subsystem : subsystems){
-            if(subsystem){
-                if(T* castedSubsys = qobject_cast<T*>(subsystem)){
-                    return castedSubsys;
-                }
-            }
-        }
-
-        return nullptr;
-    }
-
-    void addSubsystem(SubsystemBase* subsystem);
-
-    // Window creation - template version (original)
-    template <typename mw>
-    void createApp() {
-        mw *window = new mw();
-        mainWindow = window;
-        window->show();
-    }
-
-    QWidget* getMainWindow() const { return mainWindow; }
+    AppInstance();
+    ~AppInstance() override;
 
     AppInstance(const AppInstance&) = delete;
     AppInstance& operator=(const AppInstance&) = delete;
 
-protected:
+    /// @brief The running instance; nullptr before construction and after destruction.
+    static AppInstance* getInstance();
 
-    QList<SubsystemBase*> subsystems;
-    QWidget* mainWindow = nullptr;
+    /// @brief Registers configs, starts the subsystems and loads the main window.
+    /// @return false if the main window failed to load.
+    bool init();
+
+    /// @brief The QML engine that holds the main window.
+    QQmlApplicationEngine* getEngine() const { return engine; }
+
+    /// @brief The updater's line to this app: quit requests and, during a windowless install, its progress.
+    QAppUpdater::AppControlServer* getControlServer() const { return controlServer; }
+
+    /// @brief The root window of the QML engine, or nullptr if it is not loaded.
+    QQuickWindow* getMainWindow() const;
+
+public slots:
+    /// @brief Shows, restores and activates the main window.
+    void showMainWindow();
+    /// @brief Hides the main window to the tray.
+    void hideMainWindow();
+    /// @brief Shows the main window if it is hidden, hides it otherwise.
+    void toggleMainWindow();
+
+private:
+    bool createMainWindow();
+    void createTrayIcon();
+    void createMediaControls();
+
+    QQmlApplicationEngine* engine = nullptr;
+    TrayIcon* trayIcon = nullptr;
+    SystemMediaControls* mediaControls = nullptr;
+    QAppUpdater::AppControlServer* controlServer = nullptr;
 
     static AppInstance* instance;
 };
-
-#endif //APPINSTANCE_H

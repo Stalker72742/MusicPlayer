@@ -1,182 +1,135 @@
 //
-// Created by Stalker7274 on 24.03.2025.
+// Created by Stalker7274 on 03.10.2026.
 //
 
-#ifndef PLAYERSUBSYSTEM_H
-#define PLAYERSUBSYSTEM_H
+#pragma once
 
-#include "PlayerBackend.h"
 #include "SubsystemBase.h"
 
-#include <QDir>
-#include <QMediaPlayer>
-#include <QObject>
+#include <QList>
 #include <QTimer>
 
-#ifdef Q_OS_ANDROID
-#include <QJniObject>
-#endif
+#include "Library/Track.h"
 
+class QAudioOutput;
+class QMediaDevices;
+class QMediaPlayer;
 
-class playlist;
-class QSlider;
-class song;
-
-class PlayerSubsystem : public SubsystemBase {
+/// @brief Plays library tracks with a queue.
+///
+/// A local file (scanned, or the downloaded copy of an online track) plays directly; otherwise an online track
+/// plays the audio stream OnlineSubsystem resolves when it starts (IsLoading() meanwhile).
+/// Volume, shuffle, repeat and the output device are kept in the Settings config.
+class PlayerSubsystem : public Subsystem<PlayerSubsystem>
+{
     Q_OBJECT
-public:
-    explicit PlayerSubsystem(playerBackend* Backend, QObject* parent = nullptr);
-
-protected:
-
-
-    bool bIsPlaying;
-
-
-
-
-
-
-
-
-protected:
-
-
-    virtual void SetIsPlaying(bool isPlaying);
-
+    friend class Subsystem<PlayerSubsystem>;
 
 public:
+    /// @brief What happens at the end of a track and of the queue.
+    enum class RepeatMode
+    {
+        Off, ///< The queue plays once.
+        All, ///< The queue starts over.
+        One  ///< The current track repeats.
+    };
 
-    virtual bool isPlaying() const { return bIsPlaying; }
+    /// @brief Replaces the queue and starts playing `newQueue[index]`.
+    void PlayQueue(const QList<TrackId>& newQueue, int index);
 
-public:
-
-    ~PlayerSubsystem() override;
-
-    void LoadSongs();
-
-    void PlayCurrentSong();
-
-    void Resume();
-
+    /// @brief Resumes the current track.
+    void Play();
+    /// @brief Pauses the current track.
     void Pause();
+    /// @brief Play() or Pause(), whichever applies.
+    void TogglePlay();
 
-    void SetVolume(int volume);
+    /// @brief Goes to the next track.
+    ///
+    /// Respects shuffle and repeat (RepeatMode::One only applies when a track ends by itself);
+    /// at the end of the queue without repeat stops on the last track, rewound.
+    void Next();
 
-    int getVolume() const;
+    /// @brief Restarts the track if it has played for a few seconds, otherwise goes to the previous one.
+    void Previous();
 
-    void NextSong();
+    /// @brief Moves the playback position of the current track.
+    void Seek(qint64 positionMs);
 
-    void PreviousSong();
+    /// @brief Sets the volume and saves it to the config once it settles.
+    /// @param volume 0..1 on a perceptual (logarithmic) scale.
+    void SetVolume(float volume);
 
-    void addSong(song* Song);
+    /// @brief Applies AppConfigs::SettingsKeys::OutputDevice: that device if present, else the system default.
+    void ApplyOutputDevice();
+    /// @brief Volume 0..1 on a perceptual scale.
+    float GetVolume() const { return volume; }
 
-    void addSongToQueue(song* Song);
+    /// @brief Enables or disables shuffle; saved to the config.
+    void SetShuffle(bool bValue);
+    /// @brief Sets the repeat mode; saved to the config.
+    void SetRepeatMode(RepeatMode mode);
+    bool IsShuffle() const { return bShuffle; }
+    RepeatMode GetRepeatMode() const { return repeatMode; }
 
-    void savePlaylist();
+    /// @brief The current track of the queue, or an invalid id.
+    TrackId GetCurrentTrack() const;
 
-    QList<song*> getSongs();
-
-    QString createPlaylist(QString playlistName);
-
-    void setCurrentPlaylist(QString playlistPathLocal);
-
-    void startPlayFromIndex(int index);
-
-    void removePlaylist(QString playlistPath);
-
-    QList<QString> getPlaylists();
-
-    template <typename P>
-    void addSongToPlaylist(song* Song, P playlist);
-
-    void addSongToPlaylistByName(QString Song, QString playlistName);
-
-    qint64 getMaxDuration() const;
-
-    QList<QString> getLocalSongsPaths() const;
-
-    void showMediaLib();
-
-    QString getMusicFolder() { return DefaultMusicFolder; }
-
-    void playPause();
-
-    // Facade API for easy slider binding
-    void bindPositionSlider(QSlider* slider);
-    void bindVolumeSlider(QSlider* slider);
-
-public slots:
-
-    void PlayerError(QMediaPlayer::Error Error, const QString &error);
-
-    void onAudioStreamLoaded(song* songPtr);
-
-    void updateSliderPosition();
-
-    void onBackendStateChanged(EPlayerState inBackedState);
+    /// @brief Whether the track is playing; while loading, whether it will play once loaded.
+    bool IsPlaying() const;
+    /// @brief Whether the stream of an online track is being resolved.
+    bool IsLoading() const { return bLoading; }
+    /// @brief Playback position in ms.
+    qint64 GetPosition() const;
+    /// @brief Duration of the current track in ms.
+    qint64 GetDuration() const;
 
 signals:
-
-    void playlistUpdated();
-
-    void playlistChanged();
-
-    void updateMusicDuration(int newDuration);
-
-    void onShowMediaLib(QList<QString> songs);
-
-    void playingSongChanged(song* currentPlayingSong);
-
-    void onPlaylistChanged(playlist* InPlaylist);
-    void OnSongChanged(song* Song);
-    void OnPlayingStateChanged(bool isPlaying);
-
-    // Facade signals for sliders
-    void onPositionChanged(qint64 currentMs, qint64 totalMs);
-    void onVolumeChanged(int volume);
+    void currentTrackChanged();
+    void playingChanged();
+    void loadingChanged();
+    void positionChanged(qint64 positionMs);
+    void durationChanged(qint64 durationMs);
+    void volumeChanged();
+    void shuffleChanged();
+    void repeatChanged();
+    /// @brief Playback failed; message is for the user.
+    void errorOccurred(const QString& message);
 
 private:
+    PlayerSubsystem();
 
-    void checkMusicFolder();
+    void Deinitialize() override;
 
-    void updateMediaSessionState(const QString &state);
+    void PlayIndex(int index);
 
-    void initJavaPlayer();
-    void registerJavaCallbacks();
+    /// The end of the queue without repeat.
+    void StopAtEnd();
+    void OnMediaStatusChanged(int status);
+    void OnPlayerError(const QString& message);
 
-    playerBackend* playerBackend;
+    /// Resolves the stream of the current online track and starts it at startMs.
+    void LoadStream(const QString& pageUrl, qint64 startMs);
+    void SetLoading(bool bValue);
 
-    QObject* Parent;
+    QMediaPlayer* player = nullptr;
+    QAudioOutput* audioOutput = nullptr;
+    QMediaDevices* devices = nullptr;
 
-    QTimer* updateTimer;
-    int time = 0;
+    /// Dragging the volume slider writes the config once it settles.
+    QTimer volumeSaveTimer;
 
-    QString DefaultMusicFolder = QDir::currentPath() + "/Music";
-    QString DefaultMediaLibFolder = DefaultMusicFolder + "/MediaLib";
+    QList<TrackId> queue;
+    int currentIndex = -1;
 
-    QList<song*> currentPlaylist;
-    playlist* currentPlaylistPtr;
+    /// Bumped on every track change: a stream resolved for an older one is dropped.
+    quint64 loadRequest = 0;
+    bool bLoading = false;
+    bool bPlayWhenLoaded = true;
+    bool bStreamRetried = false;
+    qint64 pendingSeekMs = 0;
 
-    QString playlistPath;
-
-    qint32 CurrentSongIndex;
-
-    bool bUseQueue = false;
-
-    QList<song*> queueSongs;
-
-    bool bPaused = true;
-
-    int currentVolume = 50;
-    qint64 currentDuration = 0;
-
-public:
-
-    void SetSource(song* InSong);
-
-    void setCurrentPlaylist(playlist* InNewPlaylist);
-    playlist* getCurrentPlaylist() const { return currentPlaylistPtr; }
+    float volume = 0.8f;
+    bool bShuffle = false;
+    RepeatMode repeatMode = RepeatMode::Off;
 };
-
-#endif

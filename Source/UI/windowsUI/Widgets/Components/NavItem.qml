@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import SoundLink 1.0
 
 Rectangle {
@@ -20,13 +21,18 @@ Rectangle {
                     : (hovered ? Theme.palette.hoverOverlay : "transparent")
     radius: Theme.metrics.radiusMd
 
+    ToolTip.visible: compact && hovered
+    ToolTip.text: text
+    ToolTip.delay: 500
+
     Behavior on color { ColorAnimation { duration: Theme.motion.durationFast } }
 
     AppIcon {
         id: icon
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: root.compact ? (root.width - width) / 2 : 12
+        // 24: where NavSection puts its icon (after the chevron), so items line up with Home, Settings, About.
+        anchors.leftMargin: root.compact ? (root.width - width) / 2 : 24
         width: 16
         height: 16
         name: root.iconName

@@ -1,34 +1,10 @@
 import QtQuick
 import SoundLink 1.0
-import "../Components"
 
+// Now-playing bar, driven by PlayerViewModel.
 Rectangle {
     id: root
 
-    property string title: ""
-    property string artist: ""
-    property string artSource: ""
-    property color  artTint: "#3A3A40"
-
-    property bool playing: false
-    property bool shuffled: false
-    property bool repeating: false
-    property bool liked: false
-
-    property real progress: 0.0      // 0..1
-    property string elapsedText: "0:00"
-    property string totalText: "0:00"
-
-    property real volume: 0.7
-
-    signal togglePlay
-    signal next
-    signal prev
-    signal toggleShuffle
-    signal toggleRepeat
-    signal toggleLike
-    signal seekRequested(real value)
-    signal volumeRequested(real value)
     signal queueClicked
 
     implicitHeight: Theme.metrics.bottomBarHeight
@@ -57,8 +33,8 @@ Rectangle {
             anchors.left: parent.left
             width: 56; height: 56
             cornerRadius: Theme.metrics.radiusSm
-            tint: root.artTint
-            source: root.artSource
+            tint: PlayerViewModel.artTint
+            source: PlayerViewModel.artUrl
         }
 
         Column {
@@ -72,7 +48,7 @@ Rectangle {
             Text {
                 width: parent.width
                 elide: Text.ElideRight
-                text: root.title
+                text: PlayerViewModel.title
                 color: Theme.palette.textPrimary
                 font.family: Theme.typography.family
                 font.pixelSize: Theme.typography.bodySize
@@ -81,8 +57,11 @@ Rectangle {
             Text {
                 width: parent.width
                 elide: Text.ElideRight
-                text: root.artist
-                color: Theme.palette.textSecondary
+                // Online tracks: the stream is being found, or it could not be played.
+                text: PlayerViewModel.errorText.length > 0 ? "Cannot play: " + PlayerViewModel.errorText
+                    : PlayerViewModel.loading ? "Loading stream…"
+                    : PlayerViewModel.artist
+                color: PlayerViewModel.errorText.length > 0 ? Theme.palette.danger : Theme.palette.textSecondary
                 font.family: Theme.typography.family
                 font.pixelSize: Theme.typography.smallSize
             }
@@ -94,10 +73,10 @@ Rectangle {
             anchors.right: parent.right
             anchors.rightMargin: 4
             implicitWidth: 32; implicitHeight: 32
-            iconName: root.liked ? "heart-filled" : "heart"
+            iconName: PlayerViewModel.liked ? "heart-filled" : "heart"
             iconSize: 16
-            iconColor: root.liked ? Theme.palette.iconActive : Theme.palette.iconDefault
-            onClicked: root.toggleLike()
+            iconColor: PlayerViewModel.liked ? Theme.palette.iconActive : Theme.palette.iconDefault
+            onClicked: PlayerViewModel.toggleLike()
         }
     }
 
@@ -121,33 +100,35 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 iconName: "shuffle"
                 iconSize: 16
-                active: root.shuffled
-                onClicked: root.toggleShuffle()
+                active: PlayerViewModel.shuffle
+                onClicked: PlayerViewModel.toggleShuffle()
             }
             PlaybackButton {
                 anchors.verticalCenter: parent.verticalCenter
                 iconName: "prev"
                 iconSize: 16
-                onClicked: root.prev()
+                onClicked: PlayerViewModel.previous()
             }
             PlayButton {
                 anchors.verticalCenter: parent.verticalCenter
-                playing: root.playing
+                playing: PlayerViewModel.playing
                 diameter: 40
-                onClicked: root.togglePlay()
+                onClicked: PlayerViewModel.togglePlay()
             }
             PlaybackButton {
                 anchors.verticalCenter: parent.verticalCenter
                 iconName: "next"
                 iconSize: 16
-                onClicked: root.next()
+                onClicked: PlayerViewModel.next()
             }
             PlaybackButton {
                 anchors.verticalCenter: parent.verticalCenter
                 iconName: "repeat"
                 iconSize: 16
-                active: root.repeating
-                onClicked: root.toggleRepeat()
+                // Off, the whole queue, the current track.
+                active: PlayerViewModel.repeatMode > 0
+                badge: PlayerViewModel.repeatMode === 2 ? "1" : ""
+                onClicked: PlayerViewModel.toggleRepeat()
             }
         }
 
@@ -163,7 +144,7 @@ Rectangle {
                 id: elapsed
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
-                text: root.elapsedText
+                text: PlayerViewModel.elapsedText
                 color: Theme.palette.textSecondary
                 font.family: Theme.typography.family
                 font.pixelSize: Theme.typography.smallSize
@@ -172,7 +153,7 @@ Rectangle {
                 id: total
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
-                text: root.totalText
+                text: PlayerViewModel.totalText
                 color: Theme.palette.textSecondary
                 font.family: Theme.typography.family
                 font.pixelSize: Theme.typography.smallSize
@@ -183,8 +164,8 @@ Rectangle {
                 anchors.right: total.left
                 anchors.leftMargin: 12
                 anchors.rightMargin: 12
-                value: root.progress
-                onMoved: (v) => root.seekRequested(v)
+                value: PlayerViewModel.progress
+                onMoved: (v) => PlayerViewModel.seek(v)
             }
         }
     }
@@ -209,8 +190,8 @@ Rectangle {
             height: 14
             ProgressSlider {
                 anchors.fill: parent
-                value: root.volume
-                onMoved: (v) => root.volumeRequested(v)
+                value: PlayerViewModel.volume
+                onMoved: (v) => PlayerViewModel.setVolume(v)
             }
         }
         IconButton {

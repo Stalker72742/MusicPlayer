@@ -1,7 +1,8 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import SoundLink 1.0
-import "../Components"
 
 Rectangle {
     id: root
@@ -11,9 +12,6 @@ Rectangle {
     readonly property int collapsedWidth: Theme.metrics.sideBarCollapsed
     readonly property bool compact: !expanded
 
-    property string currentItem: "all_tracks"
-
-    signal itemSelected(string id)
     signal toggleRequested
 
     implicitWidth: expanded ? expandedWidth : collapsedWidth
@@ -93,90 +91,147 @@ Rectangle {
             width: scroller.width
             spacing: 6
 
+            // ─── Home (no section) ────────────────────
+            NavSection {
+                Layout.fillWidth: true
+                title: "Home"
+                iconName: "home"
+                compact: root.compact
+                selected: Navigation.page === Navigation.Home
+                onClicked: Navigation.navigate(Navigation.Home)
+            }
+
+            Item { Layout.fillWidth: true; Layout.preferredHeight: 6; visible: !root.compact }
+
             // ─── My Library ───────────────────────────
             NavSection {
-                id: librarySection
                 Layout.fillWidth: true
                 title: "My Library"
-                iconName: ""
                 compact: root.compact
-                expanded: true
+                compactSeparator: false
+                onClicked: Navigation.navigate(Navigation.Tracks)
 
                 NavItem {
                     Layout.fillWidth: true
                     iconName: "library"
                     text: "All Tracks"
+                    badge: String(LibraryViewModel.tracks.count)
                     compact: root.compact
-                    selected: root.currentItem === "all_tracks"
-                    onClicked: { root.currentItem = "all_tracks"; root.itemSelected("all_tracks") }
+                    selected: Navigation.page === Navigation.Tracks
+                    onClicked: Navigation.navigate(Navigation.Tracks)
                 }
                 NavItem {
                     Layout.fillWidth: true
                     iconName: "list"
                     text: "Playlists"
-                    badge: "0"
+                    badge: String(PlaylistsViewModel.playlists.count)
                     compact: root.compact
-                    selected: root.currentItem === "playlists"
-                    onClicked: { root.currentItem = "playlists"; root.itemSelected("playlists") }
+                    selected: Navigation.page === Navigation.Playlists
+                    onClicked: Navigation.navigate(Navigation.Playlists)
                 }
                 NavItem {
                     Layout.fillWidth: true
                     iconName: "heart"
                     text: "Favorites"
-                    badge: "0"
+                    badge: String(LibraryViewModel.favorites.count)
                     compact: root.compact
-                    selected: root.currentItem === "favorites"
-                    onClicked: { root.currentItem = "favorites"; root.itemSelected("favorites") }
+                    selected: Navigation.page === Navigation.Favorites
+                    onClicked: Navigation.navigate(Navigation.Favorites)
+                }
+                NavItem {
+                    Layout.fillWidth: true
+                    iconName: "download"
+                    text: "Downloads"
+                    badge: DownloadsViewModel.activeCount > 0 ? String(DownloadsViewModel.activeCount) : ""
+                    compact: root.compact
+                    selected: Navigation.page === Navigation.Downloads
+                    onClicked: Navigation.navigate(Navigation.Downloads)
                 }
                 NavItem {
                     Layout.fillWidth: true
                     iconName: "clock"
                     text: "Recent"
                     compact: root.compact
-                    selected: root.currentItem === "recent"
-                    onClicked: { root.currentItem = "recent"; root.itemSelected("recent") }
+                    selected: Navigation.page === Navigation.Recent
+                    onClicked: Navigation.navigate(Navigation.Recent)
+                }
+                // Back to the last YouTube results, once there were any.
+                NavItem {
+                    Layout.fillWidth: true
+                    visible: SearchViewModel.onlineQuery.length > 0
+                    iconName: "globe"
+                    text: "YouTube results"
+                    compact: root.compact
+                    selected: Navigation.page === Navigation.Search
+                    onClicked: Navigation.navigate(Navigation.Search)
                 }
             }
 
-            // Items rendered directly in compact mode (so users still see them)
-            Item { Layout.fillWidth: true; height: 6; visible: !root.compact }
+            Item { Layout.fillWidth: true; Layout.preferredHeight: 6; visible: !root.compact }
+
+            // ─── Playlists ────────────────────────────
+            // Each playlist; the header opens the overview. Hidden while there are none.
+            NavSection {
+                id: playlistsSection
+                visible: PlaylistsViewModel.playlists.count > 0
+                Layout.fillWidth: true
+                title: "Playlists"
+                compact: root.compact
+                selected: Navigation.page === Navigation.Playlist && !playlistsSection.expanded
+                onClicked: Navigation.navigate(Navigation.Playlists)
+
+                Repeater {
+                    model: PlaylistsViewModel.playlists
+
+                    NavItem {
+                        required property string playlistId
+                        required property string name
+                        required property bool smart
+                        required property int trackCount
+
+                        Layout.fillWidth: true
+                        iconName: smart ? "funnel" : "list"
+                        text: name
+                        badge: String(trackCount)
+                        compact: root.compact
+                        selected: Navigation.page === Navigation.Playlist && Navigation.playlistId === playlistId
+                        onClicked: Navigation.openPlaylist(playlistId)
+                    }
+                }
+            }
+
+            Item { Layout.fillWidth: true; Layout.preferredHeight: 6; visible: !root.compact && playlistsSection.visible }
 
             // ─── Settings ─────────────────────────────
+            // The header opens the last viewed category, an item jumps straight to its category.
             NavSection {
                 id: settingsSection
                 Layout.fillWidth: true
                 title: "Settings"
                 iconName: "settings"
                 compact: root.compact
-                expanded: true
+                // Highlight the header when the active category item is hidden.
+                selected: Navigation.page === Navigation.Settings && !settingsSection.expanded
+                onClicked: Navigation.openSettings()
 
-                NavItem {
-                    Layout.fillWidth: true
-                    iconName: "settings"
-                    text: "General"
-                    compact: root.compact
-                    selected: root.currentItem === "general"
-                    onClicked: { root.currentItem = "general"; root.itemSelected("general") }
-                }
-                NavItem {
-                    Layout.fillWidth: true
-                    iconName: "audio"
-                    text: "Audio"
-                    compact: root.compact
-                    selected: root.currentItem === "audio"
-                    onClicked: { root.currentItem = "audio"; root.itemSelected("audio") }
-                }
-                NavItem {
-                    Layout.fillWidth: true
-                    iconName: "list"
-                    text: "Mods"
-                    compact: root.compact
-                    selected: root.currentItem === "mods"
-                    onClicked: { root.currentItem = "mods"; root.itemSelected("mods") }
+                Repeater {
+                    model: SettingsModel.categories
+
+                    NavItem {
+                        required property var modelData
+
+                        Layout.fillWidth: true
+                        iconName: modelData.icon
+                        text: modelData.title
+                        compact: root.compact
+                        selected: Navigation.page === Navigation.Settings
+                                  && Navigation.settingsCategory === modelData.id
+                        onClicked: Navigation.openSettings(modelData.id)
+                    }
                 }
             }
 
-            Item { Layout.fillWidth: true; height: 6; visible: !root.compact }
+            Item { Layout.fillWidth: true; Layout.preferredHeight: 6; visible: !root.compact }
 
             // ─── About / Updates ──────────────────────
             NavSection {
@@ -184,17 +239,17 @@ Rectangle {
                 title: "About"
                 iconName: "info"
                 compact: root.compact
-                expanded: false
-                onClicked: if (root.compact) { root.currentItem = "about"; root.itemSelected("about") }
+                selected: Navigation.page === Navigation.About
+                onClicked: Navigation.navigate(Navigation.About)
             }
             NavSection {
                 Layout.fillWidth: true
                 title: "Updates"
                 iconName: "download"
                 compact: root.compact
-                expanded: false
-                showDot: true
-                onClicked: if (root.compact) { root.currentItem = "updates"; root.itemSelected("updates") }
+                showDot: AppInfoViewModel.updateAvailable
+                selected: Navigation.page === Navigation.Updates
+                onClicked: Navigation.navigate(Navigation.Updates)
             }
         }
     }

@@ -1,18 +1,30 @@
 import QtQuick
 import SoundLink 1.0
 
+// Delegate for TrackListModel rows.
 Rectangle {
     id: root
 
-    property int    index: 0
-    property string title: ""
-    property string artist: ""
-    property string album: ""
-    property string dateAdded: ""
-    property string duration: ""
-    property color  artTint: "#3A3A40"
-    property bool   liked: false
+    required property int    index
+    required property int    trackId
+    required property int    number
+    required property string title
+    required property string artist
+    required property string album
+    required property string dateAdded
+    required property string duration
+    required property color  artTint
+    required property string artUrl
+    required property bool   liked
+    required property bool   online
+    required property bool   inLibrary
+    required property bool   downloaded
+
     property bool   playing: false
+
+    // Reorderable lists: a grip replaces the number on hover; dragging it reports scene positions.
+    property bool   showGrip: false
+    property bool   dragging: false
     property bool   hovered: hover.hovered
     property bool   selected: false
 
@@ -26,9 +38,13 @@ Rectangle {
     signal clicked
     signal doubleClicked
     signal likeClicked
-    signal moreClicked
+    signal moreClicked(Item anchor)
+    signal dragStarted
+    signal dragMoved(point scenePosition)
+    signal dragEnded
 
     implicitHeight: Theme.metrics.rowHeight
+    opacity: dragging ? 0.4 : 1
 
     color: selected ? Theme.palette.selectedOverlay
          : hovered  ? Theme.palette.hoverOverlay
@@ -45,9 +61,19 @@ Rectangle {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
 
+        readonly property bool gripShown: root.showGrip && (root.hovered || root.dragging)
+
         AppIcon {
             anchors.centerIn: parent
-            visible: root.playing
+            visible: indexCell.gripShown
+            width: 16; height: 16
+            name: "grip"
+            color: Theme.palette.iconActive
+        }
+
+        AppIcon {
+            anchors.centerIn: parent
+            visible: root.playing && !indexCell.gripShown
             width: 16; height: 16
             name: "playing"
             color: Theme.palette.iconActive
@@ -55,11 +81,27 @@ Rectangle {
 
         Text {
             anchors.centerIn: parent
-            visible: !root.playing
-            text: root.index
+            visible: !root.playing && !indexCell.gripShown
+            text: root.number
             color: Theme.palette.textTertiary
             font.family: Theme.typography.family
             font.pixelSize: Theme.typography.bodySize
+        }
+
+        HoverHandler {
+            enabled: root.showGrip
+            cursorShape: gripDrag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+        }
+        DragHandler {
+            id: gripDrag
+            enabled: root.showGrip
+            target: null
+            xAxis.enabled: false
+            // The list must not turn this drag into a flick.
+            grabPermissions: PointerHandler.CanTakeOverFromAnything
+
+            onActiveChanged: active ? root.dragStarted() : root.dragEnded()
+            onCentroidChanged: if (active) root.dragMoved(centroid.scenePosition)
         }
     }
 
@@ -77,6 +119,7 @@ Rectangle {
             anchors.left: parent.left
             width: 36; height: 36
             tint: root.artTint
+            source: root.artUrl
         }
 
         Column {
@@ -96,13 +139,28 @@ Rectangle {
                 font.pixelSize: Theme.typography.bodySize
                 font.weight: Font.DemiBold
             }
-            Text {
+            Row {
                 width: parent.width
-                elide: Text.ElideRight
-                text: root.artist
-                color: Theme.palette.textSecondary
-                font.family: Theme.typography.family
-                font.pixelSize: Theme.typography.smallSize
+                spacing: 5
+
+                AppIcon {
+                    id: onlineMark
+                    visible: root.online
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: visible ? 11 : 0
+                    height: 11
+                    // Streamed, or played from its downloaded copy.
+                    name: root.downloaded ? "download" : "globe"
+                    color: Theme.palette.textTertiary
+                }
+                Text {
+                    width: parent.width - (onlineMark.visible ? onlineMark.width + parent.spacing : 0)
+                    elide: Text.ElideRight
+                    text: root.artist
+                    color: Theme.palette.textSecondary
+                    font.family: Theme.typography.family
+                    font.pixelSize: Theme.typography.smallSize
+                }
             }
         }
     }
@@ -164,10 +222,11 @@ Rectangle {
             onClicked: root.likeClicked()
         }
         IconButton {
+            id: moreButton
             iconName: "more"
             iconSize: 16
             implicitWidth: 30; implicitHeight: 30
-            onClicked: root.moreClicked()
+            onClicked: root.moreClicked(moreButton)
         }
     }
 
