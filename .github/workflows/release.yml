@@ -1,0 +1,126 @@
+# Release: push a tag vX.Y or vX.Y.Z on a commit of Dev.
+#   1. build   — clean Release build on Windows, SoundLink-<version>-win64.zip (QAppUpdater's SoundLink_package).
+#   2. release — snapshot commit on main with the tagged tree ("Release vX.Y"), the tag is moved onto it,
+#                GitHub release with the zip; release notes = message of the tagged commit.
+# The version in project(SoundLink VERSION ...) must match the tag: the updater compares it with the release tag.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      commit: ${{ steps.check.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Check tag, branch and version
+        id: check
+        shell: bash
+        run: |
+          tag="$GITHUB_REF_NAME"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Tag '$tag' is not vX.Y or vX.Y.Z"
+            exit 1
+          fi
+          version="${tag#v}"
+          commit=$(git rev-parse "$tag^{commit}")
+          if ! git merge-base --is-ancestor "$commit" origin/Dev; then
+            echo "::error::Tagged commit $commit is not on Dev"
+            exit 1
+          fi
+          project_version=$(sed -n -E 's/^project\(SoundLink VERSION ([0-9.]+).*/\1/p' Source/CMakeLists.txt)
+          if [[ "$project_version" != "$version" ]]; then
+            echo "::error::project(SoundLink VERSION $project_version) in Source/CMakeLists.txt does not match tag $tag"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          host: windows
+          target: desktop
+          arch: win64_mingw
+          modules: 'qtmultimedia qtwebsockets'
+          tools: 'tools_mingw1310,qt.tools.win64_mingw1310 tools_ninja'
+          cache: true
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          $mingw = "$env:IQTA_TOOLS/mingw1310_64/bin"
+          # windeployqt takes the MinGW runtime DLLs from PATH: the Qt toolchain must come before the runner's MinGW
+          $env:PATH = "$mingw;$env:PATH"
+          cmake -S Source -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
+            -DCMAKE_C_COMPILER="$mingw/gcc.exe" `
+            -DCMAKE_CXX_COMPILER="$mingw/g++.exe" `
+            -DCMAKE_MAKE_PROGRAM="$env:IQTA_TOOLS/Ninja/ninja.exe"
+
+      - name: Build package
+        shell: pwsh
+        run: |
+          $env:PATH = "$env:IQTA_TOOLS/mingw1310_64/bin;$env:PATH"
+          cmake --build build --target SoundLink_package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: packages/SoundLink-${{ steps.check.outputs.version }}-win64.zip
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+      VERSION: ${{ needs.build.outputs.version }}
+      COMMIT: ${{ needs.build.outputs.commit }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: package
+
+      - name: Snapshot commit on main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898732+github-actions[bot]@users.noreply.github.com"
+          git log -1 --format=%B "$COMMIT" > notes.md
+          { echo "Release $TAG"; echo; cat notes.md; } > message.txt
+          snapshot=$(git commit-tree "$COMMIT^{tree}" -p origin/main -F message.txt)
+          git push origin "$snapshot:refs/heads/main"
+          git tag -f -a "$TAG" -F message.txt "$snapshot"
+          git push -f origin "refs/tags/$TAG"
+
+      - name: GitHub release
+        run: |
+          gh release create "$TAG" "SoundLink-$VERSION-win64.zip" \
+            --title "SoundLink $TAG" \
+            --notes-file notes.md \
+            --verify-tag \
+            --latest
