@@ -71,8 +71,8 @@ public:
 
     /// @brief Replaces the rows.
     ///
-    /// Updates in place when the rows are the same and inserts when rows were only appended,
-    /// so views keep their scroll position; anything else resets the model.
+    /// Rows that were only updated, removed or inserted are applied as such, so views keep their scroll position;
+    /// only a changed order of the remaining rows resets the model.
     void SetTracks(const QList<TrackData>& newTracks);
 
     /// @brief Row of a track, -1 if the track is not in the list.
@@ -85,5 +85,8 @@ signals:
     void countChanged();
 
 private:
+    /// Removes and inserts the changed rows; false, with nothing changed, if the remaining rows changed their order.
+    bool ApplyInPlace(const QList<TrackData>& newTracks);
+
     QList<TrackData> tracks;
 };

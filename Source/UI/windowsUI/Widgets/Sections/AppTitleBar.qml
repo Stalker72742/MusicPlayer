@@ -6,6 +6,8 @@ Rectangle {
 
     property var window: null
     property bool maximized: false
+    // Width of the window buttons on the right; the window resize frame leaves them alone.
+    readonly property real buttonsWidth: windowButtons.width
 
     // Ctrl+K and SearchViewModel.focusSearch() land here.
     function focusSearch() {
@@ -38,8 +40,22 @@ Rectangle {
         id: dragHandler
         target: null
         onActiveChanged: {
-            if (active && root.window)
-                root.window.startSystemMove();
+            if (!active || !root.window)
+                return;
+
+            // A frameless window is not restored by Windows when dragged while maximized:
+            // restore it here, keeping the grab point under the cursor.
+            const w = root.window;
+            if (w.visibility === Window.Maximized) {
+                const press = centroid.scenePressPosition;
+                const ratio = press.x / w.width;
+                const cursorX = w.x + centroid.scenePosition.x;
+                const cursorY = w.y + centroid.scenePosition.y;
+                w.showNormal();
+                w.x = Math.round(cursorX - ratio * w.width);
+                w.y = Math.round(cursorY - press.y);
+            }
+            w.startSystemMove();
         }
     }
 
@@ -89,6 +105,7 @@ Rectangle {
     }
 
     Row {
+        id: windowButtons
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom

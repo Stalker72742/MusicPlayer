@@ -12,6 +12,7 @@
 #include <QUrl>
 
 #include <algorithm>
+#include <vector>
 
 #include "Downloads/DownloadSubsystem.h"
 #include "Library/LibrarySubsystem.h"
@@ -138,28 +139,60 @@ TrackData LibraryViewModel::ToTrackData(const Track& track)
     return data;
 }
 
-void LibraryViewModel::Rebuild()
+void LibraryViewModel::SortTracks()
 {
-    const QList<Track>& library = LibrarySubsystem::Get().GetTracks();
-
-    QList<const Track*> sorted;
-    sorted.reserve(library.size());
-    for (const Track& track : library)
-    {
-        if (track.IsInLibrary())
-            sorted.append(&track);
-    }
-
     QCollator collator;
     collator.setNumericMode(true);
     collator.setCaseSensitivity(Qt::CaseInsensitive);
-    std::sort(sorted.begin(), sorted.end(), [&collator](const Track* a, const Track* b) {
-        if (a->IsOnline() != b->IsOnline())
-            return b->IsOnline();
-        if (a->IsOnline())
-            return a->stats.dateAdded < b->stats.dateAdded;
-        return collator.compare(a->file.path, b->file.path) < 0;
-    });
+
+    struct Row
+    {
+        const Track* track;
+        QCollatorSortKey key;
+    };
+
+    std::vector<Row> local;
+    std::vector<const Track*> online;
+    for (const Track& track : LibrarySubsystem::Get().GetTracks())
+    {
+        if (!track.IsInLibrary())
+            continue;
+
+        if (track.IsOnline())
+            online.push_back(&track);
+        else
+            local.push_back({&track, collator.sortKey(track.file.path)});
+    }
+
+    std::sort(local.begin(), local.end(), [](const Row& a, const Row& b) { return a.key < b.key; });
+    std::sort(online.begin(), online.end(),
+        [](const Track* a, const Track* b) { return a->stats.dateAdded < b->stats.dateAdded; });
+
+    sortedIds.clear();
+    sortedIds.reserve(static_cast<qsizetype>(local.size() + online.size()));
+    for (const Row& row : local)
+        sortedIds.append(row.track->id);
+    for (const Track* track : online)
+        sortedIds.append(track->id);
+}
+
+void LibraryViewModel::Rebuild()
+{
+    const LibrarySubsystem& subsystem = LibrarySubsystem::Get();
+
+    if (sortedRevision != subsystem.GetStructureRevision())
+    {
+        sortedRevision = subsystem.GetStructureRevision();
+        SortTracks();
+    }
+
+    QList<const Track*> sorted;
+    sorted.reserve(sortedIds.size());
+    for (TrackId id : sortedIds)
+    {
+        if (const Track* track = subsystem.FindTrack(id))
+            sorted.append(track);
+    }
 
     QList<TrackData> all;
     QList<TrackData> favorites;

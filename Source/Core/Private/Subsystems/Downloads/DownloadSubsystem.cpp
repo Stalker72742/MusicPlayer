@@ -266,7 +266,7 @@ void DownloadSubsystem::Start(Job& job)
     RemoveTempFiles(track);
 
     QStringList args{
-        QStringLiteral("-f"), YtDlpBackend::GetAudioFormat(),
+        QStringLiteral("-f"), YtDlpBackend::GetDownloadFormat(),
         QStringLiteral("--no-playlist"),
         QStringLiteral("--no-warnings"),
         QStringLiteral("--no-mtime"),

@@ -12,6 +12,14 @@ Item {
     property string subtitle: ""
     property TrackListModel model: null
     property bool showTabs: false
+    property var tabs: [
+        { id: "all", title: "All" },
+        { id: "albums", title: "Albums" },
+        { id: "artists", title: "Artists" },
+        { id: "genres", title: "Genres" }
+    ]
+    // What the tabs other than "all" show instead of "Coming soon".
+    property Component tabContent: null
     property string emptyIcon: "library"
     property string emptyTitle: ""
     property string emptyText: ""
@@ -19,12 +27,28 @@ Item {
 
     // Search results: a click plays just that track; library lists queue the whole list on double click.
     property bool singleTrackPlayback: false
+    // Playlists: a single click queues the whole list.
+    property bool clickToPlay: false
 
     property string albumHeader: "Album"
     property string dateHeader: "Date Added"
 
     // Endless lists: endReached() when scrolled to the bottom (or when everything fits), a footer while loading.
     property bool loadingMore: false
+
+    // A click on a row selects it instead of playing it.
+    property bool selectionMode: false
+    property var selectedIds: ({})
+    readonly property int selectedCount: Object.keys(selectedIds).length
+
+    function toggleSelected(trackId) {
+        const next = Object.assign({}, selectedIds);
+        if (next[trackId])
+            delete next[trackId];
+        else
+            next[trackId] = true;
+        selectedIds = next;
+    }
 
     // Buttons under the header, e.g. a playlist's Play and Edit.
     property Component headerActions: null
@@ -77,12 +101,7 @@ Item {
             Layout.topMargin: 4
 
             Repeater {
-                model: [
-                    { id: "all", title: "All" },
-                    { id: "albums", title: "Albums" },
-                    { id: "artists", title: "Artists" },
-                    { id: "genres", title: "Genres" }
-                ]
+                model: root.tabs
 
                 TabPill {
                     required property var modelData
@@ -231,6 +250,7 @@ Item {
                 id: row
                 width: list.width
                 playing: PlayerViewModel.hasTrack && PlayerViewModel.trackId === trackId
+                selected: root.selectionMode && root.selectedIds[trackId] === true
 
                 indexColWidth: root.indexCol
                 albumColWidth: root.albumCol
@@ -238,8 +258,15 @@ Item {
                 durationColWidth: root.durationCol
                 actionsColWidth: root.actionsCol
 
-                onClicked: if (root.singleTrackPlayback) PlayerViewModel.playSingle(trackId)
-                onDoubleClicked: if (!root.singleTrackPlayback) PlayerViewModel.play(root.model, index)
+                onClicked: {
+                    if (root.selectionMode)
+                        root.toggleSelected(trackId);
+                    else if (root.singleTrackPlayback || (root.clickToPlay && playing))
+                        PlayerViewModel.playSingle(trackId); // Does not restart the current track.
+                    else if (root.clickToPlay)
+                        PlayerViewModel.play(root.model, index);
+                }
+                onDoubleClicked: if (!root.selectionMode && !root.singleTrackPlayback && !root.clickToPlay) PlayerViewModel.play(root.model, index)
                 onLikeClicked: LibraryViewModel.toggleLiked(trackId)
                 onMoreClicked: (anchor) => trackMenu.openFor(anchor, row)
 
@@ -255,8 +282,16 @@ Item {
             }
         }
 
+        Loader {
+            active: root.tabContent !== null && root.currentTab !== "all"
+            visible: active
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            sourceComponent: root.tabContent
+        }
+
         EmptyState {
-            visible: !root.showList
+            visible: !root.showList && !(root.tabContent !== null && root.currentTab !== "all")
             Layout.fillWidth: true
             Layout.fillHeight: true
             iconName: root.currentTab === "all" ? root.emptyIcon : "list"

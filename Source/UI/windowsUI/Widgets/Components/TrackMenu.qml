@@ -59,6 +59,9 @@ Popup {
     parent: Overlay.overlay
     width: 240
     padding: 4
+    // Modal without a dimmer: a click outside only closes the menu and does not also play the row under it.
+    modal: true
+    dim: false
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     // The playlist page can be taller: keep the menu inside the window.
@@ -136,6 +139,12 @@ Popup {
 
             Separator {}
 
+            MenuEntry {
+                visible: root.online
+                iconName: "globe"
+                text: "Go to author"
+                onTriggered: root.run(() => OnlinePageViewModel.openAuthor(root.trackId))
+            }
             MenuEntry {
                 iconName: root.online ? "external" : "folder"
                 text: root.online ? "Open in browser" : "Show in folder"

@@ -37,6 +37,12 @@ qt_add_executable(SoundLink
         core/private/subsystems/Library/LibrarySubsystem.cpp
         core/private/subsystems/Library/MetadataReader.h
         core/private/subsystems/Library/MetadataReader.cpp
+        core/private/subsystems/Library/FileScanner.h
+        core/private/subsystems/Library/FileScanner.cpp
+        core/private/subsystems/Library/FolderWatcher.h
+        core/private/subsystems/Library/FolderWatcher.cpp
+        core/private/subsystems/Library/LibraryStorage.h
+        core/private/subsystems/Library/LibraryStorage.cpp
 
         # Discord Rich Presence
         core/public/subsystems/Discord/DiscordSubsystem.h
@@ -56,6 +62,8 @@ qt_add_executable(SoundLink
 
         # Online (yt-dlp search and streams)
         core/public/subsystems/Online/OnlineTypes.h
+        core/public/subsystems/Online/OnlineLink.h
+        core/private/subsystems/Online/OnlineLink.cpp
         core/public/subsystems/Online/OnlineSubsystem.h
         core/private/subsystems/Online/OnlineSubsystem.cpp
         core/private/subsystems/Online/OnlineBackend.h
@@ -129,6 +137,7 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Theme.qml
         ${QML_DIR}/Screens/HomeScreen.qml
         ${QML_DIR}/Screens/SearchScreen.qml
+        ${QML_DIR}/Screens/OnlinePageScreen.qml
         ${QML_DIR}/Screens/PlaylistsScreen.qml
         ${QML_DIR}/Screens/PlaylistScreen.qml
         ${QML_DIR}/Screens/DownloadsScreen.qml
@@ -136,13 +145,16 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Screens/AboutScreen.qml
         ${QML_DIR}/Screens/UpdatesScreen.qml
         ${QML_DIR}/Sections/AppTitleBar.qml
+        ${QML_DIR}/Sections/LinkDropOverlay.qml
         ${QML_DIR}/Sections/LibraryView.qml
         ${QML_DIR}/Sections/PlayerBar.qml
         ${QML_DIR}/Sections/ResizeHandle.qml
+        ${QML_DIR}/Sections/WindowResizeFrame.qml
         ${QML_DIR}/Sections/SideBar.qml
         ${QML_DIR}/Sections/SearchSuggestions.qml
         ${QML_DIR}/Sections/TrackShelf.qml
         ${QML_DIR}/Components/AlbumArt.qml
+        ${QML_DIR}/Components/OnlineCollectionList.qml
         ${QML_DIR}/Components/AppIcon.qml
         ${QML_DIR}/Components/IconButton.qml
         ${QML_DIR}/Components/NavItem.qml
@@ -187,6 +199,8 @@ qt_add_qml_module(SoundLink
         ui/windowsUI/ViewModels/SuggestionListModel.cpp
         ui/windowsUI/ViewModels/SearchViewModel.h
         ui/windowsUI/ViewModels/SearchViewModel.cpp
+        ui/windowsUI/ViewModels/OnlinePageViewModel.h
+        ui/windowsUI/ViewModels/OnlinePageViewModel.cpp
         ui/windowsUI/ViewModels/OnlineViewModel.h
         ui/windowsUI/ViewModels/OnlineViewModel.cpp
         ui/windowsUI/ViewModels/PlaylistsViewModel.h

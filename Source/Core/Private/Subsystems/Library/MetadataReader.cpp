@@ -39,7 +39,11 @@ MetadataReader::~MetadataReader()
 
 void MetadataReader::Enqueue(TrackId id, const QString& path)
 {
-    queue.append({id, path});
+    if (!queued.contains(id))
+    {
+        queued.insert(id);
+        queue.append({id, path});
+    }
 
     if (!current.IsValid())
         StartNext();
@@ -48,6 +52,7 @@ void MetadataReader::Enqueue(TrackId id, const QString& path)
 void MetadataReader::Clear()
 {
     queue.clear();
+    queued.clear();
 }
 
 void MetadataReader::StartNext()
@@ -64,6 +69,7 @@ void MetadataReader::StartNext()
     }
 
     const Request request = queue.takeFirst();
+    queued.remove(request.id);
     current = request.id;
     timeout.start();
     player->setSource(QUrl::fromLocalFile(request.path));

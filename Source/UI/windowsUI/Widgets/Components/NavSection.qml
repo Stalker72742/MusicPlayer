@@ -116,10 +116,11 @@ Item {
         }
 
         HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-        TapHandler {
-            onTapped: (eventPoint) => {
+        MouseArea {
+            anchors.fill: parent
+            onClicked: (mouse) => {
                 const canCollapse = root.collapsible && root.hasItems && !root.compact;
-                if (canCollapse && eventPoint.position.x < chevron.x + chevron.width + 4) {
+                if (canCollapse && mouse.x < chevron.x + chevron.width + 4) {
                     root.expanded = !root.expanded;
                     return;
                 }

@@ -50,5 +50,5 @@ Item {
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: root.clicked() }
+    MouseArea { anchors.fill: parent; onClicked: root.clicked() }
 }

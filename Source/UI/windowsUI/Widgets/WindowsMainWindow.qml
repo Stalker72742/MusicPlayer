@@ -101,6 +101,7 @@ ApplicationWindow {
         }
         DownloadsScreen {}
         SearchScreen {}
+        OnlinePageScreen {}
         SettingsScreen {}
         AboutScreen {}
         UpdatesScreen {}
@@ -128,6 +129,21 @@ ApplicationWindow {
         anchors.bottom: parent.bottom
         z: 100
         window: root
+    }
+
+    // ─── Resize by any edge or corner ────────────────────
+    WindowResizeFrame {
+        anchors.fill: parent
+        z: 101
+        window: root
+        topRightWidth: titleBar.buttonsWidth
+        topRightHeight: titleBar.height
+    }
+
+    // ─── A YouTube link dragged from a browser ───────────
+    LinkDropOverlay {
+        anchors.fill: parent
+        z: 102
     }
 
     // Hides to the tray, or quits when "Close to tray" is off.

@@ -16,6 +16,7 @@ struct Suggestion
         Setting,          ///< Points the settings screen at a setting.
         Track,            ///< Plays a library track.
         YouTube,          ///< Searches YouTube for text.
+        Link,             ///< Opens the YouTube link in `text`.
         Playlist          ///< Opens a playlist.
     };
 

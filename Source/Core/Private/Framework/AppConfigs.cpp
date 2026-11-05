@@ -67,6 +67,7 @@ void AppConfigs::RegisterAppConfigs()
 
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::AutoUpdateYtDlp, true);
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::AudioQuality, AudioQuality::High);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::DownloadFormat, DownloadFormat::Auto);
 
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::OnlineSearchSource, QStringLiteral("innertube"));
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::OnlineStreamSource, QStringLiteral("browser"));

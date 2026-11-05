@@ -11,10 +11,12 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QUrlQuery>
 
 namespace
 {
     const QUrl SearchUrl(QStringLiteral("https://www.youtube.com/youtubei/v1/search?prettyPrint=false"));
+    const QUrl PlayerUrl(QStringLiteral("https://www.youtube.com/youtubei/v1/player?prettyPrint=false"));
 
     const QString ClientVersion = QStringLiteral("2.20250925.01.00");
     const QString UserAgent = QStringLiteral(
@@ -39,6 +41,11 @@ namespace
 void InnerTubeBackend::Shutdown()
 {
     CancelSearch();
+    if (network)
+    {
+        for (QNetworkReply* reply : network->findChildren<QNetworkReply*>())
+            reply->disconnect(this);
+    }
     delete network;
     network = nullptr;
 }
@@ -70,10 +77,8 @@ void InnerTubeBackend::SearchMore(SearchCallback callback)
     Send({{"continuation", continuation}}, std::move(callback));
 }
 
-void InnerTubeBackend::Send(QJsonObject body, SearchCallback callback)
+QNetworkReply* InnerTubeBackend::Post(const QUrl& url, QJsonObject body)
 {
-    CancelSearch();
-
     if (!network)
         network = new QNetworkAccessManager(this);
 
@@ -90,7 +95,7 @@ void InnerTubeBackend::Send(QJsonObject body, SearchCallback callback)
 
     body.insert("context", QJsonObject{{"client", client}});
 
-    QNetworkRequest request(SearchUrl);
+    QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     request.setHeader(QNetworkRequest::UserAgentHeader, UserAgent);
     request.setRawHeader("X-Youtube-Client-Name", "1");
@@ -100,7 +105,53 @@ void InnerTubeBackend::Send(QJsonObject body, SearchCallback callback)
     request.setAttribute(QNetworkRequest::CookieLoadControlAttribute, QNetworkRequest::Manual);
     request.setAttribute(QNetworkRequest::CookieSaveControlAttribute, QNetworkRequest::Manual);
 
-    QNetworkReply* reply = network->post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+    return network->post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+}
+
+void InnerTubeBackend::FetchVideo(const QString& pageUrl, VideoCallback callback)
+{
+    const QString videoId = QUrlQuery(QUrl(pageUrl)).queryItemValue(QStringLiteral("v"));
+
+    QNetworkReply* reply = Post(PlayerUrl, {{"videoId", videoId}});
+    connect(reply, &QNetworkReply::finished, this, [reply, pageUrl, videoId, callback] {
+        reply->deleteLater();
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            callback({}, OnlineError::Make(OnlineError::Failed, QStringLiteral("InnerTube: ") + reply->errorString()));
+            return;
+        }
+
+        const QJsonObject root = QJsonDocument::fromJson(reply->readAll()).object();
+        const QJsonObject details = root.value("videoDetails").toObject();
+        if (details.value("videoId").toString() != videoId)
+        {
+            const QJsonObject playability = root.value("playabilityStatus").toObject();
+            const QString reason = playability.value("reason").toString();
+            const bool bGone = playability.value("status").toString() == QStringLiteral("ERROR");
+            callback({}, OnlineError::Make(bGone ? OnlineError::NotFound : OnlineError::Failed,
+                             reason.isEmpty() ? QStringLiteral("InnerTube: no video details") : reason));
+            return;
+        }
+
+        OnlineEntry entry;
+        entry.pageUrl = pageUrl;
+        entry.title = details.value("title").toString();
+        entry.channel = details.value("author").toString();
+        const QString channelId = details.value("channelId").toString();
+        if (!channelId.isEmpty())
+            entry.channelUrl = QStringLiteral("https://www.youtube.com/channel/") + channelId;
+        entry.thumbnailUrl = QStringLiteral("https://i.ytimg.com/vi/%1/mqdefault.jpg").arg(videoId);
+        entry.durationMs = details.value("lengthSeconds").toString().toLongLong() * 1000;
+        callback(entry, {});
+    });
+}
+
+void InnerTubeBackend::Send(QJsonObject body, SearchCallback callback)
+{
+    CancelSearch();
+
+    QNetworkReply* reply = Post(SearchUrl, std::move(body));
     searchReply = reply;
 
     connect(reply, &QNetworkReply::finished, this, [this, reply, callback] {
@@ -172,7 +223,14 @@ bool InnerTubeBackend::ParsePage(const QByteArray& json, QList<OnlineEntry>& ent
             OnlineEntry entry;
             entry.pageUrl = QStringLiteral("https://www.youtube.com/watch?v=") + videoId;
             entry.title = RunsText(video.value("title").toObject());
-            entry.channel = RunsText(video.value("ownerText").toObject());
+            const QJsonObject owner = video.value("ownerText").toObject();
+            entry.channel = RunsText(owner);
+            const QString channelId = owner.value("runs").toArray().first().toObject()
+                                          .value("navigationEndpoint").toObject()
+                                          .value("browseEndpoint").toObject()
+                                          .value("browseId").toString();
+            if (!channelId.isEmpty())
+                entry.channelUrl = QStringLiteral("https://www.youtube.com/channel/") + channelId;
             entry.thumbnailUrl = QStringLiteral("https://i.ytimg.com/vi/%1/mqdefault.jpg").arg(videoId);
             entry.durationMs = durationMs;
             entries.append(entry);

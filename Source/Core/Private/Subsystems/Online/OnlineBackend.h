@@ -24,6 +24,8 @@ public:
     using SearchCallback = std::function<void(const QList<OnlineEntry>& entries, const OnlineError& error)>;
     /// @brief Result of a stream resolve: the direct audio URL, or an error.
     using StreamCallback = std::function<void(const QUrl& stream, const OnlineError& error)>;
+    /// @brief Result of FetchVideo(): what a search would say about the video, or an error.
+    using VideoCallback = std::function<void(const OnlineEntry& entry, const OnlineError& error)>;
 
     using QObject::QObject;
 
@@ -36,6 +38,8 @@ public:
     virtual bool CanSearch() const { return false; }
     /// @brief Whether ResolveStream() is supported.
     virtual bool CanResolve() const { return false; }
+    /// @brief Whether FetchVideo() is supported.
+    virtual bool CanFetchVideo() const { return false; }
 
     /// @brief Empty while the backend can be used right now; otherwise why not.
     virtual QString GetUnavailableReason() const = 0;
@@ -54,6 +58,9 @@ public:
     virtual void SearchMore(SearchCallback callback);
     /// @brief Finds the direct audio stream of a page; calls back exactly once, unless the backend shut down.
     virtual void ResolveStream(const QString& pageUrl, StreamCallback callback);
+
+    /// @brief Finds the title, channel and duration of one video; calls back exactly once, unless the backend shut down.
+    virtual void FetchVideo(const QString& pageUrl, VideoCallback callback);
 
     /// @brief Stops processes and network; called from OnlineSubsystem::Deinitialize().
     virtual void Shutdown() {}

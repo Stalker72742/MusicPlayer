@@ -21,6 +21,7 @@
 ///
 /// Follows PlayerSubsystem on its own once Start()ed. Discord may start later or restart: the pipe is
 /// looked for again every 20 s. Discord accepts about 5 activity updates per 20 s, so updates are coalesced.
+/// A track paused for more than 5 minutes is hidden until playback resumes.
 /// Turned off with AppConfigs::SettingsKeys::DiscordPresence.
 class DiscordSubsystem : public Subsystem<DiscordSubsystem>
 {
@@ -63,6 +64,8 @@ private:
 
     /// Builds the activity of the current track and sends it when the rate limit allows.
     void ScheduleUpdate();
+    /// Starts the pause timeout while paused, stops it and shows the track again once playing.
+    void UpdatePauseTimeout();
     void SendActivity();
     QJsonObject BuildActivity() const;
 
@@ -74,6 +77,9 @@ private:
 
     QTimer reconnectTimer;
     QTimer updateTimer;
+    QTimer pauseTimer;
+    /// Paused for longer than the timeout: the activity is cleared.
+    bool bPauseExpired = false;
     QDateTime lastSent;
 
     /// What was last sent, without its timestamps (they move with the clock), and the start it had.

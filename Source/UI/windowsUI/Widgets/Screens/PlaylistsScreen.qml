@@ -123,7 +123,7 @@ Item {
                     }
 
                     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-                    TapHandler { onTapped: PlaylistsViewModel.open(card.playlistId) }
+                    MouseArea { anchors.fill: parent; onClicked: PlaylistsViewModel.open(card.playlistId) }
                 }
             }
         }

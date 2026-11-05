@@ -72,6 +72,9 @@ public:
     bool IsShuffle() const { return bShuffle; }
     RepeatMode GetRepeatMode() const { return repeatMode; }
 
+    /// @brief The tracks of the queue.
+    const QList<TrackId>& GetQueue() const { return queue; }
+
     /// @brief The current track of the queue, or an invalid id.
     TrackId GetCurrentTrack() const;
 

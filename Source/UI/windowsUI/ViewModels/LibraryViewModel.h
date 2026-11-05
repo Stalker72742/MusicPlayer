@@ -3,11 +3,11 @@
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
+#include "Library/Track.h"
 #include "TrackListModel.h"
 
 class QJSEngine;
 class QQmlEngine;
-struct Track;
 
 /// @brief Library data for the UI, built from LibrarySubsystem. QML singleton.
 class LibraryViewModel : public QObject
@@ -73,8 +73,12 @@ private:
     LibraryViewModel();
 
     void Rebuild();
+    /// Sorting by path is the slow part of a rebuild, and likes or play counts do not change the order.
+    void SortTracks();
 
     int albumCount = 0;
+    QList<TrackId> sortedIds;
+    quint64 sortedRevision = ~quint64{0};
 
     TrackListModel tracksModel;
     TrackListModel favoritesModel;

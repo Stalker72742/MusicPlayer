@@ -45,13 +45,19 @@ Navigation* Navigation::create(QQmlEngine*, QJSEngine*)
 
 void Navigation::navigate(Page target)
 {
-    GoTo({target, settingsCategory, playlistId}, true);
+    GoTo({target, settingsCategory, playlistId, onlineUrl}, true);
 }
 
 void Navigation::openPlaylist(const QString& id)
 {
     if (!id.isEmpty())
-        GoTo({Playlist, settingsCategory, id}, true);
+        GoTo({Playlist, settingsCategory, id, onlineUrl}, true);
+}
+
+void Navigation::openOnline(const QString& url)
+{
+    if (!url.isEmpty())
+        GoTo({OnlinePage, settingsCategory, playlistId, url}, true);
 }
 
 void Navigation::openSettings(const QString& category, const QString& settingKey)
@@ -62,7 +68,7 @@ void Navigation::openSettings(const QString& category, const QString& settingKey
         return;
     }
 
-    GoTo({Settings, category.isEmpty() ? settingsCategory : category, playlistId}, true);
+    GoTo({Settings, category.isEmpty() ? settingsCategory : category, playlistId, onlineUrl}, true);
 
     highlightedSetting.clear();
     emit highlightedSettingChanged();
@@ -85,7 +91,7 @@ void Navigation::goBack()
 
 void Navigation::GoTo(const Location& location, bool bRecordHistory)
 {
-    const Location current{page, settingsCategory, playlistId};
+    const Location current{page, settingsCategory, playlistId, onlineUrl};
     if (location == current)
         return;
 
@@ -100,15 +106,19 @@ void Navigation::GoTo(const Location& location, bool bRecordHistory)
     const bool bPageChanged = location.page != page;
     const bool bCategoryChanged = location.settingsCategory != settingsCategory;
     const bool bPlaylistChanged = location.playlistId != playlistId;
+    const bool bOnlineChanged = location.onlineUrl != onlineUrl;
 
     page = location.page;
     settingsCategory = location.settingsCategory;
     playlistId = location.playlistId;
+    onlineUrl = location.onlineUrl;
 
     if (bCategoryChanged)
         emit settingsCategoryChanged();
     if (bPlaylistChanged)
         emit playlistIdChanged();
+    if (bOnlineChanged)
+        emit onlineUrlChanged();
     if (bPageChanged)
         emit pageChanged();
 }

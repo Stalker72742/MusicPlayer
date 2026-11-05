@@ -55,6 +55,9 @@ private:
     bool createMainWindow();
     void createTrayIcon();
     void createMediaControls();
+    /// A frameless window has no WS_MINIMIZEBOX, so Windows does not minimize it on a click on its
+    /// taskbar button; the style is added back (it draws nothing without a caption).
+    void allowTaskbarMinimize();
 
     QQmlApplicationEngine* engine = nullptr;
     TrayIcon* trayIcon = nullptr;

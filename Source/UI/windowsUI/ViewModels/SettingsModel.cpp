@@ -175,6 +175,10 @@ SettingsModel::SettingsModel()
             QStringLiteral("Of streams and downloads. High is AAC, which every player and tag editor handles"),
             {{AppConfigs::AudioQuality::Best, QStringLiteral("Best")}, {AppConfigs::AudioQuality::High, QStringLiteral("High")},
                 {AppConfigs::AudioQuality::Medium, QStringLiteral("Medium")}}),
+        configChoice(AppConfigs::SettingsKeys::DownloadFormat, QStringLiteral("downloads"), QStringLiteral("Download format"),
+            QStringLiteral("Files stay as YouTube serves them, nothing is converted. If a track lacks the format, the best available one is taken"),
+            {{AppConfigs::DownloadFormat::Auto, QStringLiteral("By quality")}, {AppConfigs::DownloadFormat::M4a, QStringLiteral("M4A")},
+                {AppConfigs::DownloadFormat::Opus, QStringLiteral("Opus")}}),
     };
 
     for (const Setting& setting : settings)

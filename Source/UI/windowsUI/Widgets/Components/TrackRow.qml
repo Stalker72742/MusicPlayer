@@ -53,6 +53,13 @@ Rectangle {
 
     Behavior on color { ColorAnimation { duration: Theme.motion.durationFast } }
 
+    // First child, so the row's buttons stay above it. Not a TapHandler: those fire through popups.
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.clicked()
+        onDoubleClicked: root.doubleClicked()
+    }
+
     // Index / playing indicator
     Item {
         id: indexCell
@@ -73,7 +80,7 @@ Rectangle {
 
         AppIcon {
             anchors.centerIn: parent
-            visible: root.playing && !indexCell.gripShown
+            visible: root.playing && !indexCell.gripShown && !root.selected
             width: 16; height: 16
             name: "playing"
             color: Theme.palette.iconActive
@@ -81,11 +88,19 @@ Rectangle {
 
         Text {
             anchors.centerIn: parent
-            visible: !root.playing && !indexCell.gripShown
+            visible: !root.playing && !indexCell.gripShown && !root.selected
             text: root.number
             color: Theme.palette.textTertiary
             font.family: Theme.typography.family
             font.pixelSize: Theme.typography.bodySize
+        }
+
+        AppIcon {
+            anchors.centerIn: parent
+            visible: root.selected
+            width: 16; height: 16
+            name: "check"
+            color: Theme.palette.iconActive
         }
 
         HoverHandler {
@@ -231,8 +246,4 @@ Rectangle {
     }
 
     HoverHandler { id: hover }
-    TapHandler {
-        onTapped: root.clicked()
-        onDoubleTapped: root.doubleClicked()
-    }
 }

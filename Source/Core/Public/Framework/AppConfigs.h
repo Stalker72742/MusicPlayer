@@ -64,6 +64,16 @@ namespace AppConfigs
         inline const QString AutoUpdateYtDlp = QStringLiteral("downloads.autoUpdateYtDlp");
         /// @brief QString, one of AppConfigs::AudioQuality: used for streams and downloads.
         inline const QString AudioQuality = QStringLiteral("downloads.quality");
+        /// @brief QString, one of AppConfigs::DownloadFormat: the container downloads prefer.
+        inline const QString DownloadFormat = QStringLiteral("downloads.format");
+    }
+
+    /// @brief Values of SettingsKeys::DownloadFormat. Picked among what the site serves, nothing is converted.
+    namespace DownloadFormat
+    {
+        inline const QString Auto = QStringLiteral("auto"); ///< Whatever SettingsKeys::AudioQuality picks.
+        inline const QString M4a = QStringLiteral("m4a");   ///< AAC in m4a.
+        inline const QString Opus = QStringLiteral("opus"); ///< Opus in webm.
     }
 
     /// @brief Values of SettingsKeys::AudioQuality.

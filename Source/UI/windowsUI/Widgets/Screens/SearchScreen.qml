@@ -15,6 +15,15 @@ LibraryView {
                                                     : model.count + " results for “" + query + "”"
                                                       + (OnlineViewModel.lastSearchBackend.length > 0 ? " · via " + OnlineViewModel.lastSearchBackend : ""))
     model: SearchViewModel.results
+    showTabs: query.length > 0
+    tabs: [
+        { id: "all", title: "Tracks" },
+        { id: "playlist", title: "Playlists" },
+        { id: "channel", title: "Authors" }
+    ]
+    tabContent: OnlineCollectionList {}
+    onCurrentTabChanged: if (currentTab !== "all") SearchViewModel.loadCollections(currentTab)
+    onQueryChanged: currentTab = "all"
     singleTrackPlayback: true
     loadingMore: SearchViewModel.loadingMore
     onEndReached: SearchViewModel.loadMore()

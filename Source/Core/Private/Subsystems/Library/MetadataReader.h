@@ -5,6 +5,7 @@
 #pragma once
 
 #include <QList>
+#include <QSet>
 #include <QObject>
 #include <QTimer>
 
@@ -21,7 +22,7 @@ public:
     explicit MetadataReader(QObject* parent = nullptr);
     ~MetadataReader() override;
 
-    /// @brief Queues a file; tagsRead() reports the result.
+    /// @brief Queues a file unless it is already waiting; tagsRead() reports the result.
     void Enqueue(TrackId id, const QString& path);
     /// @brief Drops all queued files.
     void Clear();
@@ -49,5 +50,6 @@ private:
     QMediaPlayer* player = nullptr;
     QTimer timeout;
     QList<Request> queue;
+    QSet<TrackId> queued;
     TrackId current;
 };

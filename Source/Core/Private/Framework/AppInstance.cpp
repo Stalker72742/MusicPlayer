@@ -23,6 +23,10 @@
 #include "YtDlp/FfmpegSubsystem.h"
 #include "YtDlp/YtDlpSubsystem.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 AppInstance* AppInstance::instance = nullptr;
 
 AppInstance::AppInstance()
@@ -100,6 +104,7 @@ void AppInstance::showMainWindow()
 {
     if (QQuickWindow* window = getMainWindow())
     {
+        window->setWindowStates(window->windowStates() & ~Qt::WindowMinimized);
         window->show();
         window->raise();
         window->requestActivate();
@@ -118,7 +123,7 @@ void AppInstance::toggleMainWindow()
     if (!window)
         return;
 
-    if (window->isVisible())
+    if (window->isVisible() && !(window->windowStates() & Qt::WindowMinimized))
         hideMainWindow();
     else
         showMainWindow();
@@ -135,7 +140,23 @@ bool AppInstance::createMainWindow()
         return false;
     }
 
+    allowTaskbarMinimize();
+    connect(getMainWindow(), &QWindow::visibleChanged, this, &AppInstance::allowTaskbarMinimize);
     return true;
+}
+
+void AppInstance::allowTaskbarMinimize()
+{
+#ifdef Q_OS_WIN
+    QQuickWindow* window = getMainWindow();
+    if (!window)
+        return;
+
+    const HWND hwnd = reinterpret_cast<HWND>(window->winId());
+    const LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
+    if (!(style & WS_MINIMIZEBOX))
+        SetWindowLongPtrW(hwnd, GWL_STYLE, style | WS_MINIMIZEBOX);
+#endif
 }
 
 void AppInstance::createMediaControls()

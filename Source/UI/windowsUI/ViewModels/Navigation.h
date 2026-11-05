@@ -22,6 +22,7 @@ class Navigation : public QObject
     Q_PROPERTY(QString settingsCategory READ GetSettingsCategory NOTIFY settingsCategoryChanged)
     Q_PROPERTY(QString highlightedSetting READ GetHighlightedSetting NOTIFY highlightedSettingChanged)
     Q_PROPERTY(QString playlistId READ GetPlaylistId NOTIFY playlistIdChanged)
+    Q_PROPERTY(QString onlineUrl READ GetOnlineUrl NOTIFY onlineUrlChanged)
     Q_PROPERTY(bool canGoBack READ CanGoBack NOTIFY historyChanged)
 
 public:
@@ -36,6 +37,7 @@ public:
         Recent,
         Downloads,
         Search,
+        OnlinePage,
         Settings,
         About,
         Updates
@@ -62,6 +64,7 @@ public:
     QString GetSettingsCategory() const { return settingsCategory; }
     QString GetHighlightedSetting() const { return highlightedSetting; }
     QString GetPlaylistId() const { return playlistId; }
+    QString GetOnlineUrl() const { return onlineUrl; }
     bool CanGoBack() const { return !history.isEmpty(); }
 
     /// @brief Opens a page, recording the current one in the history.
@@ -74,6 +77,9 @@ public:
     /// @brief Opens the screen of one playlist.
     Q_INVOKABLE void openPlaylist(const QString& id);
 
+    /// @brief Opens the screen of a YouTube video, playlist or channel by its canonical URL.
+    Q_INVOKABLE void openOnline(const QString& url);
+
     /// @brief Returns to the previous location, if any.
     Q_INVOKABLE void goBack();
 
@@ -82,6 +88,7 @@ signals:
     void settingsCategoryChanged();
     void highlightedSettingChanged();
     void playlistIdChanged();
+    void onlineUrlChanged();
     void historyChanged();
 
 private:
@@ -92,6 +99,7 @@ private:
         Page page;
         QString settingsCategory;
         QString playlistId;
+        QString onlineUrl;
 
         bool operator==(const Location&) const = default;
     };
@@ -102,5 +110,6 @@ private:
     QString settingsCategory;
     QString highlightedSetting;
     QString playlistId;
+    QString onlineUrl;
     QList<Location> history;
 };

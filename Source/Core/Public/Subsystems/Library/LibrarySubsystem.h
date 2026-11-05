@@ -6,6 +6,7 @@
 
 #include "SubsystemBase.h"
 
+#include <QElapsedTimer>
 #include <QFutureWatcher>
 #include <QHash>
 #include <QList>
@@ -13,14 +14,25 @@
 #include <QStringList>
 #include <QTimer>
 
+#include <atomic>
+#include <memory>
+
 #include "Library/Track.h"
 
+class FolderWatcher;
 class MetadataReader;
 
-/// @brief The music library: every audio file found in the music folders plus online tracks.
+/// @brief The track registry: everything known about every track, addressed by TrackId.
 ///
-/// Cached in `<AppLocalData>/library.json`. The cache is loaded first, so the library is available immediately;
-/// a background scan then adds new files, drops missing ones and queues changed ones for metadata reading.
+/// Playlists and the player hold only TrackIds. Stored in `<AppLocalData>/library.bin` (`library.json` of older
+/// versions is imported once). The file is loaded first, so the library is available immediately; a background scan
+/// then brings it up to date, and FolderWatcher keeps it so while the app runs: changed paths are looked at within
+/// a fraction of a second, without a full scan.
+///
+/// A file that went away is not forgotten: its track stays with FileComponent::bMissing, hidden from the lists.
+/// When a new file turns up, its file id (or size, time and name) finds the missing track it really is, so renaming
+/// or moving a file keeps its TrackId, and with it the likes, tags and playlist places.
+///
 /// Music folders live in the Settings config (AppConfigs::SettingsKeys::MusicScanFolders).
 ///
 /// Online tracks (see StreamComponent) live next to the files: saved ones are cached by page URL,
@@ -64,8 +76,10 @@ public:
     /// @param pageUrl Page the track was found on; the identity of an online track.
     /// @param tags Tags known from the source.
     /// @param thumbnailUrl Cover image URL, may be empty.
+    /// @param channelUrl Channel page of the author, may be empty; a saved track takes it if it had none.
     /// @return Id of the found or created track.
-    TrackId AddOnlineTrack(const QString& pageUrl, const TagsComponent& tags, const QString& thumbnailUrl);
+    TrackId AddOnlineTrack(const QString& pageUrl, const TagsComponent& tags, const QString& thumbnailUrl,
+        const QString& channelUrl = {});
     /// @brief The online track with this page URL, or an invalid id.
     TrackId FindOnlineTrack(const QString& pageUrl) const;
 
@@ -98,8 +112,10 @@ public:
     /// @brief Stores the exact duration, known to the player once a file is loaded.
     void SetDuration(TrackId id, qint64 durationMs);
 
-    /// @brief Whether a folder scan is running.
-    bool IsScanning() const { return scanWatcher.isRunning(); }
+    /// @brief Whether a full scan of the folders is running. Looks at single changed paths do not count.
+    bool IsScanning() const { return bFullScanRunning; }
+    /// @brief Changes whenever the set of listed tracks or the order of a path-sorted list may have changed.
+    quint64 GetStructureRevision() const { return structureRevision; }
     /// @brief Number of files whose tags are still to be read.
     int GetPendingMetadataCount() const;
 
@@ -116,39 +132,49 @@ private:
 
     void Deinitialize() override;
 
-    struct ScannedFile
-    {
-        QString path;
-        qint64 size = 0;
-        QDateTime modified;
-    };
+    /// One look at the disk: what was found, and where a track that was not found counts as gone.
+    struct ScanJob;
 
-    static QList<ScannedFile> ScanFolders(const QStringList& folders);
-
+    void StartNextScan();
     void OnScanFinished();
+    void ApplyScan(const ScanJob& job);
+    /// A file being copied reports many changes: waits for a pause, but not forever.
+    void OnPathsChanged(const QStringList& paths);
     void OnTagsRead(TrackId id, const TagsComponent& tags, bool bSuccess);
 
     Track* FindMutable(TrackId id);
-    TrackId AddTrack(const ScannedFile& file);
+    TrackId AddTrack(const QString& path, qint64 size, qint64 modifiedMs, quint64 fileId, quint32 volumeId);
     void RemoveTrack(TrackId id);
+    void IndexLoadedTracks(QList<Track> loaded);
     static TagsComponent GuessTagsFromPath(const QString& path);
 
     void NotifyChanged();
     void ScheduleSave();
 
-    QString GetCachePath() const;
-    void LoadCache();
-    void SaveCache();
+    QString GetDataPath(const QString& fileName) const;
+    /// An unreadable registry is moved aside rather than overwritten: it holds the only copy of likes and play counts.
+    void LoadRegistry();
+    void SaveRegistry();
+    void ApplyFoldersChanged();
 
     QList<Track> tracks;
     QHash<TrackId, qsizetype> indexById;
     QHash<QString, TrackId> idByPath;
     QHash<QString, TrackId> idByUrl;
     quint32 nextId = 1;
+    quint64 structureRevision = 0;
 
     MetadataReader* metadataReader = nullptr;
-    QFutureWatcher<QList<ScannedFile>> scanWatcher;
-    bool bRescanPending = false;
+    FolderWatcher* folderWatcher = nullptr;
+
+    QFutureWatcher<void> scanWatcher;
+    std::shared_ptr<ScanJob> currentJob;
+    std::atomic_bool bStopScan{false};
+    bool bFullScanRunning = false;
+    bool bFullScanPending = false;
+    QSet<QString> pendingPaths;
+    QElapsedTimer pendingSince;
+    QTimer pathsTimer;
 
     QTimer notifyTimer;
     QTimer saveTimer;

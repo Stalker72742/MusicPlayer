@@ -20,6 +20,13 @@ void OnlineBackend::SearchMore(SearchCallback callback)
     });
 }
 
+void OnlineBackend::FetchVideo(const QString&, VideoCallback callback)
+{
+    QTimer::singleShot(0, this, [callback] {
+        callback({}, OnlineError::Make(OnlineError::Unavailable, QStringLiteral("Video details are not supported")));
+    });
+}
+
 void OnlineBackend::ResolveStream(const QString&, StreamCallback callback)
 {
     QTimer::singleShot(0, this, [callback] {

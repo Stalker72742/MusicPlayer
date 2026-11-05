@@ -277,13 +277,14 @@ void PlaylistSubsystem::AddTracks(const QString& id, const QList<TrackId>& track
 void PlaylistSubsystem::MoveTrack(const QString& id, int from, int to)
 {
     Playlist* playlist = FindMutable(id);
-    if (!playlist || playlist->IsSmart() || from == to || from < 0 || to < 0 || from >= playlist->tracks.size()
-        || to >= playlist->tracks.size())
-    {
+    if (!playlist || playlist->IsSmart() || from == to)
         return;
-    }
 
-    playlist->tracks.move(from, to);
+    const QList<TrackId> shown = Resolve(id);
+    if (from < 0 || to < 0 || from >= shown.size() || to >= shown.size())
+        return;
+
+    playlist->tracks.move(playlist->tracks.indexOf(shown[from]), playlist->tracks.indexOf(shown[to]));
     Changed();
 }
 
@@ -363,7 +364,8 @@ QList<TrackId> PlaylistSubsystem::Resolve(const QString& id) const
     QList<TrackId> result;
     for (TrackId track : playlist->tracks)
     {
-        if (LibrarySubsystem::Get().FindTrack(track))
+        const Track* found = LibrarySubsystem::Get().FindTrack(track);
+        if (found && found->IsInLibrary())
             result.append(track);
     }
     return result;
