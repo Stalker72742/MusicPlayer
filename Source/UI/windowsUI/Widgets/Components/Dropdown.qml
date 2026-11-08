@@ -75,6 +75,7 @@ Rectangle {
             implicitHeight: Math.min(contentHeight, 320)
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: AppScrollBar {}
             model: root.options
 
             delegate: Rectangle {

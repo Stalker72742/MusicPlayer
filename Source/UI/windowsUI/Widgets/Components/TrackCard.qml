@@ -16,6 +16,7 @@ Item {
     readonly property bool current: PlayerViewModel.hasTrack && PlayerViewModel.trackId === trackId
 
     signal clicked
+    signal contextRequested(point scenePosition)
 
     implicitWidth: 168
     implicitHeight: art.height + texts.implicitHeight + 22
@@ -89,5 +90,14 @@ Item {
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    MouseArea { anchors.fill: parent; onClicked: root.clicked() }
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: (mouse) => {
+            if (mouse.button === Qt.RightButton)
+                root.contextRequested(root.mapToItem(null, mouse.x, mouse.y));
+            else
+                root.clicked();
+        }
+    }
 }

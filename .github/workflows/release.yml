@@ -60,9 +60,23 @@ jobs:
           host: windows
           target: desktop
           arch: win64_mingw
-          modules: 'qtmultimedia qtwebsockets'
+          modules: 'qtwebsockets'
           tools: 'tools_mingw1310,qt.tools.win64_mingw1310 tools_ninja'
           cache: true
+
+      - name: Cache FFmpeg
+        id: ffmpeg-cache
+        uses: actions/cache@v4
+        with:
+          path: third_party/ffmpeg
+          key: ffmpeg-${{ hashFiles('tools/build-ffmpeg.sh') }}
+
+      - name: Build FFmpeg
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          export PATH="$(cygpath -u "$IQTA_TOOLS")/mingw1310_64/bin:$PATH"
+          FFMPEG_BUILD_DIR="$RUNNER_TEMP/ffmpeg-build" sh tools/build-ffmpeg.sh
 
       - name: Configure
         shell: pwsh

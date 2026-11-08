@@ -57,15 +57,18 @@ OnlinePageViewModel::OnlinePageViewModel()
             rebuildTimer.start();
     });
 
-    connect(&Navigation::Get(), &Navigation::onlineUrlChanged, this, [this] {
+    const auto follow = [this] {
         const QString target = Navigation::Get().GetOnlineUrl();
-        if (!target.isEmpty() && target != url)
+        if (Navigation::Get().GetPage() == Navigation::OnlinePage && !target.isEmpty() && target != url)
         {
             pendingAction = OpenOnly;
             playlistUrl.clear();
             Load(target);
         }
-    });
+    };
+    connect(&Navigation::Get(), &Navigation::onlineUrlChanged, this, follow);
+    connect(&Navigation::Get(), &Navigation::pageChanged, this, follow);
+    follow();
 }
 
 OnlinePageViewModel& OnlinePageViewModel::Get()

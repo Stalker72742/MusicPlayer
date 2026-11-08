@@ -85,6 +85,32 @@ Rectangle {
         }
     }
 
+    // Back and forward through the history, in the left corner like a browser. The margin keeps them clear of
+    // the window resize edge (6 px).
+    Row {
+        anchors.left: parent.left
+        anchors.leftMargin: 12
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 2
+
+        IconButton {
+            implicitWidth: 28; implicitHeight: 28
+            iconName: "chevron-left"
+            iconSize: 16
+            enabled: Navigation.canGoBack
+            opacity: enabled ? 1 : 0.35
+            onClicked: Navigation.goBack()
+        }
+        IconButton {
+            implicitWidth: 28; implicitHeight: 28
+            iconName: "chevron-right"
+            iconSize: 16
+            enabled: Navigation.canGoForward
+            opacity: enabled ? 1 : 0.35
+            onClicked: Navigation.goForward()
+        }
+    }
+
     SearchSuggestions {
         id: suggestions
         parent: search

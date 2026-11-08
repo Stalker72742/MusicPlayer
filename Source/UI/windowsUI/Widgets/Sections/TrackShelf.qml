@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import SoundLink 1.0
 
@@ -52,12 +53,14 @@ ColumnLayout {
         clip: true
         spacing: 4
         boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.horizontal: AppScrollBar {}
         model: root.model
 
         delegate: TrackCard {
             width: 168
             height: list.height
             onClicked: PlayerViewModel.play(root.model, index)
+            onContextRequested: (scenePosition) => menu.openAt(scenePosition, trackId)
         }
 
         // Shift+wheel scrolls the shelf sideways; the plain wheel keeps scrolling the page.
@@ -71,4 +74,6 @@ ColumnLayout {
             }
         }
     }
+
+    TrackMenu { id: menu }
 }

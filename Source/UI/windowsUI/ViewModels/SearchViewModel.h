@@ -23,7 +23,7 @@ struct OnlineEntry;
 /// - `lib:<text>` - search the library (`l:`, `library:`)
 /// - `go:<page>` - open a page (`g:`)
 /// - `pl:<name>` - open a playlist (`playlist:`)
-/// - `s:<category>;<setting>` - open settings, e.g. `s:audio;` or `s:audio;crossfade` (`set:`, `settings:`)
+/// - `s:<category>;<setting>` - open settings, e.g. `s:general;` or `s:general;outputDevice` (`set:`, `settings:`)
 ///
 /// Free text suggests matching pages, settings and tracks next to a YouTube search;
 /// what the current screen shows is suggested first.
@@ -118,6 +118,8 @@ private:
     SearchViewModel();
 
     void Rebuild();
+    /// Runs the search of the Search location the navigation went to (back, forward, the snapshot at startup).
+    void FollowNavigation();
     void OnSearchFinished(const QString& searchQuery, const QList<OnlineEntry>& entries);
 
     /// Adds the entries as transient online tracks after the current results, skipping ones already there.

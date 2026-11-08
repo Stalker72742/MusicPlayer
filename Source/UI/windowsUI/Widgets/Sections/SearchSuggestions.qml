@@ -40,6 +40,7 @@ Popup {
             height: Math.min(contentHeight, 440)
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: AppScrollBar {}
             model: root.model
             currentIndex: 0
             highlightMoveDuration: 0

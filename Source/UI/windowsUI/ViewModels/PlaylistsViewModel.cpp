@@ -2,9 +2,12 @@
 
 #include <QJSEngine>
 
+#include <algorithm>
+
 #include "Library/LibrarySubsystem.h"
 #include "LibraryViewModel.h"
 #include "Navigation.h"
+#include "Player/PlayerSubsystem.h"
 #include "Playlists/PlaylistSubsystem.h"
 
 namespace
@@ -167,6 +170,22 @@ void PlaylistsViewModel::removeTrack(const QString& id, int trackId)
     PlaylistSubsystem::Get().RemoveTracks(id, {TrackId{static_cast<quint32>(trackId)}});
 }
 
+void PlaylistsViewModel::addTracks(const QString& id, const QVariantList& trackIds)
+{
+    QList<TrackId> tracks;
+    for (const QVariant& value : trackIds)
+        tracks.append(TrackId{static_cast<quint32>(value.toInt())});
+    PlaylistSubsystem::Get().AddTracks(id, tracks);
+}
+
+void PlaylistsViewModel::removeTracks(const QString& id, const QVariantList& trackIds)
+{
+    QList<TrackId> tracks;
+    for (const QVariant& value : trackIds)
+        tracks.append(TrackId{static_cast<quint32>(value.toInt())});
+    PlaylistSubsystem::Get().RemoveTracks(id, tracks);
+}
+
 void PlaylistsViewModel::moveTrack(const QString& id, int from, int to)
 {
     PlaylistSubsystem::Get().MoveTrack(id, from, to);
@@ -177,23 +196,83 @@ void PlaylistsViewModel::restoreExcluded(const QString& id)
     PlaylistSubsystem::Get().RestoreExcluded(id);
 }
 
+void PlaylistsViewModel::play(const QString& id)
+{
+    const QList<TrackId> tracks = PlaylistSubsystem::Get().Resolve(id);
+    if (!tracks.isEmpty())
+        PlayerSubsystem::Get().PlayQueue(tracks, 0);
+}
+
+QVariantList PlaylistsViewModel::trackIdsOf(const QString& id) const
+{
+    QVariantList result;
+    for (TrackId track : PlaylistSubsystem::Get().Resolve(id))
+        result.append(static_cast<int>(track.value));
+    return result;
+}
+
+QVariantMap PlaylistsViewModel::infoOf(const QString& id) const
+{
+    for (const Playlist& playlist : PlaylistSubsystem::Get().GetPlaylists())
+    {
+        if (playlist.id != id)
+            continue;
+
+        const QList<TrackId> tracks = PlaylistSubsystem::Get().Resolve(id);
+        int downloadable = 0;
+        for (TrackId trackId : tracks)
+        {
+            const Track* track = LibrarySubsystem::Get().FindTrack(trackId);
+            if (track && track->IsOnline() && !track->HasLocalFile())
+                ++downloadable;
+        }
+        return {
+            {QStringLiteral("exists"), true},
+            {QStringLiteral("smart"), playlist.IsSmart()},
+            {QStringLiteral("count"), static_cast<int>(tracks.size())},
+            {QStringLiteral("excluded"), playlist.IsSmart() ? static_cast<int>(playlist.excluded.size()) : 0},
+            {QStringLiteral("downloadable"), downloadable},
+        };
+    }
+    return {{QStringLiteral("exists"), false}};
+}
+
 QVariantList PlaylistsViewModel::staticPlaylistsFor(int trackId) const
 {
-    const TrackId id{static_cast<quint32>(trackId)};
+    return staticPlaylistsForTracks({trackId});
+}
 
+QVariantList PlaylistsViewModel::staticPlaylistsForTracks(const QVariantList& trackIds) const
+{
     QVariantList result;
     for (const Playlist& playlist : PlaylistSubsystem::Get().GetPlaylists())
     {
         if (playlist.IsSmart())
             continue;
 
+        bool bContainsAll = !trackIds.isEmpty();
+        for (const QVariant& value : trackIds)
+        {
+            if (!playlist.tracks.contains(TrackId{static_cast<quint32>(value.toInt())}))
+            {
+                bContainsAll = false;
+                break;
+            }
+        }
+
         result.append(QVariantMap{
             {QStringLiteral("id"), playlist.id},
             {QStringLiteral("name"), playlist.name},
-            {QStringLiteral("contains"), playlist.tracks.contains(id)},
+            {QStringLiteral("contains"), bContainsAll},
         });
     }
     return result;
+}
+
+bool PlaylistsViewModel::hasSmartPlaylists() const
+{
+    const QList<Playlist>& playlists = PlaylistSubsystem::Get().GetPlaylists();
+    return std::any_of(playlists.cbegin(), playlists.cend(), [](const Playlist& playlist) { return playlist.IsSmart(); });
 }
 
 QString PlaylistsViewModel::nameOf(const QString& id) const

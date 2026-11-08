@@ -7,6 +7,8 @@ Rectangle {
 
     signal queueClicked
 
+    TrackMenu { id: playerTrackMenu }
+
     implicitHeight: Theme.metrics.bottomBarHeight
     color: Theme.palette.bottomBar
 
@@ -26,6 +28,15 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.leftMargin: 16
         width: 300
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            onClicked: (mouse) => {
+                if (PlayerViewModel.hasTrack)
+                    playerTrackMenu.openAt(leftBlock.mapToItem(null, mouse.x, mouse.y), PlayerViewModel.trackId);
+            }
+        }
 
         AlbumArt {
             id: art

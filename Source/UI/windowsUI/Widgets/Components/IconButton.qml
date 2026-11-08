@@ -30,8 +30,6 @@ Rectangle {
         height: root.iconSize
         name: root.iconName
         color: (root.hovered || root.active) ? root.iconHoverColor : root.iconColor
-
-        Behavior on color { ColorAnimation { duration: Theme.motion.durationFast } }
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

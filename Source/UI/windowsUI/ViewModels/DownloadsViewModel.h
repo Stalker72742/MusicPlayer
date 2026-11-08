@@ -103,6 +103,9 @@ public:
     /// @brief Queues every online track of the playlist that has no local copy yet.
     /// @return How many were queued.
     Q_INVOKABLE int downloadPlaylist(const QString& playlistId);
+    /// @brief Queues the online tracks among these that have no copy yet.
+    /// @return How many were queued.
+    Q_INVOKABLE int downloadTracks(const QVariantList& trackIds);
     /// @brief See DownloadSubsystem::Cancel().
     Q_INVOKABLE void cancel(int trackId);
     /// @brief See DownloadSubsystem::Retry().

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import SoundLink 1.0
 
@@ -85,10 +86,11 @@ Rectangle {
         contentHeight: column.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { id: sideScrollBar }
 
         ColumnLayout {
             id: column
-            width: scroller.width
+            width: scroller.width - (sideScrollBar.visible ? 10 : 0)
             spacing: 6
 
             // ─── Home (no section) ────────────────────
@@ -128,6 +130,7 @@ Rectangle {
                     compact: root.compact
                     selected: Navigation.page === Navigation.Playlists
                     onClicked: Navigation.navigate(Navigation.Playlists)
+                    onContextRequested: (scenePosition) => playlistMenu.openSectionAt(scenePosition)
                 }
                 NavItem {
                     Layout.fillWidth: true
@@ -179,6 +182,7 @@ Rectangle {
                 compact: root.compact
                 selected: Navigation.page === Navigation.Playlist && !playlistsSection.expanded
                 onClicked: Navigation.navigate(Navigation.Playlists)
+                onContextRequested: (scenePosition) => playlistMenu.openSectionAt(scenePosition)
 
                 Repeater {
                     model: PlaylistsViewModel.playlists
@@ -196,6 +200,7 @@ Rectangle {
                         compact: root.compact
                         selected: Navigation.page === Navigation.Playlist && Navigation.playlistId === playlistId
                         onClicked: Navigation.openPlaylist(playlistId)
+                        onContextRequested: (scenePosition) => playlistMenu.openAt(scenePosition, playlistId)
                     }
                 }
             }
@@ -253,4 +258,6 @@ Rectangle {
             }
         }
     }
+
+    PlaylistMenu { id: playlistMenu }
 }

@@ -9,23 +9,31 @@
 #include <QList>
 #include <QTimer>
 
-#include "Library/Track.h"
+#include <memory>
 
-class QAudioOutput;
-class QMediaDevices;
-class QMediaPlayer;
+#include "Library/Track.h"
+#include "Player/AudioBackend.h"
+
+class AudioDevices;
+class StreamCapture;
 
 /// @brief Plays library tracks with a queue.
 ///
 /// A local file (scanned, or the downloaded copy of an online track) plays directly; otherwise an online track
 /// plays the audio stream OnlineSubsystem resolves when it starts (IsLoading() meanwhile).
 /// Volume, shuffle, repeat and the output device are kept in the Settings config.
+///
+/// The sound itself is an AudioBackend's job. Bytes a backend hands out go
+/// to a StreamCapture when AppConfigs::SettingsKeys::SaveWhileListening is on: a stream that was read whole
+/// becomes the downloaded copy of the track.
 class PlayerSubsystem : public Subsystem<PlayerSubsystem>
 {
     Q_OBJECT
     friend class Subsystem<PlayerSubsystem>;
 
 public:
+    ~PlayerSubsystem();
+
     /// @brief What happens at the end of a track and of the queue.
     enum class RepeatMode
     {
@@ -55,6 +63,17 @@ public:
 
     /// @brief Moves the playback position of the current track.
     void Seek(qint64 positionMs);
+
+    /// @brief Closes the file of the current track if it is this track, so the file can be renamed or deleted.
+    ///
+    /// Windows does not let a file that is open be renamed or deleted. Follow with RestoreFile().
+    /// @return Whether the file was open.
+    bool ReleaseFile(TrackId id);
+    /// @brief Opens the current track again after ReleaseFile(), where it was and playing if it was.
+    ///
+    /// The file may have a new path (renamed) or be gone: then an online track streams, a local one is skipped
+    /// if it was playing.
+    void RestoreFile();
 
     /// @brief Sets the volume and saves it to the config once it settles.
     /// @param volume 0..1 on a perceptual (logarithmic) scale.
@@ -108,16 +127,26 @@ private:
 
     /// The end of the queue without repeat.
     void StopAtEnd();
-    void OnMediaStatusChanged(int status);
+    void OnBackendFinished();
+    void OnBackendLoaded();
     void OnPlayerError(const QString& message);
+
+    void ConnectBackend();
+    void ApplyVolume();
+
+    /// Starts collecting the source being set, if the setting is on and the backend can hand out bytes.
+    void StartCapture(const Track& track, const QUrl& stream);
+    void OnSourceData(qint64 offset, const QByteArray& bytes);
 
     /// Resolves the stream of the current online track and starts it at startMs.
     void LoadStream(const QString& pageUrl, qint64 startMs);
     void SetLoading(bool bValue);
 
-    QMediaPlayer* player = nullptr;
-    QAudioOutput* audioOutput = nullptr;
-    QMediaDevices* devices = nullptr;
+    AudioBackend* player = nullptr;
+    AudioDevices* devices = nullptr;
+    std::unique_ptr<StreamCapture> capture;
+    TrackId captureTrack;
+    QString captureExtension;
 
     /// Dragging the volume slider writes the config once it settles.
     QTimer volumeSaveTimer;
@@ -131,6 +160,11 @@ private:
     bool bPlayWhenLoaded = true;
     bool bStreamRetried = false;
     qint64 pendingSeekMs = 0;
+
+    /// Set by ReleaseFile().
+    TrackId releasedTrack;
+    qint64 releasedPositionMs = 0;
+    bool bReleasedPlaying = false;
 
     float volume = 0.8f;
     bool bShuffle = false;

@@ -4,8 +4,10 @@ import QtQuick
 import QtQuick.Controls
 import SoundLink 1.0
 
-// The "more" menu of a track: favorites, playlists, tags, the library (online tracks) and the track's source.
+// The "more" menu of a track: favorites, playlists, tags, the library (online tracks), the track's file
+// (local tracks and downloaded copies: show, rename, delete) and its page (online tracks).
 // Opened from a playlist (contextPlaylistId), it can also take the track out of that playlist.
+// openPlaylistsFor() opens only the "Add to playlist" page, for several selected tracks.
 Popup {
     id: root
 
@@ -22,9 +24,23 @@ Popup {
     property string contextPlaylistId: ""
     property bool contextSmart: false
 
-    // The second page: the static playlists to add the track to.
+    // A local file, or the downloaded copy of an online track.
+    readonly property bool hasFile: !online || downloaded
+
+    // The second page: the static playlists to add the tracks to.
     property bool choosingPlaylist: false
     property var playlistChoices: []
+    property bool smartPlaylistsExist: false
+    // What the playlist page adds: this track, or the selected tracks of openPlaylistsFor().
+    property var targetIds: []
+    property bool onlyPlaylists: false
+
+    // In a list with selection: the menu offers Select.
+    property bool selectable: false
+    property bool rowSelected: false
+
+    signal tracksChanged
+    signal selectRequested(int trackId)
 
     // track: anything with trackId, liked, online and inLibrary, e.g. a TrackRow.
     function openFor(anchor, track) {
@@ -35,15 +51,71 @@ Popup {
         downloaded = track.downloaded;
         downloadState = DownloadsViewModel.stateOf(trackId);
         downloadProgress = DownloadsViewModel.progressOf(trackId);
+        targetIds = [trackId];
+        onlyPlaylists = false;
         choosingPlaylist = false;
+        placeAt(anchor);
+        open();
+    }
 
+    // Right click: at a point of the window, for a track given by id.
+    function openAt(point, id) {
+        const track = LibraryViewModel.trackProperties(id);
+        if (track.id === 0)
+            return;
+        trackId = id;
+        liked = track.liked;
+        online = track.online;
+        inLibrary = track.inLibrary;
+        downloaded = track.downloaded;
+        downloadState = DownloadsViewModel.stateOf(id);
+        downloadProgress = DownloadsViewModel.progressOf(id);
+        targetIds = [id];
+        onlyPlaylists = false;
+        choosingPlaylist = false;
+        placeAtPoint(point);
+        open();
+    }
+
+    function openPlaylistsAt(point, ids) {
+        targetIds = ids;
+        onlyPlaylists = true;
+        showPlaylists();
+        placeAtPoint(point);
+        open();
+    }
+
+    function placeAtPoint(point) {
+        x = Math.max(8, Math.min(point.x, parent.width - width - 8));
+        y = Math.max(8, Math.min(point.y, parent.height - implicitHeight - 8));
+    }
+
+    function openPlaylistsFor(anchor, ids) {
+        targetIds = ids;
+        onlyPlaylists = true;
+        showPlaylists();
+        placeAt(anchor, true);
+        open();
+    }
+
+    // alignLeft: under the anchor's left edge (a button) rather than ending at its right edge (a "⋯").
+    function placeAt(anchor, alignLeft) {
         const overlay = parent;
         const point = anchor.mapToItem(overlay, anchor.width, anchor.height);
-        x = Math.max(8, Math.min(point.x - width, overlay.width - width - 8));
+        const left = alignLeft ? point.x - anchor.width : point.x - width;
+        x = Math.max(8, Math.min(left, overlay.width - width - 8));
         y = point.y + 4 + implicitHeight > overlay.height - 8
             ? point.y - anchor.height - implicitHeight - 4
             : point.y + 4;
-        open();
+    }
+
+    function askRename(id, name, error) {
+        renameDialog.hint = error || "";
+        renameDialog.ask("Rename file", name, (text) => {
+            const problem = LibraryViewModel.renameFile(id, text);
+            if (problem.length > 0)
+                root.askRename(id, text, problem);
+        });
     }
 
     function run(action) {
@@ -52,7 +124,8 @@ Popup {
     }
 
     function showPlaylists() {
-        playlistChoices = PlaylistsViewModel.staticPlaylistsFor(trackId);
+        playlistChoices = PlaylistsViewModel.staticPlaylistsForTracks(targetIds);
+        smartPlaylistsExist = PlaylistsViewModel.hasSmartPlaylists();
         choosingPlaylist = true;
     }
 
@@ -65,7 +138,7 @@ Popup {
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     // The playlist page can be taller: keep the menu inside the window.
-    onImplicitHeightChanged: if (opened) y = Math.max(8, Math.min(y, parent.height - implicitHeight - 8))
+    onImplicitHeightChanged: if (visible) y = Math.max(8, Math.min(y, parent.height - implicitHeight - 8))
 
     background: Rectangle {
         color: Theme.palette.fieldBg
@@ -101,9 +174,14 @@ Popup {
             }
             MenuEntry {
                 iconName: "tag"
-                text: "Edit tags…"
-                onTriggered: root.run(() => labelsDialog.ask("Tags", LibraryViewModel.labelsText(root.trackId),
-                    (text) => LibraryViewModel.setLabelsText(root.trackId, text)))
+                text: "Properties…"
+                onTriggered: root.run(() => LibraryViewModel.openProperties([root.trackId]))
+            }
+            MenuEntry {
+                visible: root.selectable
+                iconName: "select"
+                text: root.rowSelected ? "Deselect" : "Select"
+                onTriggered: root.run(() => root.selectRequested(root.trackId))
             }
             MenuEntry {
                 readonly property bool busy: root.downloadState === DownloadListModel.Queued
@@ -137,7 +215,67 @@ Popup {
                 onTriggered: root.run(() => LibraryViewModel.setInLibrary(root.trackId, false))
             }
 
-            Separator {}
+            // ─── The file ──────────────────────────────
+            MenuDivider { visible: root.hasFile }
+
+            MenuEntry {
+                visible: root.hasFile
+                iconName: "folder"
+                text: "Show in folder"
+                onTriggered: root.run(() => LibraryViewModel.showInFolder(root.trackId))
+            }
+            MenuEntry {
+                visible: root.hasFile
+                iconName: "pencil"
+                text: "Rename file…"
+                onTriggered: {
+                    const id = root.trackId;
+                    root.run(() => root.askRename(id, LibraryViewModel.fileBaseName(id), ""));
+                }
+            }
+            MenuEntry {
+                visible: root.hasFile
+                iconName: "link"
+                text: "Copy file path"
+                onTriggered: root.run(() => LibraryViewModel.copyFilePath(root.trackId))
+            }
+            MenuEntry {
+                visible: !root.online
+                iconName: "trash"
+                text: "Delete file…"
+                onTriggered: {
+                    const id = root.trackId;
+                    root.run(() => deleteDialog.ask("Delete file",
+                        "“" + LibraryViewModel.fileBaseName(id) + "” goes to the Recycle Bin and leaves the library. "
+                        + "Restore it from there and the track comes back with its likes, tags and playlists.",
+                        "Delete", () => {
+                            const result = LibraryViewModel.removeTracks([id]);
+                            if (result.failed > 0)
+                                failedDialog.ask("Could not delete the file", result.error, "OK", () => {});
+                        }));
+                }
+            }
+
+            // ─── Artist and album pages ────────────────
+            MenuDivider { visible: goArtist.visible || goAlbum.visible }
+
+            MenuEntry {
+                id: goArtist
+                visible: root.trackId > 0 && CatalogViewModel.hasOfTrack("artist", root.trackId)
+                iconName: "library"
+                text: "Go to artist"
+                onTriggered: root.run(() => CatalogViewModel.openOfTrack("artist", root.trackId))
+            }
+            MenuEntry {
+                id: goAlbum
+                visible: root.trackId > 0 && CatalogViewModel.hasOfTrack("album", root.trackId)
+                iconName: "list"
+                text: "Go to album"
+                onTriggered: root.run(() => CatalogViewModel.openOfTrack("album", root.trackId))
+            }
+
+            // ─── The page ──────────────────────────────
+            MenuDivider { visible: root.online }
 
             MenuEntry {
                 visible: root.online
@@ -146,13 +284,15 @@ Popup {
                 onTriggered: root.run(() => OnlinePageViewModel.openAuthor(root.trackId))
             }
             MenuEntry {
-                iconName: root.online ? "external" : "folder"
-                text: root.online ? "Open in browser" : "Show in folder"
+                visible: root.online
+                iconName: "external"
+                text: "Open in browser"
                 onTriggered: root.run(() => LibraryViewModel.openSource(root.trackId))
             }
             MenuEntry {
+                visible: root.online
                 iconName: "link"
-                text: root.online ? "Copy link" : "Copy file path"
+                text: "Copy link"
                 onTriggered: root.run(() => LibraryViewModel.copyLink(root.trackId))
             }
         }
@@ -163,6 +303,7 @@ Popup {
             width: parent.width
 
             MenuEntry {
+                visible: !root.onlyPlaylists
                 iconName: "chevron-left"
                 text: "Back"
                 onTriggered: root.choosingPlaylist = false
@@ -170,12 +311,16 @@ Popup {
             MenuEntry {
                 iconName: "plus"
                 text: "New playlist…"
-                onTriggered: root.run(() => newPlaylistDialog.ask("New playlist", "", (name) => {
-                    PlaylistsViewModel.createPlaylist(name, [root.trackId]);
-                }))
+                onTriggered: {
+                    const ids = root.targetIds;
+                    root.run(() => newPlaylistDialog.ask("New playlist", "", (name) => {
+                        PlaylistsViewModel.createPlaylist(name, ids);
+                        root.tracksChanged();
+                    }));
+                }
             }
 
-            Separator { visible: root.playlistChoices.length > 0 }
+            MenuDivider { visible: root.playlistChoices.length > 0 || root.smartPlaylistsExist }
 
             Repeater {
                 model: root.playlistChoices
@@ -187,10 +332,31 @@ Popup {
                     text: modelData.name
                     dimmed: modelData.contains
                     onTriggered: {
-                        if (!modelData.contains)
-                            root.run(() => PlaylistsViewModel.addTrack(modelData.id, root.trackId));
+                        if (modelData.contains)
+                            return;
+                        const id = modelData.id;
+                        const ids = root.targetIds;
+                        root.run(() => {
+                            PlaylistsViewModel.addTracks(id, ids);
+                            root.tracksChanged();
+                        });
                     }
                 }
+            }
+
+            // Smart playlists are not listed: they pick their tracks by rules.
+            Text {
+                visible: root.smartPlaylistsExist
+                width: 232
+                leftPadding: 10
+                rightPadding: 10
+                topPadding: 6
+                bottomPadding: 6
+                wrapMode: Text.WordWrap
+                text: "Smart playlists pick tracks by their rules. To get a track into one, give it a tag the rules look for."
+                color: Theme.palette.textTertiary
+                font.family: Theme.typography.family
+                font.pixelSize: Theme.typography.smallSize
             }
         }
     }
@@ -202,78 +368,12 @@ Popup {
     }
 
     ConfirmDialog { id: removeDownloadDialog }
+    ConfirmDialog { id: deleteDialog }
+    ConfirmDialog { id: failedDialog }
 
     TextPromptDialog {
-        id: labelsDialog
-        acceptText: "Save"
-        allowEmpty: true
-        placeholder: "chill, gym, 2000s"
-        hint: "Comma-separated. Smart playlists can pick tracks by tag."
-    }
-
-    component Separator: Item {
-        width: 232
-        height: visible ? 9 : 0
-
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            height: 1
-            color: Theme.palette.hairline
-        }
-    }
-
-    component MenuEntry: Rectangle {
-        id: entry
-
-        property string iconName: ""
-        property string text: ""
-        property string trailing: ""
-        property bool dimmed: false
-
-        signal triggered
-
-        width: 232
-        height: visible ? 32 : 0
-        radius: Theme.metrics.radiusMd
-        color: entryHover.hovered && !dimmed ? Theme.palette.hoverOverlay : "transparent"
-
-        AppIcon {
-            id: entryIcon
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-            width: 14; height: 14
-            name: entry.iconName
-            color: entryHover.hovered ? Theme.palette.iconActive : Theme.palette.iconDefault
-        }
-        Text {
-            anchors.left: entryIcon.right
-            anchors.leftMargin: 10
-            anchors.right: trailingIcon.left
-            anchors.rightMargin: 6
-            anchors.verticalCenter: parent.verticalCenter
-            elide: Text.ElideRight
-            text: entry.text
-            color: entry.dimmed ? Theme.palette.textSecondary : Theme.palette.textPrimary
-            font.family: Theme.typography.family
-            font.pixelSize: Theme.typography.bodySize
-        }
-        AppIcon {
-            id: trailingIcon
-            anchors.right: parent.right
-            anchors.rightMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-            width: entry.trailing.length > 0 ? 12 : 0
-            height: 12
-            name: entry.trailing
-            color: Theme.palette.textSecondary
-        }
-
-        HoverHandler { id: entryHover; cursorShape: entry.dimmed ? Qt.ArrowCursor : Qt.PointingHandCursor }
-        TapHandler { onTapped: entry.triggered() }
+        id: renameDialog
+        acceptText: "Rename"
+        placeholder: "File name"
     }
 }

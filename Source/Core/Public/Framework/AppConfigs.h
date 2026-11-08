@@ -26,19 +26,15 @@ namespace AppConfigs
         inline const QString StartMinimized = QStringLiteral("general.startMinimized");
         /// @brief bool: show the playing track in Discord (DiscordSubsystem).
         inline const QString DiscordPresence = QStringLiteral("general.discordPresence");
-        /// @brief QString: `"en"`, `"ru"`. Saved only: there are no translations yet.
-        inline const QString Language = QStringLiteral("general.language");
 
         /// @brief QStringList: folders scanned by LibrarySubsystem.
         inline const QString MusicScanFolders = QStringLiteral("library.musicScanFolders");
-        /// @brief bool: rescan the music folders on startup.
-        inline const QString ScanOnStartup = QStringLiteral("library.scanOnStartup");
+        /// @brief QString: folder with pictures of artists, albums and genres (ArtworkSubsystem).
+        inline const QString ArtworkFolder = QStringLiteral("library.artworkFolder");
+        /// @brief bool: look missing pictures up on Deezer.
+        inline const QString FetchArtwork = QStringLiteral("library.fetchArtwork");
 
-        /// @brief bool: volume normalization. Saved only: not implemented in the player yet.
-        inline const QString NormalizeVolume = QStringLiteral("audio.normalize");
-        /// @brief double, seconds of crossfade. Saved only: not implemented in the player yet.
-        inline const QString Crossfade = QStringLiteral("audio.crossfade");
-        /// @brief QString: QAudioDevice id; empty for the system default (followed when it changes).
+        /// @brief QString: endpoint id (AudioDevices); empty for the system default (followed when it changes).
         inline const QString OutputDevice = QStringLiteral("audio.outputDevice");
 
         /// @brief double 0..1: player volume, restored on start.
@@ -66,6 +62,11 @@ namespace AppConfigs
         inline const QString AudioQuality = QStringLiteral("downloads.quality");
         /// @brief QString, one of AppConfigs::DownloadFormat: the container downloads prefer.
         inline const QString DownloadFormat = QStringLiteral("downloads.format");
+        /// @brief bool: a stream played from start to end becomes the track's downloaded copy.
+        inline const QString SaveWhileListening = QStringLiteral("downloads.saveWhileListening");
+
+        /// @brief QStringList: ids of the sections collapsed on the settings screen.
+        inline const QString CollapsedSettingsSections = QStringLiteral("ui.collapsedSettingsSections");
     }
 
     /// @brief Values of SettingsKeys::DownloadFormat. Picked among what the site serves, nothing is converted.

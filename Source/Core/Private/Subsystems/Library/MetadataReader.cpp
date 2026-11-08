@@ -4,37 +4,72 @@
 
 #include "MetadataReader.h"
 
-#include <QMediaMetaData>
-#include <QMediaPlayer>
-#include <QUrl>
+#include <QMetaObject>
+
+extern "C"
+{
+#include <libavformat/avformat.h>
+#include <libavutil/dict.h>
+#include <libavutil/log.h>
+}
 
 namespace
 {
-    constexpr int ReadTimeoutMs = 5000;
+    constexpr int MaxThreads = 4;
+
+    QString FindTag(const AVDictionary* container, const AVDictionary* stream, const char* key)
+    {
+        const AVDictionaryEntry* entry = av_dict_get(container, key, nullptr, 0);
+        if (!entry)
+            entry = av_dict_get(stream, key, nullptr, 0);
+        return entry ? QString::fromUtf8(entry->value).trimmed() : QString();
+    }
+
+    bool ReadTags(const QString& path, TagsComponent& tags)
+    {
+        AVFormatContext* container = nullptr;
+        if (avformat_open_input(&container, path.toUtf8().constData(), nullptr, nullptr) < 0)
+            return false;
+
+        const bool bInfo = avformat_find_stream_info(container, nullptr) >= 0;
+        const int index = bInfo ? av_find_best_stream(container, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0) : -1;
+        if (index < 0)
+        {
+            avformat_close_input(&container);
+            return false;
+        }
+
+        const AVDictionary* fromFile = container->metadata;
+        const AVDictionary* fromStream = container->streams[index]->metadata;
+
+        tags.title = FindTag(fromFile, fromStream, "title");
+        tags.artist = FindTag(fromFile, fromStream, "artist");
+        if (tags.artist.isEmpty())
+            tags.artist = FindTag(fromFile, fromStream, "album_artist");
+        tags.album = FindTag(fromFile, fromStream, "album");
+        tags.genre = FindTag(fromFile, fromStream, "genre");
+        tags.trackNumber = FindTag(fromFile, fromStream, "track").section(QLatin1Char('/'), 0, 0).toInt();
+        tags.year = FindTag(fromFile, fromStream, "date").left(4).toInt();
+        if (container->duration > 0)
+            tags.durationMs = container->duration / (AV_TIME_BASE / 1000);
+        tags.bFromFile = true;
+
+        avformat_close_input(&container);
+        return true;
+    }
 }
 
 MetadataReader::MetadataReader(QObject* parent)
     : QObject(parent)
-    , player(new QMediaPlayer(this))
 {
-    timeout.setSingleShot(true);
-    timeout.setInterval(ReadTimeoutMs);
-    connect(&timeout, &QTimer::timeout, this, [this] { Finish(false); });
-
-    connect(player, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
-        if (!current.IsValid())
-            return;
-
-        if (status == QMediaPlayer::LoadedMedia)
-            Finish(true);
-        else if (status == QMediaPlayer::InvalidMedia)
-            Finish(false);
-    });
+    av_log_set_level(AV_LOG_QUIET);
+    pool.setMaxThreadCount(MaxThreads);
 }
 
 MetadataReader::~MetadataReader()
 {
-    timeout.stop();
+    queue.clear();
+    pool.waitForDone();
 }
 
 void MetadataReader::Enqueue(TrackId id, const QString& path)
@@ -44,9 +79,7 @@ void MetadataReader::Enqueue(TrackId id, const QString& path)
         queued.insert(id);
         queue.append({id, path});
     }
-
-    if (!current.IsValid())
-        StartNext();
+    StartNext();
 }
 
 void MetadataReader::Clear()
@@ -57,48 +90,26 @@ void MetadataReader::Clear()
 
 void MetadataReader::StartNext()
 {
-    if (current.IsValid())
-        return;
-
-    if (queue.isEmpty())
+    while (running < MaxThreads && !queue.isEmpty())
     {
-        current = {};
-        player->setSource({});
-        emit idle();
-        return;
-    }
+        const Request request = queue.takeFirst();
+        queued.remove(request.id);
+        ++running;
 
-    const Request request = queue.takeFirst();
-    queued.remove(request.id);
-    current = request.id;
-    timeout.start();
-    player->setSource(QUrl::fromLocalFile(request.path));
+        pool.start([this, request] {
+            TagsComponent tags;
+            const bool bSuccess = ReadTags(request.path, tags);
+            QMetaObject::invokeMethod(this, [this, id = request.id, tags, bSuccess] { OnRead(id, tags, bSuccess); }, Qt::QueuedConnection);
+        });
+    }
 }
 
-void MetadataReader::Finish(bool bSuccess)
+void MetadataReader::OnRead(TrackId id, const TagsComponent& tags, bool bSuccess)
 {
-    timeout.stop();
-
-    TagsComponent tags;
-    if (bSuccess)
-    {
-        const QMediaMetaData metaData = player->metaData();
-
-        tags.title = metaData.stringValue(QMediaMetaData::Title);
-        tags.artist = metaData.stringValue(QMediaMetaData::ContributingArtist);
-        if (tags.artist.isEmpty())
-            tags.artist = metaData.stringValue(QMediaMetaData::AlbumArtist);
-        tags.album = metaData.stringValue(QMediaMetaData::AlbumTitle);
-        tags.genre = metaData.stringValue(QMediaMetaData::Genre);
-        tags.trackNumber = metaData.value(QMediaMetaData::TrackNumber).toInt();
-        tags.year = metaData.value(QMediaMetaData::Date).toDateTime().date().year();
-        tags.durationMs = player->duration();
-        tags.bFromFile = true;
-    }
-
-    const TrackId id = current;
-    current = {};
+    --running;
     emit tagsRead(id, tags, bSuccess);
+    StartNext();
 
-    QMetaObject::invokeMethod(this, &MetadataReader::StartNext, Qt::QueuedConnection);
+    if (running == 0 && queue.isEmpty())
+        emit idle();
 }

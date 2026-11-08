@@ -24,8 +24,6 @@ Item {
         color: root.active ? Theme.palette.iconActive
              : root.hovered ? Theme.palette.iconActive
                             : Theme.palette.iconDefault
-
-        Behavior on color { ColorAnimation { duration: Theme.motion.durationFast } }
     }
 
     Text {

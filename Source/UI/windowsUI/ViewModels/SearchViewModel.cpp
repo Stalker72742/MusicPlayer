@@ -382,8 +382,18 @@ SearchViewModel::SearchViewModel()
 
     connect(&Navigation::Get(), &Navigation::pageChanged, this, &SearchViewModel::Rebuild);
     connect(&Navigation::Get(), &Navigation::settingsCategoryChanged, this, &SearchViewModel::Rebuild);
+    connect(&Navigation::Get(), &Navigation::searchQueryChanged, this, &SearchViewModel::FollowNavigation);
 
     Rebuild();
+    FollowNavigation();
+}
+
+void SearchViewModel::FollowNavigation()
+{
+    const Navigation& navigation = Navigation::Get();
+    const QString wanted = navigation.GetSearchQuery();
+    if (navigation.GetPage() == Navigation::Search && !wanted.isEmpty() && wanted != onlineQuery)
+        OnlineSubsystem::Get().Search(wanted, SearchResultCount);
 }
 
 SearchViewModel& SearchViewModel::Get()
@@ -452,7 +462,7 @@ void SearchViewModel::Rebuild()
 
         result.append(MakeHint(QStringLiteral("yt:"), QStringLiteral("Search YouTube"), QStringLiteral("yt:daft punk")));
         result.append(MakeHint(QStringLiteral("lib:"), QStringLiteral("Search your library"), QStringLiteral("lib:homework")));
-        result.append(MakeHint(QStringLiteral("s:"), QStringLiteral("Open settings"), QStringLiteral("s:audio;crossfade")));
+        result.append(MakeHint(QStringLiteral("s:"), QStringLiteral("Open settings"), QStringLiteral("s:general;outputDevice")));
         result.append(MakeHint(QStringLiteral("go:"), QStringLiteral("Go to a page"), QStringLiteral("go:favorites")));
         result.append(MakeHint(QStringLiteral("pl:"), QStringLiteral("Open a playlist"), QStringLiteral("pl:road trip")));
     }
@@ -658,8 +668,11 @@ void SearchViewModel::searchOnline(const QString& text)
     while (history.size() > MaxHistory)
         history.removeLast();
 
-    Navigation::Get().navigate(Navigation::Search);
-    OnlineSubsystem::Get().Search(trimmed, SearchResultCount);
+    Navigation& navigation = Navigation::Get();
+    const bool bAlreadyThere = navigation.GetPage() == Navigation::Search && navigation.GetSearchQuery() == trimmed;
+    navigation.openSearch(trimmed);
+    if (bAlreadyThere || onlineQuery != trimmed)
+        OnlineSubsystem::Get().Search(trimmed, SearchResultCount);
 }
 
 void SearchViewModel::retryOnline()

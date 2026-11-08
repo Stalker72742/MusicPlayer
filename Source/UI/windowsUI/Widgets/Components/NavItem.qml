@@ -14,6 +14,7 @@ Rectangle {
     property bool   hovered: hover.hovered
 
     signal clicked
+    signal contextRequested(point scenePosition)
 
     implicitHeight: Theme.metrics.navItemHeight
 
@@ -108,5 +109,14 @@ Rectangle {
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    MouseArea { anchors.fill: parent; onClicked: root.clicked() }
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: (mouse) => {
+            if (mouse.button === Qt.RightButton)
+                root.contextRequested(root.mapToItem(null, mouse.x, mouse.y));
+            else
+                root.clicked();
+        }
+    }
 }

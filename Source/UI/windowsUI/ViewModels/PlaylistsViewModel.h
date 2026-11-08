@@ -64,10 +64,21 @@ public:
     /// @brief Opens the playlist screen; see Navigation::openPlaylist().
     Q_INVOKABLE void open(const QString& id);
 
+    /// @brief Plays a playlist from its first track.
+    Q_INVOKABLE void play(const QString& id);
+    /// @brief The tracks a playlist shows now.
+    Q_INVOKABLE QVariantList trackIdsOf(const QString& id) const;
+    /// @brief For the playlist menu: `exists`, `smart`, `count`, `excluded`, `downloadable`.
+    Q_INVOKABLE QVariantMap infoOf(const QString& id) const;
+
     /// @brief Adds a track to a static playlist.
     Q_INVOKABLE void addTrack(const QString& id, int trackId);
     /// @brief Removes a track; from a smart playlist it is hidden.
     Q_INVOKABLE void removeTrack(const QString& id, int trackId);
+    /// @brief Adds tracks to a static playlist; ones already there are skipped.
+    Q_INVOKABLE void addTracks(const QString& id, const QVariantList& trackIds);
+    /// @brief Removes tracks from a playlist (a smart one hides them).
+    Q_INVOKABLE void removeTracks(const QString& id, const QVariantList& trackIds);
     /// @brief Moves a track within a static playlist.
     Q_INVOKABLE void moveTrack(const QString& id, int from, int to);
     /// @brief Brings back the tracks hidden from a smart playlist.
@@ -75,6 +86,10 @@ public:
 
     /// @brief For "Add to playlist": [{id, name, contains}] of the static playlists.
     Q_INVOKABLE QVariantList staticPlaylistsFor(int trackId) const;
+    /// @brief Like staticPlaylistsFor() for several tracks: `contains` when all of them are there.
+    Q_INVOKABLE QVariantList staticPlaylistsForTracks(const QVariantList& trackIds) const;
+    /// @brief Whether there is any smart playlist: tracks cannot be added to those by hand.
+    Q_INVOKABLE bool hasSmartPlaylists() const;
 
     /// @brief Name of a playlist by id.
     Q_INVOKABLE QString nameOf(const QString& id) const;

@@ -1,8 +1,15 @@
 #include "TrayIcon.h"
 
 #include <QAction>
+#include <QCursor>
 #include <QIcon>
 #include <QMenu>
+
+#include <utility>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 TrayIcon::TrayIcon(QObject* parent)
     : QObject(parent)
@@ -15,16 +22,15 @@ TrayIcon::TrayIcon(QObject* parent)
     trayIcon->setIcon(icon);
     trayIcon->setToolTip(QStringLiteral("SoundLink"));
 
-    menu->addAction(QStringLiteral("Show"), this, &TrayIcon::showRequested);
-    menu->addAction(QStringLiteral("Hide"), this, &TrayIcon::hideRequested);
-    menu->addSeparator();
-    menu->addAction(QStringLiteral("Quit"), this, &TrayIcon::quitRequested);
+    windowAction = menu->addAction(QStringLiteral("Hide SoundLink"), this, &TrayIcon::toggleRequested);
+    exitSeparator = menu->addSeparator();
+    menu->addAction(QStringLiteral("Exit"), this, &TrayIcon::quitRequested);
 
     menu->setStyleSheet(R"(
         QMenu {
             background-color: #151515;
             color: #fff;
-            border: none;
+            border: 1px solid #2a2a2a;
             padding: 4px;
         }
         QMenu::item {
@@ -41,9 +47,11 @@ TrayIcon::TrayIcon(QObject* parent)
         }
     )");
 
-    trayIcon->setContextMenu(menu.get());
-
     connect(trayIcon, &QSystemTrayIcon::activated, this, &TrayIcon::onActivated);
+    connect(trayIcon, &QSystemTrayIcon::messageClicked, this, [this] {
+        if (messageClickHandler)
+            messageClickHandler();
+    });
 }
 
 TrayIcon::~TrayIcon() = default;
@@ -53,8 +61,43 @@ void TrayIcon::show()
     trayIcon->show();
 }
 
+void TrayIcon::ShowMessage(const QString& title, const QString& text, std::function<void()> onClick)
+{
+    messageClickHandler = std::move(onClick);
+    trayIcon->showMessage(title, text);
+}
+
+void TrayIcon::SetWindowShown(bool bShown)
+{
+    windowAction->setText(bShown ? QStringLiteral("Hide SoundLink") : QStringLiteral("Show SoundLink"));
+}
+
+QAction* TrayIcon::AddAction(const QString& text, std::function<void()> onTriggered)
+{
+    auto* action = new QAction(text, menu.get());
+    connect(action, &QAction::triggered, this, [onTriggered = std::move(onTriggered)] { onTriggered(); });
+
+    const QList<QAction*> actions = menu->actions();
+    const bool bFirstModuleItem = actions.indexOf(exitSeparator) == actions.indexOf(windowAction) + 1;
+    if (bFirstModuleItem)
+        menu->insertSeparator(exitSeparator);
+    menu->insertAction(exitSeparator, action);
+    return action;
+}
+
 void TrayIcon::onActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger)
         emit toggleRequested();
+    else if (reason == QSystemTrayIcon::Context)
+        OpenMenu();
+}
+
+void TrayIcon::OpenMenu()
+{
+    menu->popup(QCursor::pos());
+#ifdef Q_OS_WIN
+    SetForegroundWindow(reinterpret_cast<HWND>(menu->winId()));
+#endif
+    menu->activateWindow();
 }

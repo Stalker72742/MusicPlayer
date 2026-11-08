@@ -72,6 +72,12 @@ public:
     /// @brief Deletes the downloaded file; the track goes back to streaming.
     void RemoveDownload(TrackId track);
 
+    /// @brief Makes a file got some other way the downloaded copy of a track, unless it already has one.
+    /// @param track An online track.
+    /// @param path The file, moved to the download folder; deleted if not needed.
+    /// @param extension Extension of the final name.
+    void AdoptFile(TrackId track, const QString& path, const QString& extension);
+
     /// @brief Every job in queue order.
     const QList<Job>& GetJobs() const { return jobs; }
     /// @brief The job of a track, or nullptr.

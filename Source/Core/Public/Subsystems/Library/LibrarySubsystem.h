@@ -97,6 +97,27 @@ public:
     /// @param path Path of the local copy, or empty.
     void SetLocalFile(TrackId id, const QString& path);
 
+    /// @brief The file of a track was renamed or moved by the app: the track follows it at once.
+    ///
+    /// The folder watcher would find the move too, a moment later. Tags not read from the file yet are read again,
+    /// so a title guessed from the file name follows the new name.
+    /// @param id A track with a local file (scanned, or the downloaded copy of an online track).
+    /// @param path The new path of the file.
+    void SetFilePath(TrackId id, const QString& path);
+
+    /// @brief The file of a local track was deleted by the app: the track is hidden at once, as any missing file.
+    ///
+    /// Likes, tags and playlist places stay, so a file restored from the Recycle Bin brings the track back.
+    void MarkFileGone(TrackId id);
+
+    /// @brief Sets the user's values of a track's tags; other fields stay as they are.
+    /// @param edits By `title`, `artist`, `album`, `genre`, `year`, `track`; an empty title is ignored.
+    void SetTagEdits(TrackId id, const QMap<QString, QString>& edits);
+    /// @brief Makes the title follow the file name, and the artist too if the name is "Artist - Title".
+    ///
+    /// For a file renamed in the app: without this a title tag inside the file would keep showing the old name.
+    void TakeTagsFromFileName(TrackId id);
+
     /// @brief Replaces the user's tags of a track (used by smart playlists).
     void SetLabels(TrackId id, const QStringList& labels);
 
@@ -141,6 +162,7 @@ private:
     /// A file being copied reports many changes: waits for a pause, but not forever.
     void OnPathsChanged(const QStringList& paths);
     void OnTagsRead(TrackId id, const TagsComponent& tags, bool bSuccess);
+    static void ApplyTagEdits(Track& track);
 
     Track* FindMutable(TrackId id);
     TrackId AddTrack(const QString& path, qint64 size, qint64 modifiedMs, quint64 fileId, quint32 volumeId);

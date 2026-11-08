@@ -77,6 +77,10 @@ public:
 
     /// @brief Row of a track, -1 if the track is not in the list.
     int RowOf(int trackId) const;
+    /// @brief Track ids of the rows from..to, both included, in either order.
+    Q_INVOKABLE QVariantList idsBetween(int from, int to) const;
+    /// @brief Track ids of every row.
+    Q_INVOKABLE QVariantList allIds() const;
 
     /// @brief "3:07", or "1:51:26" for an hour and more.
     static QString FormatDuration(int seconds);

@@ -164,6 +164,14 @@ int DownloadsViewModel::downloadPlaylist(const QString& playlistId)
     return DownloadSubsystem::Get().Enqueue(PlaylistSubsystem::Get().Resolve(playlistId));
 }
 
+int DownloadsViewModel::downloadTracks(const QVariantList& trackIds)
+{
+    QList<TrackId> tracks;
+    for (const QVariant& value : trackIds)
+        tracks.append(TrackId{static_cast<quint32>(value.toInt())});
+    return DownloadSubsystem::Get().Enqueue(tracks);
+}
+
 void DownloadsViewModel::cancel(int trackId)
 {
     DownloadSubsystem::Get().Cancel(TrackId{static_cast<quint32>(trackId)});

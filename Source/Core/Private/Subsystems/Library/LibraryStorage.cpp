@@ -17,7 +17,7 @@
 namespace
 {
     constexpr quint32 Magic = 0x424C4C53;
-    constexpr quint32 FormatVersion = 2;
+    constexpr quint32 FormatVersion = 3;
     constexpr int JsonVersion = 1;
 
     constexpr quint8 FlagMissing = 1 << 0;
@@ -55,6 +55,7 @@ namespace
         out << track.user.labels;
         out << track.stream.pageUrl << track.stream.thumbnailUrl;
         out << track.stream.channelUrl;
+        out << track.user.tagEdits;
     }
 
     void ReadTrack(QDataStream& in, Track& track, quint32 version)
@@ -75,6 +76,8 @@ namespace
         in >> track.stream.pageUrl >> track.stream.thumbnailUrl;
         if (version >= 2)
             in >> track.stream.channelUrl;
+        if (version >= 3)
+            in >> track.user.tagEdits;
 
         track.file.bMissing = flags & FlagMissing;
         track.tags.bFromFile = flags & FlagTagsFromFile;

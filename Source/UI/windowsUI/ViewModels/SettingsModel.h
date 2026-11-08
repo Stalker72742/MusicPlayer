@@ -26,6 +26,8 @@ class SettingsModel : public QAbstractListModel
 
     /// @brief [{ id, title, icon }] in display order.
     Q_PROPERTY(QVariantList categories READ GetCategories CONSTANT)
+    /// @brief Ids of the sections collapsed on the settings screen; kept in the Settings config.
+    Q_PROPERTY(QStringList collapsedSections READ GetCollapsedSections NOTIFY collapsedSectionsChanged)
 
 public:
     /// @brief How a setting is edited and drawn.
@@ -48,6 +50,7 @@ public:
     {
         KeyRole = Qt::UserRole + 1,
         CategoryRole,
+        SectionRole, ///< Section id (SettingsCategories.h).
         TitleRole,
         DescriptionRole,
         TypeRole,
@@ -86,6 +89,15 @@ public:
     /// @brief Title of a category by id.
     Q_INVOKABLE QString categoryTitle(const QString& id) const;
 
+    /// @brief The collapsedSections property.
+    QStringList GetCollapsedSections() const { return collapsedSections; }
+    /// @brief Title of a section by id.
+    Q_INVOKABLE QString sectionTitle(const QString& id) const;
+    /// @brief Id of the section holding a setting.
+    Q_INVOKABLE QString sectionOf(const QString& key) const;
+    /// @brief Collapses or expands a section on the settings screen and remembers it.
+    Q_INVOKABLE void setSectionCollapsed(const QString& id, bool bCollapsed);
+
     /// @brief The current value, e.g. for QML that acts on a setting once (closing the window).
     Q_INVOKABLE QVariant valueOf(const QString& key) const;
     /// @brief Stores a new value; the type follows the setting's default.
@@ -101,13 +113,16 @@ public:
     /// @brief Sets the folder of a Folder setting.
     Q_INVOKABLE void setFolder(const QString& key, const QUrl& folder);
 
+signals:
+    void collapsedSectionsChanged();
+
 private:
     SettingsModel();
 
     struct Setting
     {
         QString key;
-        QString category;
+        QString section;
         QString title;
         QString description;
         Type type = Toggle;
@@ -118,6 +133,8 @@ private:
         double step = 1;
         QString unit;
         QStringList options;
+        /// Filled from the section after the list is built.
+        QString category;
 
         std::function<QVariant()> read;
         std::function<void(const QVariant&)> write;
@@ -131,6 +148,7 @@ private:
     void NotifyValueChanged(int row);
 
     QList<Setting> settings;
+    QStringList collapsedSections;
 };
 
 /// @brief Settings of one category, for a list on the settings screen.

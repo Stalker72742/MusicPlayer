@@ -30,8 +30,7 @@ LibraryView {
     }
 
     onPageUrlChanged: {
-        selectionMode = false;
-        selectedIds = {};
+        clearSelection();
         notice = "";
     }
 
@@ -52,6 +51,8 @@ LibraryView {
 
     model: OnlinePageViewModel.tracks
     clickToPlay: true
+    // The page has its own Download, Add to library and Select acting on the selection.
+    bulkActions: false
     albumHeader: "Channel"
     dateHeader: "Added"
 
@@ -106,25 +107,14 @@ LibraryView {
                 }
                 TextButton {
                     visible: root.isList
-                    text: root.selectionMode ? "Done selecting" : "Select"
+                    text: root.selecting ? "Done selecting" : "Select"
                     enabled: root.model.count > 0
-                    onClicked: {
-                        root.selectionMode = !root.selectionMode;
-                        if (!root.selectionMode)
-                            root.selectedIds = {};
-                    }
+                    onClicked: root.selecting ? root.clearSelection() : root.selectionMode = true
                 }
                 TextButton {
-                    visible: root.selectionMode
+                    visible: root.selecting
                     text: root.selectedCount === root.model.count ? "Select none" : "Select all"
-                    onClicked: {
-                        const next = {};
-                        if (root.selectedCount !== root.model.count) {
-                            for (const id of OnlinePageViewModel.allTrackIds())
-                                next[id] = true;
-                        }
-                        root.selectedIds = next;
-                    }
+                    onClicked: root.selectedCount === root.model.count ? root.selectedIds = {} : root.selectAll()
                 }
                 TextButton {
                     visible: root.kind !== "channel" && OnlinePageViewModel.channelUrl.length > 0

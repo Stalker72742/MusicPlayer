@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import SoundLink 1.0
 
 // Playlists or channels found by the search; a click opens the page.
@@ -15,6 +16,7 @@ Item {
         anchors.topMargin: 8
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar {}
         model: SearchViewModel.collections
 
         delegate: Rectangle {
@@ -22,7 +24,7 @@ Item {
 
             required property var modelData
 
-            width: list.width
+            width: list.width - 12
             height: 64
             radius: Theme.metrics.radiusMd
             color: hover.hovered ? Theme.palette.hoverOverlay : "transparent"
@@ -30,7 +32,19 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: OnlinePageViewModel.openLink(row.modelData.url)
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: (mouse) => {
+                    const url = row.modelData.url;
+                    if (mouse.button === Qt.LeftButton) {
+                        OnlinePageViewModel.openLink(url);
+                        return;
+                    }
+                    collectionMenu.openAt(row.mapToItem(null, mouse.x, mouse.y), [
+                        { text: "Open", icon: "list", action: () => OnlinePageViewModel.openLink(url) },
+                        { text: "Open in browser", icon: "external", action: () => Qt.openUrlExternally(url) },
+                        { text: "Copy link", icon: "link", action: () => LibraryViewModel.copyText(url) }
+                    ]);
+                }
             }
 
             AlbumArt {
@@ -72,6 +86,8 @@ Item {
             HoverHandler { id: hover }
         }
     }
+
+    ContextMenu { id: collectionMenu }
 
     EmptyState {
         anchors.fill: parent

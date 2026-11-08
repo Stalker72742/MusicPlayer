@@ -5,7 +5,7 @@ project(SoundLink VERSION 0.2 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Concurrent Gui Widgets Multimedia Network Qml Quick QuickControls2 WebSockets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Concurrent Gui Widgets Network Qml Quick QuickControls2 WebSockets)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -30,6 +30,8 @@ qt_add_executable(SoundLink
         core/public/framework/SystemMediaControls.h
         core/private/framework/SystemMediaControls.cpp
         core/private/framework/SmtcInterfaces.h
+        core/public/framework/AppModule.h
+        core/private/framework/AppModule.cpp
 
         # Library
         core/public/subsystems/Library/Track.h
@@ -55,10 +57,24 @@ qt_add_executable(SoundLink
         # Playlists
         core/public/subsystems/Playlists/PlaylistSubsystem.h
         core/private/subsystems/Playlists/PlaylistSubsystem.cpp
+        core/public/subsystems/Catalog/CatalogSubsystem.h
+        core/private/subsystems/Catalog/CatalogSubsystem.cpp
+        core/public/subsystems/Catalog/ArtworkSubsystem.h
+        core/private/subsystems/Catalog/ArtworkSubsystem.cpp
 
         # Player
         core/public/subsystems/Player/PlayerSubsystem.h
         core/private/subsystems/Player/PlayerSubsystem.cpp
+        core/public/subsystems/Player/AudioBackend.h
+        core/public/subsystems/Player/AudioDevices.h
+        core/private/subsystems/Player/AudioDevices.cpp
+        core/private/subsystems/Player/FfmpegBackend.h
+        core/private/subsystems/Player/FfmpegBackend.cpp
+        core/private/subsystems/Player/PcmRing.h
+        core/private/subsystems/Player/WasapiOutput.h
+        core/private/subsystems/Player/WasapiOutput.cpp
+        core/private/subsystems/Player/StreamCapture.h
+        core/private/subsystems/Player/StreamCapture.cpp
 
         # Online (yt-dlp search and streams)
         core/public/subsystems/Online/OnlineTypes.h
@@ -80,8 +96,6 @@ qt_add_executable(SoundLink
         # yt-dlp
         core/public/subsystems/YtDlp/YtDlpSubsystem.h
         core/private/subsystems/YtDlp/YtDlpSubsystem.cpp
-        core/public/subsystems/YtDlp/FfmpegSubsystem.h
-        core/private/subsystems/YtDlp/FfmpegSubsystem.cpp
         core/public/subsystems/YtDlp/DenoSubsystem.h
         core/private/subsystems/YtDlp/DenoSubsystem.cpp
         core/private/subsystems/YtDlp/ReleaseAssetDownload.h
@@ -109,7 +123,6 @@ target_link_libraries(SoundLink PRIVATE
         Qt6::Concurrent
         Qt6::Gui
         Qt6::Widgets
-        Qt6::Multimedia
         Qt6::Network
         Qt6::Qml
         Qt6::Quick
@@ -119,8 +132,42 @@ target_link_libraries(SoundLink PRIVATE
 )
 
 if(WIN32)
-    target_link_libraries(SoundLink PRIVATE winmm ole32 user32 advapi32 runtimeobject)
+    target_link_libraries(SoundLink PRIVATE winmm ole32 user32 advapi32 runtimeobject uuid)
 endif()
+
+# Optional modules (see AppModule): each option adds a module's sources, which register the module themselves;
+# the core does not know them. Developer tools are on by default everywhere but release builds
+# (Release, RelWithDebInfo, MinSizeRel); -D<option>=ON/OFF overrides it.
+if(NOT CMAKE_BUILD_TYPE MATCHES "^(Release|RelWithDebInfo|MinSizeRel)$")
+    set(SOUNDLINK_DEV_MODULES_DEFAULT ON)
+else()
+    set(SOUNDLINK_DEV_MODULES_DEFAULT OFF)
+endif()
+
+option(SOUNDLINK_MODULE_MEMORY_DUMP "Memory report for hunting leaks: tray item and Ctrl+Shift+M" ${SOUNDLINK_DEV_MODULES_DEFAULT})
+if(SOUNDLINK_MODULE_MEMORY_DUMP)
+    target_sources(SoundLink PRIVATE
+            modules/MemoryDump/MemoryDump.h
+            modules/MemoryDump/MemoryDump.cpp
+            modules/MemoryDump/MemoryDumpModule.cpp
+    )
+    target_include_directories(SoundLink PRIVATE modules/MemoryDump)
+    target_link_libraries(SoundLink PRIVATE Qt6::QmlPrivate)
+    if(WIN32)
+        target_link_libraries(SoundLink PRIVATE psapi)
+    endif()
+endif()
+message(STATUS "SoundLink modules: memory dump = ${SOUNDLINK_MODULE_MEMORY_DUMP}")
+
+# FFmpeg: built from source by tools/build-ffmpeg.sh (LGPL, audio only), used for playback, tags and by yt-dlp.
+set(FFMPEG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ffmpeg")
+if(NOT EXISTS "${FFMPEG_DIR}/include/libavcodec/avcodec.h")
+    message(FATAL_ERROR "FFmpeg not found in ${FFMPEG_DIR}. Run in Git Bash, with MinGW on PATH: tools/build-ffmpeg.sh")
+endif()
+target_include_directories(SoundLink PRIVATE "${FFMPEG_DIR}/include")
+target_link_directories(SoundLink PRIVATE "${FFMPEG_DIR}/lib")
+target_link_libraries(SoundLink PRIVATE avformat avcodec avutil swresample)
+file(GLOB FFMPEG_RUNTIME "${FFMPEG_DIR}/bin/*.dll" "${FFMPEG_DIR}/bin/ffmpeg.exe" "${FFMPEG_DIR}/bin/FFmpeg-LICENSE.txt")
 
 # QML module "SoundLink": every file is a type of the module, Theme is its singleton
 set(QML_DIR ui/windowsUI/Widgets)
@@ -144,6 +191,7 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Screens/SettingsScreen.qml
         ${QML_DIR}/Screens/AboutScreen.qml
         ${QML_DIR}/Screens/UpdatesScreen.qml
+        ${QML_DIR}/Screens/CollectionScreen.qml
         ${QML_DIR}/Sections/AppTitleBar.qml
         ${QML_DIR}/Sections/LinkDropOverlay.qml
         ${QML_DIR}/Sections/LibraryView.qml
@@ -153,8 +201,10 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Sections/SideBar.qml
         ${QML_DIR}/Sections/SearchSuggestions.qml
         ${QML_DIR}/Sections/TrackShelf.qml
+        ${QML_DIR}/Sections/CatalogGrid.qml
         ${QML_DIR}/Components/AlbumArt.qml
         ${QML_DIR}/Components/OnlineCollectionList.qml
+        ${QML_DIR}/Components/CatalogArt.qml
         ${QML_DIR}/Components/AppIcon.qml
         ${QML_DIR}/Components/IconButton.qml
         ${QML_DIR}/Components/NavItem.qml
@@ -168,6 +218,13 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Components/TrackRow.qml
         ${QML_DIR}/Components/TrackCard.qml
         ${QML_DIR}/Components/TrackMenu.qml
+        ${QML_DIR}/Components/AppScrollBar.qml
+        ${QML_DIR}/Components/MenuEntry.qml
+        ${QML_DIR}/Components/MenuDivider.qml
+        ${QML_DIR}/Components/ContextMenu.qml
+        ${QML_DIR}/Components/PlaylistMenu.qml
+        ${QML_DIR}/Components/CatalogMenu.qml
+        ${QML_DIR}/Dialogs/TrackPropertiesWindow.qml
         ${QML_DIR}/Components/InputField.qml
         ${QML_DIR}/Components/Dropdown.qml
         ${QML_DIR}/Dialogs/ModalDialog.qml
@@ -180,6 +237,8 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Components/ToggleSwitch.qml
         ${QML_DIR}/Components/SettingRow.qml
         SOURCES
+        ui/windowsUI/ViewModels/IconImageProvider.h
+        ui/windowsUI/ViewModels/IconImageProvider.cpp
         ui/windowsUI/ViewModels/Navigation.h
         ui/windowsUI/ViewModels/Navigation.cpp
         ui/windowsUI/ViewModels/SettingsCategories.h
@@ -195,6 +254,10 @@ qt_add_qml_module(SoundLink
         ui/windowsUI/ViewModels/PlayerViewModel.cpp
         ui/windowsUI/ViewModels/AppInfoViewModel.h
         ui/windowsUI/ViewModels/AppInfoViewModel.cpp
+        ui/windowsUI/ViewModels/LocalBuildPicker.h
+        ui/windowsUI/ViewModels/LocalBuildPicker.cpp
+        ui/windowsUI/ViewModels/CatalogViewModel.h
+        ui/windowsUI/ViewModels/CatalogViewModel.cpp
         ui/windowsUI/ViewModels/SuggestionListModel.h
         ui/windowsUI/ViewModels/SuggestionListModel.cpp
         ui/windowsUI/ViewModels/SearchViewModel.h
@@ -256,6 +319,7 @@ qau_setup(SoundLink
         ACCENT_COLOR "#ECECEC"
         DESCRIPTION "SoundLink music player"
         PROTECTED_PATHS Saved
+        RUNTIME_FILES ${FFMPEG_RUNTIME}
         QML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${QML_DIR}"
         DIST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../dist"
         PACKAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../packages"

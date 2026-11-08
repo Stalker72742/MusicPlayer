@@ -19,8 +19,8 @@
 #include "../Online/YtDlpBackend.h"
 #include "AppConfigs.h"
 #include "Library/LibrarySubsystem.h"
+#include "Player/PlayerSubsystem.h"
 #include "YtDlp/DenoSubsystem.h"
-#include "YtDlp/FfmpegSubsystem.h"
 #include "YtDlp/YtDlpSubsystem.h"
 
 namespace
@@ -213,14 +213,43 @@ void DownloadSubsystem::RemoveDownload(TrackId track)
         return;
 
     const QString path = found->file.path;
+    const bool bReleased = PlayerSubsystem::Get().ReleaseFile(track);
     LibrarySubsystem::Get().SetLocalFile(track, {});
     if (QFile::exists(path) && !QFile::remove(path))
         qWarning() << "[Downloads] Cannot delete" << path << "(in use?)";
+    if (bReleased)
+        PlayerSubsystem::Get().RestoreFile();
 
     const qsizetype before = jobs.size();
     jobs.removeIf([track](const Job& job) { return job.track == track && job.state == Job::State::Done; });
     if (jobs.size() != before)
         emit jobsChanged();
+}
+
+void DownloadSubsystem::AdoptFile(TrackId track, const QString& path, const QString& extension)
+{
+    const Track* found = LibrarySubsystem::Get().FindTrack(track);
+    const QString folder = GetFolder();
+    if (!found || !CanDownload(*found) || folder.isEmpty() || !QDir().mkpath(folder))
+    {
+        QFile::remove(path);
+        return;
+    }
+
+    const QString target = MakeTargetPath(*found, extension);
+    if (!QFile::rename(path, target))
+    {
+        const bool bCopied = QFile::copy(path, target);
+        QFile::remove(path);
+        if (!bCopied)
+        {
+            qWarning() << "[Downloads] Cannot move the listened track to" << folder;
+            return;
+        }
+    }
+
+    qDebug() << "[Downloads] Saved while listening:" << target;
+    LibrarySubsystem::Get().SetLocalFile(track, target);
 }
 
 void DownloadSubsystem::StartNext()
@@ -279,8 +308,8 @@ void DownloadSubsystem::Start(Job& job)
         QStringLiteral("-o"), tempDir + QStringLiteral("/%1.%(ext)s").arg(track.value),
     };
 
-    const QString ffmpeg = FfmpegSubsystem::Get().GetLocation();
-    if (!ffmpeg.isEmpty())
+    const QString ffmpeg = AppConfigs::GetAppRoot() + QStringLiteral("/bin");
+    if (QFile::exists(ffmpeg + QStringLiteral("/ffmpeg.exe")))
         args << QStringLiteral("--ffmpeg-location") << ffmpeg << QStringLiteral("--embed-metadata");
 
     const QString deno = DenoSubsystem::Get().GetExecutablePath();

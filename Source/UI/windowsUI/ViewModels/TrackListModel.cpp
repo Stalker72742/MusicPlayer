@@ -2,6 +2,8 @@
 
 #include <QSet>
 
+#include <algorithm>
+
 int TrackListModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : GetCount();
@@ -150,6 +152,22 @@ bool TrackListModel::ApplyInPlace(const QList<TrackData>& newTracks)
 
     tracks = newTracks;
     return true;
+}
+
+QVariantList TrackListModel::idsBetween(int from, int to) const
+{
+    const qsizetype first = std::clamp<qsizetype>(std::min(from, to), 0, tracks.size());
+    const qsizetype last = std::clamp<qsizetype>(std::max(from, to), -1, tracks.size() - 1);
+
+    QVariantList ids;
+    for (qsizetype row = first; row <= last; ++row)
+        ids.append(tracks[row].id);
+    return ids;
+}
+
+QVariantList TrackListModel::allIds() const
+{
+    return idsBetween(0, static_cast<int>(tracks.size()) - 1);
 }
 
 int TrackListModel::RowOf(int trackId) const

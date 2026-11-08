@@ -13,14 +13,15 @@
 #include <QAppUpdater/AppControlServer.h>
 
 #include "AppConfigs.h"
+#include "AppModule.h"
 #include "Discord/DiscordSubsystem.h"
 #include "Downloads/DownloadSubsystem.h"
+#include "IconImageProvider.h"
 #include "Library/LibrarySubsystem.h"
 #include "Online/BrowserBridge.h"
 #include "SystemMediaControls.h"
 #include "TrayIcon.h"
 #include "YtDlp/DenoSubsystem.h"
-#include "YtDlp/FfmpegSubsystem.h"
 #include "YtDlp/YtDlpSubsystem.h"
 
 #ifdef Q_OS_WIN
@@ -37,6 +38,8 @@ AppInstance::AppInstance()
 
 AppInstance::~AppInstance()
 {
+    modules.clear();
+
     delete mediaControls;
     mediaControls = nullptr;
 
@@ -78,6 +81,7 @@ bool AppInstance::init()
 
     createTrayIcon();
     createMediaControls();
+    startModules();
 
     DiscordSubsystem::Get().Start();
 
@@ -85,7 +89,6 @@ bool AppInstance::init()
         hideMainWindow();
 
     YtDlpSubsystem::Get().StartAutoUpdate();
-    FfmpegSubsystem::Get().EnsureInstalled();
     DenoSubsystem::Get().EnsureInstalled();
 
     BrowserBridge::Get().Start();
@@ -119,19 +122,22 @@ void AppInstance::hideMainWindow()
 
 void AppInstance::toggleMainWindow()
 {
-    QQuickWindow* window = getMainWindow();
-    if (!window)
-        return;
-
-    if (window->isVisible() && !(window->windowStates() & Qt::WindowMinimized))
+    if (IsMainWindowShown())
         hideMainWindow();
     else
         showMainWindow();
 }
 
+bool AppInstance::IsMainWindowShown() const
+{
+    const QQuickWindow* window = getMainWindow();
+    return window && window->isVisible() && !(window->windowStates() & Qt::WindowMinimized);
+}
+
 bool AppInstance::createMainWindow()
 {
     engine = new QQmlApplicationEngine();
+    engine->addImageProvider(QStringLiteral("icons"), new IconImageProvider());
     engine->loadFromModule("SoundLink", "WindowsMainWindow");
 
     if (!getMainWindow())
@@ -168,10 +174,23 @@ void AppInstance::createTrayIcon()
 {
     trayIcon = new TrayIcon();
 
-    connect(trayIcon, &TrayIcon::showRequested, this, &AppInstance::showMainWindow);
-    connect(trayIcon, &TrayIcon::hideRequested, this, &AppInstance::hideMainWindow);
     connect(trayIcon, &TrayIcon::toggleRequested, this, &AppInstance::toggleMainWindow);
     connect(trayIcon, &TrayIcon::quitRequested, qApp, &QCoreApplication::quit);
 
+    const auto updateWindowItem = [this] { trayIcon->SetWindowShown(IsMainWindowShown()); };
+    QQuickWindow* window = getMainWindow();
+    connect(window, &QWindow::visibleChanged, trayIcon, updateWindowItem);
+    connect(window, &QWindow::windowStateChanged, trayIcon, updateWindowItem);
+    updateWindowItem();
+
     trayIcon->show();
+}
+
+void AppInstance::startModules()
+{
+    modules = AppModule::CreateAll();
+    for (const std::unique_ptr<AppModule>& module : modules)
+        module->Start(*this);
+    if (!modules.empty())
+        qInfo() << "[AppInstance] Modules:" << AppModule::GetNames().join(QStringLiteral(", "));
 }

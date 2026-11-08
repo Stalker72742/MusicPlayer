@@ -25,7 +25,7 @@ struct Suggestion
     QString subtitle;
     QString icon;
 
-    /// Short tag form shown on the right, e.g. "s:audio;crossfade".
+    /// Short tag form shown on the right, e.g. "s:general;outputDevice".
     QString tag;
 
     /// Query that Tab puts into the search field.

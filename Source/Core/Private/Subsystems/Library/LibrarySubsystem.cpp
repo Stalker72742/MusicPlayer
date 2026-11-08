@@ -121,8 +121,7 @@ void LibrarySubsystem::Initialize()
 
     folderWatcher->SetRoots(FileScanner::CollapseRoots(GetFolders()));
 
-    if (AppConfigs::GetBool(AppConfigs::SettingsKeys::ScanOnStartup, true))
-        Rescan();
+    Rescan();
 }
 
 QStringList LibrarySubsystem::GetFolders() const
@@ -406,6 +405,7 @@ void LibrarySubsystem::OnTagsRead(TrackId id, const TagsComponent& tags, bool bS
         qDebug() << "[Library] Cannot read tags of" << track->file.path;
 
     track->tags = merged;
+    ApplyTagEdits(*track);
     NotifyChanged();
     ScheduleSave();
 }
@@ -447,6 +447,7 @@ TrackId LibrarySubsystem::AddOnlineTrack(const QString& pageUrl, const TagsCompo
         if (!existing->stream.bSaved)
         {
             existing->tags = tags;
+            ApplyTagEdits(*existing);
             existing->stream.thumbnailUrl = thumbnailUrl;
             if (!channelUrl.isEmpty())
                 existing->stream.channelUrl = channelUrl;
@@ -531,6 +532,101 @@ void LibrarySubsystem::SetLocalFile(TrackId id, const QString& path)
     ++structureRevision;
     NotifyChanged();
     ScheduleSave();
+}
+
+void LibrarySubsystem::SetFilePath(TrackId id, const QString& path)
+{
+    Track* track = FindMutable(id);
+    if (!track || track->file.path.isEmpty() || path.isEmpty())
+        return;
+
+    const QString normalized = NormalizedPath(path);
+    if (track->file.path == normalized)
+        return;
+
+    const TrackId owner = idByPath.value(normalized);
+    if (owner.IsValid() && owner != id)
+        RemoveTrack(owner);
+
+    idByPath.remove(track->file.path);
+    idByPath.insert(normalized, id);
+    track->file.path = normalized;
+    track->file.bMissing = false;
+
+    if (!track->IsOnline())
+    {
+        track->tags.bFromFile = false;
+        metadataReader->Enqueue(id, normalized);
+    }
+
+    ++structureRevision;
+    notifyTimer.stop();
+    emit tracksChanged();
+    ScheduleSave();
+}
+
+void LibrarySubsystem::MarkFileGone(TrackId id)
+{
+    Track* track = FindMutable(id);
+    if (!track || track->IsOnline() || track->file.path.isEmpty() || track->file.bMissing)
+        return;
+
+    track->file.bMissing = true;
+    ++structureRevision;
+    notifyTimer.stop();
+    emit tracksChanged();
+    ScheduleSave();
+}
+
+void LibrarySubsystem::ApplyTagEdits(Track& track)
+{
+    const QMap<QString, QString>& edits = track.user.tagEdits;
+    for (auto it = edits.cbegin(); it != edits.cend(); ++it)
+    {
+        if (it.key() == QLatin1String("title"))
+            track.tags.title = it.value();
+        else if (it.key() == QLatin1String("artist"))
+            track.tags.artist = it.value();
+        else if (it.key() == QLatin1String("album"))
+            track.tags.album = it.value();
+        else if (it.key() == QLatin1String("genre"))
+            track.tags.genre = it.value();
+        else if (it.key() == QLatin1String("year"))
+            track.tags.year = it.value().toInt();
+        else if (it.key() == QLatin1String("track"))
+            track.tags.trackNumber = it.value().toInt();
+    }
+}
+
+void LibrarySubsystem::SetTagEdits(TrackId id, const QMap<QString, QString>& edits)
+{
+    Track* track = FindMutable(id);
+    if (!track || edits.isEmpty())
+        return;
+
+    for (auto it = edits.cbegin(); it != edits.cend(); ++it)
+    {
+        const QString value = it.value().trimmed();
+        if (it.key() != QLatin1String("title") || !value.isEmpty())
+            track->user.tagEdits.insert(it.key(), value);
+    }
+
+    ApplyTagEdits(*track);
+    NotifyChanged();
+    ScheduleSave();
+}
+
+void LibrarySubsystem::TakeTagsFromFileName(TrackId id)
+{
+    const Track* track = FindTrack(id);
+    if (!track || track->file.path.isEmpty())
+        return;
+
+    const TagsComponent guessed = GuessTagsFromPath(track->file.path);
+    QMap<QString, QString> edits{{QStringLiteral("title"), guessed.title}};
+    if (!guessed.artist.isEmpty())
+        edits.insert(QStringLiteral("artist"), guessed.artist);
+    SetTagEdits(id, edits);
 }
 
 void LibrarySubsystem::SetLabels(TrackId id, const QStringList& labels)

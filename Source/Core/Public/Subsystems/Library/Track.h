@@ -6,6 +6,7 @@
 
 #include <QDateTime>
 #include <QHashFunctions>
+#include <QMap>
 #include <QMetaType>
 #include <QString>
 #include <QStringList>
@@ -75,10 +76,13 @@ struct StatsComponent
     bool bLiked = false;
 };
 
-/// @brief What the user curates: free-form tags for smart playlists.
+/// @brief What the user curates: free-form tags for smart playlists and their own values of the track's tags.
 struct UserComponent
 {
     QStringList labels;
+    /// Tag values set in the app, by `title`, `artist`, `album`, `genre`, `year`, `track`. They win over what the
+    /// file or the online source says, and the audio file itself is not changed.
+    QMap<QString, QString> tagEdits;
 };
 
 /// @brief Source page of an online track.

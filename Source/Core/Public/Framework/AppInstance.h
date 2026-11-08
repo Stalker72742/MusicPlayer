@@ -5,14 +5,20 @@
 #pragma once
 
 #include <QObject>
+#include <QString>
 
+#include <memory>
+#include <vector>
+
+class AppModule;
 class QQmlApplicationEngine;
 namespace QAppUpdater { class AppControlServer; }
 class QQuickWindow;
 class SystemMediaControls;
 class TrayIcon;
 
-/// @brief Owns the UI: the QML engine with the main window, the tray icon and the OS media controls.
+/// @brief Owns the UI: the QML engine with the main window, the tray icon, the OS media controls and the modules
+/// built into this app (see AppModule).
 ///
 /// Subsystems are independent singletons and are not owned here. Create one instance on the stack
 /// in main() after QApplication.
@@ -43,6 +49,9 @@ public:
     /// @brief The root window of the QML engine, or nullptr if it is not loaded.
     QQuickWindow* getMainWindow() const;
 
+    /// @brief The tray icon; nullptr before init().
+    TrayIcon* getTrayIcon() const { return trayIcon; }
+
 public slots:
     /// @brief Shows, restores and activates the main window.
     void showMainWindow();
@@ -55,6 +64,8 @@ private:
     bool createMainWindow();
     void createTrayIcon();
     void createMediaControls();
+    void startModules();
+    bool IsMainWindowShown() const;
     /// A frameless window has no WS_MINIMIZEBOX, so Windows does not minimize it on a click on its
     /// taskbar button; the style is added back (it draws nothing without a caption).
     void allowTaskbarMinimize();
@@ -63,6 +74,7 @@ private:
     TrayIcon* trayIcon = nullptr;
     SystemMediaControls* mediaControls = nullptr;
     QAppUpdater::AppControlServer* controlServer = nullptr;
+    std::vector<std::unique_ptr<AppModule>> modules;
 
     static AppInstance* instance;
 };

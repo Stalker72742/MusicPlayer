@@ -15,6 +15,12 @@ ApplicationWindow {
     color: "transparent"
     flags: Qt.Window | Qt.FramelessWindowHint
 
+    Binding {
+        target: Theme
+        property: "pixelRatio"
+        value: root.Screen.devicePixelRatio
+    }
+
     // ─── Background gradient layer ───────────────────────
     Rectangle {
         anchors.fill: parent
@@ -59,52 +65,95 @@ ApplicationWindow {
     }
 
     // ─── Main content ────────────────────────────────────
-    // Children follow the order of Navigation.Page.
-    StackLayout {
+    // Only the screen of the current location is alive, like a browser tab. Leaving a location stores the
+    // screen's saveState() with it; a screen made for a location reads Navigation.pageState back.
+    Item {
         id: contentArea
         anchors.top: titleBar.bottom
         anchors.bottom: playerBar.top
         anchors.left: sideBar.right
         anchors.right: parent.right
-        currentIndex: Navigation.page
 
-        HomeScreen {}
-        LibraryView {
+        // In the order of Navigation.Page.
+        readonly property list<Component> screens: [
+            homeScreen, tracksScreen, playlistsScreen, playlistScreen, favoritesScreen, recentScreen,
+            downloadsScreen, searchScreen, onlinePageScreen, settingsScreen, aboutScreen, updatesScreen,
+            collectionScreen
+        ]
+
+        function showLocation() {
+            pageLoader.sourceComponent = null;
+            pageLoader.sourceComponent = screens[Navigation.page];
+        }
+
+        Component.onCompleted: showLocation()
+
+        Connections {
+            target: Navigation
+            function onSaveStateRequested() {
+                const screen = pageLoader.item;
+                if (screen && typeof screen.saveState === "function")
+                    Navigation.storeState(screen.saveState());
+            }
+            function onLocationChanged() { contentArea.showLocation(); }
+        }
+
+        Loader {
+            id: pageLoader
+            objectName: "pageLoader"
+            anchors.fill: parent
+        }
+
+        Component { id: homeScreen; HomeScreen {} }
+        Component { id: tracksScreen; LibraryView {
+            id: tracksView
             readonly property string scanText: LibraryViewModel.scanning
                 ? " · Scanning…"
                 : (LibraryViewModel.pendingMetadata > 0 ? " · Reading tags, " + LibraryViewModel.pendingMetadata + " left" : "")
 
             title: "My library"
-            subtitle: LibraryViewModel.tracks.count + " tracks · " + LibraryViewModel.albumCount + " albums" + scanText
+            subtitle: LibraryViewModel.tracks.count + " tracks · " + CatalogViewModel.artists.count + " artists · "
+                      + CatalogViewModel.albums.count + " albums" + scanText
             model: LibraryViewModel.tracks
             showTabs: true
+            // Tab ids are "albums", "artists", "genres"; the grid takes the singular.
+            tabContent: CatalogGrid { kind: tracksView.currentTab.slice(0, -1) }
             emptyTitle: LibraryViewModel.scanning ? "Scanning your music folders…" : "Your library is empty"
             emptyText: LibraryViewModel.scanning ? "" : "Add music folders in Settings › Library, or save tracks from YouTube."
-        }
-        PlaylistsScreen {}
-        PlaylistScreen {}
-        LibraryView {
+        } }
+        Component { id: playlistsScreen; PlaylistsScreen {} }
+        Component { id: playlistScreen; PlaylistScreen {} }
+        Component { id: favoritesScreen; LibraryView {
             title: "Favorites"
             subtitle: LibraryViewModel.favorites.count + " tracks"
             model: LibraryViewModel.favorites
             emptyIcon: "heart"
             emptyTitle: "No favorites yet"
             emptyText: "Tap the heart on a track to keep it here."
-        }
-        LibraryView {
+        } }
+        Component { id: recentScreen; LibraryView {
             title: "Recent"
             subtitle: "Recently played"
             model: LibraryViewModel.recent
             emptyIcon: "clock"
             emptyTitle: "Nothing played yet"
             emptyText: "Tracks you play will show up here."
-        }
-        DownloadsScreen {}
-        SearchScreen {}
-        OnlinePageScreen {}
-        SettingsScreen {}
-        AboutScreen {}
-        UpdatesScreen {}
+        } }
+        Component { id: downloadsScreen; DownloadsScreen {} }
+        Component { id: searchScreen; SearchScreen {} }
+        Component { id: onlinePageScreen; OnlinePageScreen {} }
+        Component { id: settingsScreen; SettingsScreen {} }
+        Component { id: aboutScreen; AboutScreen {} }
+        Component { id: updatesScreen; UpdatesScreen {} }
+        Component { id: collectionScreen; CollectionScreen {} }
+    }
+
+    // ─── Properties of tracks: a window of its own ───────
+    TrackPropertiesWindow { id: propertiesWindow }
+
+    Connections {
+        target: LibraryViewModel
+        function onPropertiesRequested(trackIds) { propertiesWindow.openFor(trackIds); }
     }
 
     // ─── Search from anywhere: Ctrl+K, Ctrl+F ────────────
@@ -113,14 +162,18 @@ ApplicationWindow {
         onActivated: titleBar.focusSearch()
     }
 
-    // ─── Back navigation: mouse back button, Alt+Left ────
+    // ─── Back and forward: mouse side buttons, Alt+Left / Alt+Right ─
     TapHandler {
-        acceptedButtons: Qt.BackButton
-        onTapped: Navigation.goBack()
+        acceptedButtons: Qt.BackButton | Qt.ForwardButton
+        onTapped: (eventPoint, button) => button === Qt.ForwardButton ? Navigation.goForward() : Navigation.goBack()
     }
     Shortcut {
         sequences: [StandardKey.Back]
         onActivated: Navigation.goBack()
+    }
+    Shortcut {
+        sequences: [StandardKey.Forward]
+        onActivated: Navigation.goForward()
     }
 
     // ─── Resize handle ───────────────────────────────────

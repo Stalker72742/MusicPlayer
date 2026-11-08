@@ -1,15 +1,15 @@
 #include "SettingsModel.h"
 
-#include <QAudioDevice>
 #include <QDebug>
 #include <QJSEngine>
-#include <QMediaDevices>
 
 #include <QTomlUtils/QTomlUtils.h>
 
 #include "AppConfigs.h"
+#include "Catalog/ArtworkSubsystem.h"
 #include "Discord/DiscordSubsystem.h"
 #include "Library/LibrarySubsystem.h"
+#include "Player/AudioDevices.h"
 #include "Player/PlayerSubsystem.h"
 #include "SettingsCategories.h"
 
@@ -41,19 +41,19 @@ SettingsModel::SettingsModel()
         };
     };
 
-    auto toggle = [&bind](QString key, QString category, QString title, QString description) {
-        Setting setting{key, category, title, description, Toggle, false, false};
+    auto toggle = [&bind](QString key, QString section, QString title, QString description) {
+        Setting setting{key, section, title, description, Toggle, false, false};
         bind(setting);
         return setting;
     };
 
-    auto configChoice = [this](QString key, QString category, QString title, QString description,
+    auto configChoice = [this](QString key, QString section, QString title, QString description,
                             QList<std::pair<QString, QString>> choices) {
         QStringList titles;
         for (const auto& [id, choiceTitle] : choices)
             titles.append(choiceTitle);
 
-        Setting setting{key, category, title, description, Choice, titles.first(), titles.first()};
+        Setting setting{key, section, title, description, Choice, titles.first(), titles.first()};
         setting.options = titles;
         setting.read = [key, choices] {
             const QString id = QTomlUtils::FindPropertyValue<QString>(AppConfigs::Settings, key).value_or(QString());
@@ -79,16 +79,33 @@ SettingsModel::SettingsModel()
         };
         return setting;
     };
-    Setting downloadFolder{AppConfigs::SettingsKeys::DownloadFolder, QStringLiteral("downloads"),
+    Setting downloadFolder{AppConfigs::SettingsKeys::DownloadFolder, QStringLiteral("library.downloads"),
         QStringLiteral("Download folder"),
         QStringLiteral("Where downloaded tracks go. Inside a music folder they also show up in other players."),
         Folder, QString(), QString()};
     bind(downloadFolder);
 
+    Setting artworkFolder{AppConfigs::SettingsKeys::ArtworkFolder, QStringLiteral("library.artwork"),
+        QStringLiteral("Artwork folder"),
+        QStringLiteral("Pictures of artists, albums and genres, in Artists, Albums and Genres subfolders. "
+                       "Put your own there named like the artist, \"Artist - Album\" or the genre, or replace any file."),
+        Folder, QString(), QString()};
+    bind(artworkFolder);
+    const auto writeArtworkFolder = artworkFolder.write;
+    artworkFolder.write = [writeArtworkFolder](const QVariant& value) {
+        writeArtworkFolder(value);
+        ArtworkSubsystem::Get().ApplyFolderSetting();
+    };
+    const auto resetArtworkFolder = artworkFolder.reset;
+    artworkFolder.reset = [resetArtworkFolder] {
+        resetArtworkFolder();
+        ArtworkSubsystem::Get().ApplyFolderSetting();
+    };
+
     QList<std::pair<QString, QString>> outputs{{QString(), QStringLiteral("System default")}};
-    for (const QAudioDevice& device : QMediaDevices::audioOutputs())
-        outputs.append({QString::fromUtf8(device.id()), device.description()});
-    Setting output = configChoice(AppConfigs::SettingsKeys::OutputDevice, QStringLiteral("audio"),
+    for (const AudioDevices::Device& device : AudioDevices::List())
+        outputs.append({QString::fromUtf8(device.id), device.name});
+    Setting output = configChoice(AppConfigs::SettingsKeys::OutputDevice, QStringLiteral("general.playback"),
         QStringLiteral("Output device"), QStringLiteral("Where the sound goes"), outputs);
     const auto writeOutput = output.write;
     output.write = [writeOutput](const QVariant& value) {
@@ -101,11 +118,11 @@ SettingsModel::SettingsModel()
         PlayerSubsystem::Get().ApplyOutputDevice();
     };
 
-    auto statusRow = [](QString key, QString title, QString description, Type type) {
-        return Setting{key, QStringLiteral("online"), title, description, type, QVariant(), QVariant()};
+    auto statusRow = [](QString key, QString section, QString title, QString description, Type type) {
+        return Setting{key, section, title, description, type, QVariant(), QVariant()};
     };
 
-    Setting discord = toggle(AppConfigs::SettingsKeys::DiscordPresence, QStringLiteral("general"),
+    Setting discord = toggle(AppConfigs::SettingsKeys::DiscordPresence, QStringLiteral("general.app"),
         QStringLiteral("Discord status"), QStringLiteral("Show what you are listening to on your Discord profile"));
     const auto writeDiscord = discord.write;
     discord.write = [writeDiscord](const QVariant& value) {
@@ -118,13 +135,7 @@ SettingsModel::SettingsModel()
         DiscordSubsystem::Get().ApplySetting();
     };
 
-    Setting crossfade{AppConfigs::SettingsKeys::Crossfade, QStringLiteral("audio"), QStringLiteral("Crossfade"),
-        QStringLiteral("Blend the end of a track into the next one (coming soon)"), Slider, 0.0, 0.0};
-    crossfade.maximum = 12;
-    crossfade.unit = QStringLiteral("s");
-    bind(crossfade);
-
-    Setting folders{AppConfigs::SettingsKeys::MusicScanFolders, QStringLiteral("library"), QStringLiteral("Music folders"),
+    Setting folders{AppConfigs::SettingsKeys::MusicScanFolders, QStringLiteral("library.folders"), QStringLiteral("Music folders"),
         QStringLiteral("Folders scanned for music, including subfolders"), FolderList, QStringList(), QStringList()};
     folders.read = [] { return QVariant(LibrarySubsystem::Get().GetFolders()); };
     folders.write = [](const QVariant& value) { LibrarySubsystem::Get().SetFolders(value.toStringList()); };
@@ -132,57 +143,63 @@ SettingsModel::SettingsModel()
     folders.reset = [] { LibrarySubsystem::Get().ResetFolders(); };
 
     settings = {
-        toggle(AppConfigs::SettingsKeys::CloseToTray, QStringLiteral("general"), QStringLiteral("Close to tray"),
+        toggle(AppConfigs::SettingsKeys::CloseToTray, QStringLiteral("general.app"), QStringLiteral("Close to tray"),
             QStringLiteral("Keep playing in the tray when the window is closed; otherwise closing quits")),
-        toggle(AppConfigs::SettingsKeys::StartMinimized, QStringLiteral("general"), QStringLiteral("Start minimized"),
+        toggle(AppConfigs::SettingsKeys::StartMinimized, QStringLiteral("general.app"), QStringLiteral("Start minimized"),
             QStringLiteral("Start in the tray without showing the window")),
         discord,
-        configChoice(AppConfigs::SettingsKeys::Language, QStringLiteral("general"), QStringLiteral("Language"),
-            QStringLiteral("Interface language (only English for now)"),
-            {{QStringLiteral("en"), QStringLiteral("English")}, {QStringLiteral("ru"), QStringLiteral("Русский")}}),
-
-        folders,
-        toggle(AppConfigs::SettingsKeys::ScanOnStartup, QStringLiteral("library"), QStringLiteral("Scan on startup"),
-            QStringLiteral("Look for new files every time the app starts")),
 
         output,
-        toggle(AppConfigs::SettingsKeys::NormalizeVolume, QStringLiteral("audio"), QStringLiteral("Normalize volume"),
-            QStringLiteral("Play all tracks at a similar loudness (coming soon)")),
-        crossfade,
+        configChoice(AppConfigs::SettingsKeys::AudioQuality, QStringLiteral("general.playback"), QStringLiteral("Audio quality"),
+            QStringLiteral("Of YouTube streams and downloads. High is AAC, which every player and tag editor handles"),
+            {{AppConfigs::AudioQuality::Best, QStringLiteral("Best")}, {AppConfigs::AudioQuality::High, QStringLiteral("High")},
+                {AppConfigs::AudioQuality::Medium, QStringLiteral("Medium")}}),
 
-        statusRow(QStringLiteral("online.browserExtension"), QStringLiteral("Browser extension"),
+        folders,
+
+        artworkFolder,
+        toggle(AppConfigs::SettingsKeys::FetchArtwork, QStringLiteral("library.artwork"), QStringLiteral("Download missing pictures"),
+            QStringLiteral("Look artists, albums and genres without a picture up on Deezer and save what is found into the artwork folder")),
+
+        downloadFolder,
+        configChoice(AppConfigs::SettingsKeys::DownloadFormat, QStringLiteral("library.downloads"), QStringLiteral("Download format"),
+            QStringLiteral("Files stay as YouTube serves them, nothing is converted. If a track lacks the format, the best available one is taken"),
+            {{AppConfigs::DownloadFormat::Auto, QStringLiteral("By quality")}, {AppConfigs::DownloadFormat::M4a, QStringLiteral("M4A")},
+                {AppConfigs::DownloadFormat::Opus, QStringLiteral("Opus")}}),
+        toggle(AppConfigs::SettingsKeys::SaveWhileListening, QStringLiteral("library.downloads"), QStringLiteral("Save tracks while listening"),
+            QStringLiteral("A YouTube track played to its end stays as a file, with no second download")),
+
+        statusRow(QStringLiteral("online.browserExtension"), QStringLiteral("online.extension"), QStringLiteral("Browser extension"),
             QStringLiteral("Plays YouTube with your browser's own session, so bot checks pass the way they do there. "
                            "Install it unpacked from the folder, then pair it with the code shown here."),
             BrowserBridge),
-        configChoice(AppConfigs::SettingsKeys::OnlineSearchSource, QStringLiteral("online"), QStringLiteral("Search with"),
-            QStringLiteral("Tried first; the other one takes over if it fails"),
-            {{QStringLiteral("innertube"), QStringLiteral("InnerTube")}, {QStringLiteral("ytdlp"), QStringLiteral("yt-dlp")}}),
-        configChoice(AppConfigs::SettingsKeys::OnlineStreamSource, QStringLiteral("online"), QStringLiteral("Play streams with"),
-            QStringLiteral("Tried first; yt-dlp on its own takes over if the extension is missing or fails"),
-            {{QStringLiteral("browser"), QStringLiteral("Browser extension")}, {QStringLiteral("ytdlp"), QStringLiteral("yt-dlp")}}),
-        configChoice(AppConfigs::SettingsKeys::OnlineBrowserCookies, QStringLiteral("online"), QStringLiteral("Browser cookies"),
+        configChoice(AppConfigs::SettingsKeys::OnlineBrowserCookies, QStringLiteral("online.extension"), QStringLiteral("Browser cookies"),
             QStringLiteral("Only for a browser logged in to YouTube or after a sign-in wall, and only if the extension "
                            "allows it too. Cookies go to a temporary file deleted right after use."),
             {{AppConfigs::BrowserCookies::WhenNeeded, QStringLiteral("Only when needed")},
                 {AppConfigs::BrowserCookies::Never, QStringLiteral("Never")}}),
-        statusRow(QStringLiteral("online.backends"), QStringLiteral("Sources"),
-            QStringLiteral("What can be used right now"), OnlineBackends),
 
-        downloadFolder,
-        toggle(AppConfigs::SettingsKeys::AutoUpdateYtDlp, QStringLiteral("downloads"), QStringLiteral("Keep yt-dlp updated"),
+        statusRow(QStringLiteral("online.backends"), QStringLiteral("online.advanced"), QStringLiteral("Sources"),
+            QStringLiteral("What can be used right now"), OnlineBackends),
+        configChoice(AppConfigs::SettingsKeys::OnlineSearchSource, QStringLiteral("online.advanced"), QStringLiteral("Search with"),
+            QStringLiteral("Tried first; the other one takes over if it fails"),
+            {{QStringLiteral("innertube"), QStringLiteral("InnerTube")}, {QStringLiteral("ytdlp"), QStringLiteral("yt-dlp")}}),
+        configChoice(AppConfigs::SettingsKeys::OnlineStreamSource, QStringLiteral("online.advanced"), QStringLiteral("Play streams with"),
+            QStringLiteral("Tried first; yt-dlp on its own takes over if the extension is missing or fails"),
+            {{QStringLiteral("browser"), QStringLiteral("Browser extension")}, {QStringLiteral("ytdlp"), QStringLiteral("yt-dlp")}}),
+        toggle(AppConfigs::SettingsKeys::AutoUpdateYtDlp, QStringLiteral("online.advanced"), QStringLiteral("Keep yt-dlp updated"),
             QStringLiteral("Check for a new yt-dlp every hour and after failed downloads")),
-        configChoice(AppConfigs::SettingsKeys::AudioQuality, QStringLiteral("downloads"), QStringLiteral("Audio quality"),
-            QStringLiteral("Of streams and downloads. High is AAC, which every player and tag editor handles"),
-            {{AppConfigs::AudioQuality::Best, QStringLiteral("Best")}, {AppConfigs::AudioQuality::High, QStringLiteral("High")},
-                {AppConfigs::AudioQuality::Medium, QStringLiteral("Medium")}}),
-        configChoice(AppConfigs::SettingsKeys::DownloadFormat, QStringLiteral("downloads"), QStringLiteral("Download format"),
-            QStringLiteral("Files stay as YouTube serves them, nothing is converted. If a track lacks the format, the best available one is taken"),
-            {{AppConfigs::DownloadFormat::Auto, QStringLiteral("By quality")}, {AppConfigs::DownloadFormat::M4a, QStringLiteral("M4A")},
-                {AppConfigs::DownloadFormat::Opus, QStringLiteral("Opus")}}),
     };
 
-    for (const Setting& setting : settings)
-        Q_ASSERT_X(IsSettingsCategory(setting.category), "SettingsModel", "setting in an unknown category");
+    for (Setting& setting : settings)
+    {
+        const SettingsCategory* category = FindCategoryOfSection(setting.section);
+        Q_ASSERT_X(category, "SettingsModel", "setting in an unknown section");
+        setting.category = category ? category->id : QString();
+    }
+
+    collapsedSections = QTomlUtils::FindPropertyValue<QStringList>(AppConfigs::Settings,
+        AppConfigs::SettingsKeys::CollapsedSettingsSections).value_or(QStringList{});
 
     connect(&LibrarySubsystem::Get(), &LibrarySubsystem::foldersChanged, this,
         [this] { NotifyValueChanged(FindRow(AppConfigs::SettingsKeys::MusicScanFolders)); });
@@ -215,6 +232,7 @@ QVariant SettingsModel::data(const QModelIndex& index, int role) const
     {
         case KeyRole:         return setting.key;
         case CategoryRole:    return setting.category;
+        case SectionRole:     return setting.section;
         case TitleRole:       return setting.title;
         case DescriptionRole: return setting.description;
         case TypeRole:        return setting.type;
@@ -234,6 +252,7 @@ QHash<int, QByteArray> SettingsModel::roleNames() const
     return {
         {KeyRole, "key"},
         {CategoryRole, "category"},
+        {SectionRole, "section"},
         {TitleRole, "title"},
         {DescriptionRole, "description"},
         {TypeRole, "type"},
@@ -283,6 +302,30 @@ QString SettingsModel::categoryTitle(const QString& id) const
             return category.title;
     }
     return {};
+}
+
+QString SettingsModel::sectionTitle(const QString& id) const
+{
+    return GetSettingsSectionTitle(id);
+}
+
+QString SettingsModel::sectionOf(const QString& key) const
+{
+    const int row = FindRow(key);
+    return row >= 0 ? settings[row].section : QString();
+}
+
+void SettingsModel::setSectionCollapsed(const QString& id, bool bCollapsed)
+{
+    if (collapsedSections.contains(id) == bCollapsed || !FindCategoryOfSection(id))
+        return;
+
+    if (bCollapsed)
+        collapsedSections.append(id);
+    else
+        collapsedSections.removeAll(id);
+    QTomlUtils::SetPropertyValue(AppConfigs::Settings, AppConfigs::SettingsKeys::CollapsedSettingsSections, collapsedSections);
+    emit collapsedSectionsChanged();
 }
 
 int SettingsModel::FindRow(const QString& key) const

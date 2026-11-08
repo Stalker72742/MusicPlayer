@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import SoundLink 1.0
 
@@ -8,7 +9,37 @@ import SoundLink 1.0
 Item {
     id: root
 
+    // Navigation keeps this with the location while the screen is gone; see WindowsMainWindow.
+    function saveState() {
+        return { scroll: list.contentY - list.originY };
+    }
+
+    Component.onCompleted: {
+        const y = Navigation.pageState.scroll || 0;
+        if (y > 0)
+            Qt.callLater(() => list.contentY = list.originY + Math.min(y, Math.max(0, list.contentHeight - list.height)));
+    }
+
     readonly property DownloadListModel jobs: DownloadsViewModel.jobs
+
+    function showJobMenu(point, id, state) {
+        const done = state === DownloadListModel.Done;
+        const failed = state === DownloadListModel.Failed;
+        jobMenu.openAt(point, [
+            done ? { text: "Play", icon: "play", action: () => PlayerViewModel.playSingle(id) } : null,
+            failed ? { text: "Retry", icon: "repeat", action: () => DownloadsViewModel.retry(id) } : null,
+            done ? null : { text: failed ? "Remove from the queue" : "Cancel", icon: "close", action: () => DownloadsViewModel.cancel(id) },
+            { separator: true },
+            done ? { text: "Show in folder", icon: "folder", action: () => LibraryViewModel.showInFolder(id) } : null,
+            { text: "Properties…", icon: "tag", action: () => LibraryViewModel.openProperties([id]) },
+            done ? { text: "Remove download…", icon: "trash", action: () => removeDialog.ask("Remove download",
+                "The downloaded file will be deleted. The track stays and plays from YouTube again.",
+                "Remove", () => DownloadsViewModel.removeDownload(id)) } : null
+        ]);
+    }
+
+    ContextMenu { id: jobMenu }
+    ConfirmDialog { id: removeDialog }
 
     ColumnLayout {
         anchors.fill: parent
@@ -48,6 +79,7 @@ Item {
             spacing: 2
             boundsBehavior: Flickable.StopAtBounds
             model: root.jobs
+            ScrollBar.vertical: AppScrollBar {}
 
             delegate: Rectangle {
                 id: job
@@ -62,10 +94,16 @@ Item {
                 required property string sizeText
                 required property string error
 
-                width: list.width
+                width: list.width - 12
                 height: 64
                 radius: Theme.metrics.radiusMd
                 color: rowHover.hovered ? Theme.palette.hoverOverlay : "transparent"
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.RightButton
+                    onClicked: (mouse) => root.showJobMenu(job.mapToItem(null, mouse.x, mouse.y), job.trackId, job.jobState)
+                }
 
                 AlbumArt {
                     id: art
