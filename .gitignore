@@ -21,6 +21,7 @@ source/CMakeUserPresets.json
 *.dll
 *.dylib
 
+
 # Qt-es
 object_script.*.Release
 object_script.*.Debug
