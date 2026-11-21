@@ -82,6 +82,9 @@ public:
         const QString& channelUrl = {});
     /// @brief The online track with this page URL, or an invalid id.
     TrackId FindOnlineTrack(const QString& pageUrl) const;
+    /// @brief The track whose local file is at this path (a scanned file or the downloaded copy of an online track),
+    /// or an invalid id.
+    TrackId FindTrackByPath(const QString& path) const;
 
     /// @brief Saves an online track to the library or makes it transient again.
     ///
@@ -120,6 +123,11 @@ public:
 
     /// @brief Replaces the user's tags of a track (used by smart playlists).
     void SetLabels(TrackId id, const QStringList& labels);
+
+    /// @brief Replaces the user's tags and tag edits of a track at once (used by device sync).
+    ///
+    /// Unlike SetTagEdits() an edit missing from `tagEdits` is dropped; the tags of a local file are then read again.
+    void ReplaceUserData(TrackId id, const QStringList& labels, const QMap<QString, QString>& tagEdits);
 
     /// @brief Drops transient online tracks.
     /// @param keep Tracks still in use (e.g. the playing one) that stay.

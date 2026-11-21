@@ -67,6 +67,19 @@ namespace AppConfigs
 
         /// @brief QStringList: ids of the sections collapsed on the settings screen.
         inline const QString CollapsedSettingsSections = QStringLiteral("ui.collapsedSettingsSections");
+
+        /// @brief bool: sync with paired devices (SyncSubsystem).
+        inline const QString SyncEnabled = QStringLiteral("sync.enabled");
+        /// @brief QString: the name other devices see; empty for the computer name.
+        inline const QString SyncDeviceName = QStringLiteral("sync.deviceName");
+        /// @brief int: TCP port sessions are accepted on; the next free one of the ten after it when taken.
+        inline const QString SyncPort = QStringLiteral("sync.port");
+        /// @brief bool: ask the router for a port mapping (UPnP), so devices outside the network can connect.
+        inline const QString SyncUpnp = QStringLiteral("sync.upnp");
+        /// @brief bool: a file a paired device replaced or deleted waits for confirmation as a conflict.
+        inline const QString SyncConfirmRemote = QStringLiteral("sync.confirmRemote");
+        /// @brief QStringList: addresses ("host:port") of paired devices entered by hand, tried besides discovery.
+        inline const QString SyncManualAddresses = QStringLiteral("sync.manualAddresses");
     }
 
     /// @brief Values of SettingsKeys::DownloadFormat. Picked among what the site serves, nothing is converted.

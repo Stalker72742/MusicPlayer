@@ -42,6 +42,11 @@ inline const QList<SettingsCategory>& GetSettingsCategories()
                 {QStringLiteral("online.extension"), QStringLiteral("Browser extension")},
                 {QStringLiteral("online.advanced"), QStringLiteral("Advanced")},
             }},
+        {QStringLiteral("sync"), QStringLiteral("Sync"), QStringLiteral("devices"),
+            {
+                {QStringLiteral("sync.devices"), QStringLiteral("Devices")},
+                {QStringLiteral("sync.network"), QStringLiteral("Network")},
+            }},
     };
     return categories;
 }

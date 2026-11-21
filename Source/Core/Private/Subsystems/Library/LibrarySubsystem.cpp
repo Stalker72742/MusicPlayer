@@ -36,6 +36,18 @@ namespace
         return QDir::cleanPath(QFileInfo(path).absoluteFilePath());
     }
 
+    QStringList CleanedLabels(const QStringList& labels)
+    {
+        QStringList cleaned;
+        for (const QString& label : labels)
+        {
+            const QString simplified = label.simplified();
+            if (!simplified.isEmpty() && !cleaned.contains(simplified, Qt::CaseInsensitive))
+                cleaned.append(simplified);
+        }
+        return cleaned;
+    }
+
     bool IsUnder(const QString& path, const QStringList& folders)
     {
         return std::any_of(folders.cbegin(), folders.cend(), [&path](const QString& folder) {
@@ -479,6 +491,11 @@ TrackId LibrarySubsystem::FindOnlineTrack(const QString& pageUrl) const
     return idByUrl.value(pageUrl);
 }
 
+TrackId LibrarySubsystem::FindTrackByPath(const QString& path) const
+{
+    return path.isEmpty() ? TrackId{} : idByPath.value(NormalizedPath(path));
+}
+
 void LibrarySubsystem::SetSaved(TrackId id, bool bSaved)
 {
     Track* track = FindMutable(id);
@@ -635,18 +652,45 @@ void LibrarySubsystem::SetLabels(TrackId id, const QStringList& labels)
     if (!track)
         return;
 
-    QStringList cleaned;
-    for (const QString& label : labels)
-    {
-        const QString simplified = label.simplified();
-        if (!simplified.isEmpty() && !cleaned.contains(simplified, Qt::CaseInsensitive))
-            cleaned.append(simplified);
-    }
-
+    const QStringList cleaned = CleanedLabels(labels);
     if (track->user.labels == cleaned)
         return;
 
     track->user.labels = cleaned;
+    NotifyChanged();
+    ScheduleSave();
+}
+
+void LibrarySubsystem::ReplaceUserData(TrackId id, const QStringList& labels, const QMap<QString, QString>& tagEdits)
+{
+    Track* track = FindMutable(id);
+    if (!track)
+        return;
+
+    const QStringList cleaned = CleanedLabels(labels);
+    QMap<QString, QString> edits;
+    for (auto it = tagEdits.cbegin(); it != tagEdits.cend(); ++it)
+    {
+        const QString value = it.value().trimmed();
+        if (it.key() != QLatin1String("title") || !value.isEmpty())
+            edits.insert(it.key(), value);
+    }
+
+    if (track->user.labels == cleaned && track->user.tagEdits == edits)
+        return;
+
+    const bool bDropped = std::any_of(track->user.tagEdits.keyBegin(), track->user.tagEdits.keyEnd(),
+        [&edits](const QString& key) { return !edits.contains(key); });
+
+    track->user.labels = cleaned;
+    track->user.tagEdits = edits;
+    ApplyTagEdits(*track);
+    if (bDropped && !track->IsOnline() && !track->file.path.isEmpty())
+    {
+        track->tags.bFromFile = false;
+        metadataReader->Enqueue(id, track->file.path);
+    }
+
     NotifyChanged();
     ScheduleSave();
 }

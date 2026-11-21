@@ -145,10 +145,26 @@ Rectangle {
             iconName: root.maximized ? "restore" : "maximize"
             onClicked: {
                 if (!root.window) return;
-                if (root.window.visibility === Window.Maximized)
-                    root.window.showNormal();
-                else
+
+                const win = root.window;
+
+                if (root.window.visibility === Window.Maximized) {
+                    win.showNormal();
+
+                    const screen = win.screen;
+                    const screenWidth = screen.width;
+                    const screenHeight = screen.height;
+
+                    if (win.width > screenWidth || win.height > screenHeight) {
+                        win.width = Math.round(screenWidth * 0.75);
+                        win.height = Math.round(screenHeight * 0.75);
+
+                        win.x = Math.round((screenWidth - win.width) / 2);
+                        win.y = Math.round((screenHeight - win.height) / 2);
+                    }
+                } else {
                     root.window.showMaximized();
+                }
             }
         }
         TitleBarButton {

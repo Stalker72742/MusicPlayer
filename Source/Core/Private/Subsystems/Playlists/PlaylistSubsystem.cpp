@@ -249,6 +249,18 @@ void PlaylistSubsystem::Delete(const QString& id)
     Changed();
 }
 
+void PlaylistSubsystem::Upsert(const Playlist& playlist)
+{
+    if (playlist.id.isEmpty())
+        return;
+
+    if (Playlist* existing = FindMutable(playlist.id))
+        *existing = playlist;
+    else
+        playlists.append(playlist);
+    Changed();
+}
+
 void PlaylistSubsystem::AddTracks(const QString& id, const QList<TrackId>& tracks)
 {
     Playlist* playlist = FindMutable(id);

@@ -146,6 +146,8 @@ Rectangle {
                     iconName: "download"
                     text: "Downloads"
                     badge: DownloadsViewModel.activeCount > 0 ? String(DownloadsViewModel.activeCount) : ""
+                    // Sync conflicts wait for a choice on the Sync tab.
+                    showDot: SyncViewModel.conflictCount > 0
                     compact: root.compact
                     selected: Navigation.page === Navigation.Downloads
                     onClicked: Navigation.navigate(Navigation.Downloads)

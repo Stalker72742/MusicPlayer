@@ -5,19 +5,42 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import SoundLink 1.0
 
-// The download queue: what is waiting, downloading, done or failed.
+// The download queue (what is waiting, downloading, done or failed) and, on its own tab, device sync: files being
+// received and conflicts waiting for a choice.
 Item {
     id: root
 
+    /// "downloads" or "sync".
+    property string tab: "downloads"
+
     // Navigation keeps this with the location while the screen is gone; see WindowsMainWindow.
     function saveState() {
-        return { scroll: list.contentY - list.originY };
+        return {
+            scroll: list.contentY - list.originY,
+            syncScroll: syncPanel.listView.contentY - syncPanel.listView.originY,
+            tab: tab
+        };
+    }
+
+    function restoreScroll(view, y) {
+        if (y > 0)
+            Qt.callLater(() => view.contentY = view.originY + Math.min(y, Math.max(0, view.contentHeight - view.height)));
     }
 
     Component.onCompleted: {
-        const y = Navigation.pageState.scroll || 0;
-        if (y > 0)
-            Qt.callLater(() => list.contentY = list.originY + Math.min(y, Math.max(0, list.contentHeight - list.height)));
+        const state = Navigation.pageState;
+        tab = state.tab || (SyncViewModel.conflictCount > 0 ? "sync" : "downloads");
+        restoreScroll(list, state.scroll || 0);
+        restoreScroll(syncPanel.listView, state.syncScroll || 0);
+    }
+
+    // A notification about conflicts was clicked.
+    Connections {
+        target: SyncViewModel
+
+        function onConflictsRequested() {
+            root.tab = "sync";
+        }
     }
 
     readonly property DownloadListModel jobs: DownloadsViewModel.jobs
@@ -51,11 +74,30 @@ Item {
         ScreenHeader {
             Layout.fillWidth: true
             title: "Downloads"
-            subtitle: (DownloadsViewModel.activeCount > 0 ? DownloadsViewModel.activeCount + " in the queue · " : "")
-                      + "Saved to " + DownloadsViewModel.folder
+            subtitle: root.tab === "sync"
+                      ? (SyncViewModel.running && SyncViewModel.fileSyncAvailable
+                         ? "Received files go to " + SyncViewModel.placementRoot : "")
+                      : (DownloadsViewModel.activeCount > 0 ? DownloadsViewModel.activeCount + " in the queue · " : "")
+                        + "Saved to " + DownloadsViewModel.folder
         }
 
         Row {
+            spacing: 4
+
+            TabPill {
+                text: DownloadsViewModel.activeCount > 0 ? "Downloads · " + DownloadsViewModel.activeCount : "Downloads"
+                selected: root.tab === "downloads"
+                onClicked: root.tab = "downloads"
+            }
+            TabPill {
+                text: SyncViewModel.conflictCount > 0 ? "Sync · " + SyncViewModel.conflictCount : "Sync"
+                selected: root.tab === "sync"
+                onClicked: root.tab = "sync"
+            }
+        }
+
+        Row {
+            visible: root.tab === "downloads"
             spacing: 8
 
             TextButton {
@@ -71,7 +113,7 @@ Item {
 
         ListView {
             id: list
-            visible: root.jobs.count > 0
+            visible: root.tab === "downloads" && root.jobs.count > 0
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.topMargin: 8
@@ -207,12 +249,20 @@ Item {
         }
 
         EmptyState {
-            visible: root.jobs.count === 0
+            visible: root.tab === "downloads" && root.jobs.count === 0
             Layout.fillWidth: true
             Layout.fillHeight: true
             iconName: "download"
             title: "Nothing downloading"
             text: "Download a YouTube track from its ⋯ menu, or a whole playlist with Download. Downloaded tracks play from the file, with no waiting for the stream."
+        }
+
+        SyncPanel {
+            id: syncPanel
+            visible: root.tab === "sync"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.topMargin: 8
         }
     }
 }

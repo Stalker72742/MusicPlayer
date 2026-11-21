@@ -19,6 +19,8 @@
 #include "IconImageProvider.h"
 #include "Library/LibrarySubsystem.h"
 #include "Online/BrowserBridge.h"
+#include "Sync/SyncSubsystem.h"
+#include "SyncViewModel.h"
 #include "SystemMediaControls.h"
 #include "TrayIcon.h"
 #include "YtDlp/DenoSubsystem.h"
@@ -92,6 +94,8 @@ bool AppInstance::init()
     DenoSubsystem::Get().EnsureInstalled();
 
     BrowserBridge::Get().Start();
+    SyncViewModel::Get();
+    SyncSubsystem::Get().Start();
     return true;
 }
 

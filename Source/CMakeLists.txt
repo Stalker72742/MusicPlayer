@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(SoundLink VERSION 0.2 LANGUAGES CXX)
+project(SoundLink VERSION 0.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Concurrent Gui Widgets Network Qml Quick QuickControls2 WebSockets)
+# Sync between devices: QtProtobuf messages (module qtgrpc) over HTTP/2 from the private QHttp2Connection (6.7+).
+# The generated code is checked in, so only the library is needed: protoc (Qt's ProtobufTools) may be missing.
+set(QT_ALLOW_MISSING_TOOLS_PACKAGES TRUE)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Protobuf)
+unset(QT_ALLOW_MISSING_TOOLS_PACKAGES)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -101,6 +106,28 @@ qt_add_executable(SoundLink
         core/private/subsystems/YtDlp/ReleaseAssetDownload.h
         core/private/subsystems/YtDlp/ReleaseAssetDownload.cpp
 
+        # Sync between devices
+        core/public/subsystems/Sync/SyncSubsystem.h
+        core/private/subsystems/Sync/SyncSubsystem.cpp
+        core/private/subsystems/Sync/SyncData.h
+        core/private/subsystems/Sync/SyncData.cpp
+        core/private/subsystems/Sync/SyncEngine.h
+        core/private/subsystems/Sync/SyncEngine.cpp
+        core/private/subsystems/Sync/SyncEngineFiles.cpp
+        core/private/subsystems/Sync/SyncEngineLibrary.cpp
+        core/private/subsystems/Sync/SyncEngineTransfers.cpp
+        core/private/subsystems/Sync/SyncSession.h
+        core/private/subsystems/Sync/SyncSession.cpp
+        core/private/subsystems/Sync/SyncCrypto.h
+        core/private/subsystems/Sync/SyncCrypto.cpp
+        core/private/subsystems/Sync/SyncNetwork.h
+        core/private/subsystems/Sync/SyncNetwork.cpp
+        core/private/subsystems/Sync/GrpcTransport.h
+        core/private/subsystems/Sync/GrpcTransport.cpp
+        core/private/subsystems/Sync/proto/generated/sync.qpb.h
+        core/private/subsystems/Sync/proto/generated/sync.qpb.cpp
+        core/private/subsystems/Sync/proto/generated/sync_qtprotoreg.cpp
+
         # UI
         ui/tray/TrayIcon.h
         ui/tray/TrayIcon.cpp
@@ -116,6 +143,7 @@ target_include_directories(SoundLink PRIVATE
         core/public/subsystems
         ui/tray
         ui/windowsUI/ViewModels
+        core/private/subsystems/Sync/proto/generated
 )
 
 target_link_libraries(SoundLink PRIVATE
@@ -124,15 +152,36 @@ target_link_libraries(SoundLink PRIVATE
         Qt6::Gui
         Qt6::Widgets
         Qt6::Network
+        Qt6::NetworkPrivate
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::WebSockets
+        Qt6::Protobuf
         QTomlUtils::QTomlUtils
 )
 
 if(WIN32)
-    target_link_libraries(SoundLink PRIVATE winmm ole32 user32 advapi32 runtimeobject uuid)
+    target_link_libraries(SoundLink PRIVATE winmm ole32 user32 advapi32 runtimeobject uuid bcrypt)
+endif()
+
+# The sync protocol: the QtProtobuf code generated from sync.proto is checked in. sync.proto must stay identical to
+# SoundLink_Kotlin/app/src/main/proto/sync.proto; after changing both, build SoundLink_regenerate_proto
+# (needs protoc on PATH or -DPROTOC_EXECUTABLE=<path>).
+set(SYNC_PROTO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/private/subsystems/Sync/proto")
+if(MINGW)
+    # The generated messages exceed the 32k sections of a plain COFF object in unoptimized builds.
+    set_source_files_properties(${SYNC_PROTO_DIR}/generated/sync.qpb.cpp PROPERTIES COMPILE_OPTIONS "-Wa,-mbig-obj")
+endif()
+find_program(PROTOC_EXECUTABLE protoc)
+find_program(QTPROTOBUFGEN_EXECUTABLE qtprotobufgen HINTS "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}" NO_DEFAULT_PATH)
+if(PROTOC_EXECUTABLE AND QTPROTOBUFGEN_EXECUTABLE)
+    add_custom_target(SoundLink_regenerate_proto
+            COMMAND "${PROTOC_EXECUTABLE}" "--plugin=protoc-gen-qtprotobuf=${QTPROTOBUFGEN_EXECUTABLE}"
+                    "--qtprotobuf_out=${SYNC_PROTO_DIR}/generated" "-I${SYNC_PROTO_DIR}" "${SYNC_PROTO_DIR}/sync.proto"
+            WORKING_DIRECTORY "${SYNC_PROTO_DIR}"
+            COMMENT "Generating the sync protocol code from sync.proto"
+            VERBATIM)
 endif()
 
 # Optional modules (see AppModule): each option adds a module's sources, which register the module themselves;
@@ -236,6 +285,8 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Components/TextButton.qml
         ${QML_DIR}/Components/ToggleSwitch.qml
         ${QML_DIR}/Components/SettingRow.qml
+        ${QML_DIR}/Components/SyncPanel.qml
+        ${QML_DIR}/Components/SyncSettingControl.qml
         SOURCES
         ui/windowsUI/ViewModels/IconImageProvider.h
         ui/windowsUI/ViewModels/IconImageProvider.cpp
@@ -270,6 +321,8 @@ qt_add_qml_module(SoundLink
         ui/windowsUI/ViewModels/PlaylistsViewModel.cpp
         ui/windowsUI/ViewModels/DownloadsViewModel.h
         ui/windowsUI/ViewModels/DownloadsViewModel.cpp
+        ui/windowsUI/ViewModels/SyncViewModel.h
+        ui/windowsUI/ViewModels/SyncViewModel.cpp
 )
 
 qt_add_resources(SoundLink "icons"

@@ -41,7 +41,15 @@ public:
 
         /// Status rows drawn from OnlineViewModel rather than a value.
         BrowserBridge,
-        OnlineBackends
+        OnlineBackends,
+
+        /// Status rows drawn from SyncViewModel.
+        SyncThisDevice,
+        SyncFiles,
+        SyncPairing,
+        SyncDevices,
+        SyncServer,
+        SyncAddresses
     };
     Q_ENUM(Type)
 

@@ -77,4 +77,11 @@ void AppConfigs::RegisterAppConfigs()
         (systemMusic.isEmpty() ? appRoot + "/Music" : systemMusic) + "/SoundLink");
 
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::CollapsedSettingsSections, QStringList{QStringLiteral("online.advanced")});
+
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncEnabled, false);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncDeviceName, QString());
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncPort, 47777);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncUpnp, true);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncConfirmRemote, false);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncManualAddresses, QStringList());
 }

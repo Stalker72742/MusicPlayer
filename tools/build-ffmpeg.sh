@@ -1,6 +1,7 @@
 #!/bin/sh
 # Builds the FFmpeg SoundLink uses into third_party/ffmpeg (git-ignored): shared, LGPL, audio only.
 # The player links its DLLs; ffmpeg.exe is what yt-dlp runs to fix containers and write tags (-c copy, no encoders).
+# The JPEG demuxer, parser and decoder let ffmpeg.exe put a cover into a downloaded m4a (also -c copy).
 #
 # Needs Git Bash (or MSYS2) and MinGW with mingw32-make on PATH, e.g. D:/Qt/Tools/mingw1310_64/bin. Takes a few minutes.
 # Usage: tools/build-ffmpeg.sh [jobs]
@@ -44,9 +45,9 @@ cd "ffmpeg-$VERSION"
     --extra-ldflags=-static-libgcc \
     --enable-network --enable-schannel \
     --enable-protocol=file,pipe,http,https,tcp,tls \
-    --enable-demuxer=mov,matroska,ogg,mp3,flac,wav,asf,aac \
-    --enable-decoder=aac,aac_latm,alac,mp3,mp3float,opus,vorbis,flac,wmav1,wmav2,wmapro,pcm_s16le,pcm_s24le,pcm_s32le,pcm_f32le,pcm_u8 \
-    --enable-parser=aac,aac_latm,mpegaudio,opus,vorbis,flac \
+    --enable-demuxer=mov,matroska,ogg,mp3,flac,wav,asf,aac,image_jpeg_pipe \
+    --enable-decoder=aac,aac_latm,alac,mp3,mp3float,opus,vorbis,flac,wmav1,wmav2,wmapro,pcm_s16le,pcm_s24le,pcm_s32le,pcm_f32le,pcm_u8,mjpeg \
+    --enable-parser=aac,aac_latm,mpegaudio,opus,vorbis,flac,mjpeg \
     --enable-muxer=mp4,ipod,mov,webm,matroska,ogg,opus,mp3,flac,wav,adts,null \
     --enable-bsf=aac_adtstoasc \
     --enable-filter=aresample,aformat,anull,atrim,format,null

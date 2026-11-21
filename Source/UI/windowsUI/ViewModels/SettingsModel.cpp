@@ -12,6 +12,7 @@
 #include "Player/AudioDevices.h"
 #include "Player/PlayerSubsystem.h"
 #include "SettingsCategories.h"
+#include "Sync/SyncSubsystem.h"
 
 SettingsModel::SettingsModel()
 {
@@ -135,6 +136,21 @@ SettingsModel::SettingsModel()
         DiscordSubsystem::Get().ApplySetting();
     };
 
+    auto syncToggle = [&toggle](QString key, QString section, QString title, QString description) {
+        Setting setting = toggle(key, section, title, description);
+        const auto write = setting.write;
+        setting.write = [write, key](const QVariant& value) {
+            write(value);
+            SyncSubsystem::Get().ApplySetting(key);
+        };
+        const auto reset = setting.reset;
+        setting.reset = [reset, key] {
+            reset();
+            SyncSubsystem::Get().ApplySetting(key);
+        };
+        return setting;
+    };
+
     Setting folders{AppConfigs::SettingsKeys::MusicScanFolders, QStringLiteral("library.folders"), QStringLiteral("Music folders"),
         QStringLiteral("Folders scanned for music, including subfolders"), FolderList, QStringList(), QStringList()};
     folders.read = [] { return QVariant(LibrarySubsystem::Get().GetFolders()); };
@@ -189,6 +205,36 @@ SettingsModel::SettingsModel()
             {{QStringLiteral("browser"), QStringLiteral("Browser extension")}, {QStringLiteral("ytdlp"), QStringLiteral("yt-dlp")}}),
         toggle(AppConfigs::SettingsKeys::AutoUpdateYtDlp, QStringLiteral("online.advanced"), QStringLiteral("Keep yt-dlp updated"),
             QStringLiteral("Check for a new yt-dlp every hour and after failed downloads")),
+
+        syncToggle(AppConfigs::SettingsKeys::SyncEnabled, QStringLiteral("sync.devices"), QStringLiteral("Sync between devices"),
+            QStringLiteral("Keep music files, playlists, tags and saved YouTube tracks the same on your paired devices: "
+                           "over the local network or the internet, whenever they can reach each other")),
+        statusRow(QStringLiteral("sync.thisDevice"), QStringLiteral("sync.devices"), QStringLiteral("This device"),
+            QStringLiteral("The name other devices show"), SyncThisDevice),
+        statusRow(QStringLiteral("sync.files"), QStringLiteral("sync.devices"), QStringLiteral("Received files"),
+            QStringLiteral("Files from other devices go to this folder, keeping their subfolders: the download folder "
+                           "when it is inside a music folder. A file this PC already has in its music folders stays where it is"),
+            SyncFiles),
+        statusRow(QStringLiteral("sync.pairing"), QStringLiteral("sync.devices"), QStringLiteral("Pair a device"),
+            QStringLiteral("Show a code here and type it on the other device, or type the code the other device shows"),
+            SyncPairing),
+        statusRow(QStringLiteral("sync.deviceList"), QStringLiteral("sync.devices"), QStringLiteral("Devices"),
+            QStringLiteral("Paired devices, and devices with SoundLink heard on this network"), SyncDevices),
+        syncToggle(AppConfigs::SettingsKeys::SyncConfirmRemote, QStringLiteral("sync.devices"),
+            QStringLiteral("Ask before replacing or deleting files"),
+            QStringLiteral("A file changed or deleted on another device waits for your choice in Downloads › Sync. "
+                           "Otherwise the change is applied, and deleted files go to the Recycle Bin")),
+
+        statusRow(QStringLiteral("sync.server"), QStringLiteral("sync.network"), QStringLiteral("Server role"),
+            QStringLiteral("Every device is a server. Devices that can reach each other connect by themselves: "
+                           "on the local network, or over the internet to a device with a public address or a forwarded port"),
+            SyncServer),
+        syncToggle(AppConfigs::SettingsKeys::SyncUpnp, QStringLiteral("sync.network"), QStringLiteral("Forward the port on the router"),
+            QStringLiteral("Ask the router over UPnP to let devices on the internet connect to this PC")),
+        statusRow(QStringLiteral("sync.addresses"), QStringLiteral("sync.network"), QStringLiteral("Addresses of devices"),
+            QStringLiteral("Where to look for paired devices besides the local network, e.g. a public address or a domain "
+                           "with a forwarded port: host or host:port"),
+            SyncAddresses),
     };
 
     for (Setting& setting : settings)

@@ -91,6 +91,8 @@ public:
     QString CreateSmart(const QString& name, const QList<PlaylistRule>& rules, bool bMatchAll, const QString& sort, int limit);
     void Rename(const QString& id, const QString& name);
     void Delete(const QString& id);
+    /// @brief Adds a playlist or replaces the one with the same id (used by device sync).
+    void Upsert(const Playlist& playlist);
 
     /// @brief Adds tracks to a static playlist; tracks already there are skipped.
     void AddTracks(const QString& id, const QList<TrackId>& tracks);
