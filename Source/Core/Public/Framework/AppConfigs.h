@@ -26,19 +26,15 @@ namespace AppConfigs
         inline const QString StartMinimized = QStringLiteral("general.startMinimized");
         /// @brief bool: show the playing track in Discord (DiscordSubsystem).
         inline const QString DiscordPresence = QStringLiteral("general.discordPresence");
-        /// @brief QString: `"en"`, `"ru"`. Saved only: there are no translations yet.
-        inline const QString Language = QStringLiteral("general.language");
 
         /// @brief QStringList: folders scanned by LibrarySubsystem.
         inline const QString MusicScanFolders = QStringLiteral("library.musicScanFolders");
-        /// @brief bool: rescan the music folders on startup.
-        inline const QString ScanOnStartup = QStringLiteral("library.scanOnStartup");
+        /// @brief QString: folder with pictures of artists, albums and genres (ArtworkSubsystem).
+        inline const QString ArtworkFolder = QStringLiteral("library.artworkFolder");
+        /// @brief bool: look missing pictures up on Deezer.
+        inline const QString FetchArtwork = QStringLiteral("library.fetchArtwork");
 
-        /// @brief bool: volume normalization. Saved only: not implemented in the player yet.
-        inline const QString NormalizeVolume = QStringLiteral("audio.normalize");
-        /// @brief double, seconds of crossfade. Saved only: not implemented in the player yet.
-        inline const QString Crossfade = QStringLiteral("audio.crossfade");
-        /// @brief QString: QAudioDevice id; empty for the system default (followed when it changes).
+        /// @brief QString: endpoint id (AudioDevices); empty for the system default (followed when it changes).
         inline const QString OutputDevice = QStringLiteral("audio.outputDevice");
 
         /// @brief double 0..1: player volume, restored on start.
@@ -64,6 +60,34 @@ namespace AppConfigs
         inline const QString AutoUpdateYtDlp = QStringLiteral("downloads.autoUpdateYtDlp");
         /// @brief QString, one of AppConfigs::AudioQuality: used for streams and downloads.
         inline const QString AudioQuality = QStringLiteral("downloads.quality");
+        /// @brief QString, one of AppConfigs::DownloadFormat: the container downloads prefer.
+        inline const QString DownloadFormat = QStringLiteral("downloads.format");
+        /// @brief bool: a stream played from start to end becomes the track's downloaded copy.
+        inline const QString SaveWhileListening = QStringLiteral("downloads.saveWhileListening");
+
+        /// @brief QStringList: ids of the sections collapsed on the settings screen.
+        inline const QString CollapsedSettingsSections = QStringLiteral("ui.collapsedSettingsSections");
+
+        /// @brief bool: sync with paired devices (SyncSubsystem).
+        inline const QString SyncEnabled = QStringLiteral("sync.enabled");
+        /// @brief QString: the name other devices see; empty for the computer name.
+        inline const QString SyncDeviceName = QStringLiteral("sync.deviceName");
+        /// @brief int: TCP port sessions are accepted on; the next free one of the ten after it when taken.
+        inline const QString SyncPort = QStringLiteral("sync.port");
+        /// @brief bool: ask the router for a port mapping (UPnP), so devices outside the network can connect.
+        inline const QString SyncUpnp = QStringLiteral("sync.upnp");
+        /// @brief bool: a file a paired device replaced or deleted waits for confirmation as a conflict.
+        inline const QString SyncConfirmRemote = QStringLiteral("sync.confirmRemote");
+        /// @brief QStringList: addresses ("host:port") of paired devices entered by hand, tried besides discovery.
+        inline const QString SyncManualAddresses = QStringLiteral("sync.manualAddresses");
+    }
+
+    /// @brief Values of SettingsKeys::DownloadFormat. Picked among what the site serves, nothing is converted.
+    namespace DownloadFormat
+    {
+        inline const QString Auto = QStringLiteral("auto"); ///< Whatever SettingsKeys::AudioQuality picks.
+        inline const QString M4a = QStringLiteral("m4a");   ///< AAC in m4a.
+        inline const QString Opus = QStringLiteral("opus"); ///< Opus in webm.
     }
 
     /// @brief Values of SettingsKeys::AudioQuality.

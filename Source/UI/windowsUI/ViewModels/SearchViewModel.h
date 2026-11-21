@@ -2,9 +2,12 @@
 
 #include <QList>
 #include <QObject>
+#include <QSet>
 #include <QStringList>
+#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
+#include "Library/Track.h"
 #include "SuggestionListModel.h"
 #include "TrackListModel.h"
 
@@ -20,7 +23,7 @@ struct OnlineEntry;
 /// - `lib:<text>` - search the library (`l:`, `library:`)
 /// - `go:<page>` - open a page (`g:`)
 /// - `pl:<name>` - open a playlist (`playlist:`)
-/// - `s:<category>;<setting>` - open settings, e.g. `s:audio;` or `s:audio;crossfade` (`set:`, `settings:`)
+/// - `s:<category>;<setting>` - open settings, e.g. `s:general;` or `s:general;outputDevice` (`set:`, `settings:`)
 ///
 /// Free text suggests matching pages, settings and tracks next to a YouTube search;
 /// what the current screen shows is suggested first.
@@ -41,6 +44,11 @@ class SearchViewModel : public QObject
     /// @brief More results for the current query can be loaded (the list was scrolled to the end).
     Q_PROPERTY(bool canLoadMore READ CanLoadMore NOTIFY onlineChanged)
     Q_PROPERTY(bool loadingMore READ IsLoadingMore NOTIFY onlineChanged)
+
+    /// @brief Playlists or channels found for onlineQuery: maps with url, title, subtitle, thumbnail.
+    Q_PROPERTY(QVariantList collections READ GetCollections NOTIFY collectionsChanged)
+    Q_PROPERTY(OnlineState collectionsState READ GetCollectionsState NOTIFY collectionsChanged)
+    Q_PROPERTY(QString collectionsError READ GetCollectionsError NOTIFY collectionsChanged)
 
 public:
     /// @brief State of the YouTube search.
@@ -66,6 +74,12 @@ public:
     QString GetOnlineError() const { return onlineError; }
     bool CanLoadMore() const;
     bool IsLoadingMore() const;
+    QVariantList GetCollections() const { return collections; }
+    OnlineState GetCollectionsState() const { return collectionsState; }
+    QString GetCollectionsError() const { return collectionsError; }
+
+    /// @brief The tracks the results list shows; they must outlive other searches.
+    QSet<TrackId> GetResultTracks() const;
 
     /// @brief Sets the text of the search field and rebuilds the suggestions.
     Q_INVOKABLE void setQuery(const QString& value);
@@ -83,16 +97,20 @@ public:
     /// @brief Focuses the title bar search with the given text, e.g. a tag from a hint on the home screen.
     Q_INVOKABLE void focusSearch(const QString& prefill = {});
 
-    /// @brief Opens the results screen and searches YouTube.
+    /// @brief Opens the results screen and searches YouTube; a link opens its own screen instead.
     Q_INVOKABLE void searchOnline(const QString& text);
     /// @brief Repeats the last YouTube search.
     Q_INVOKABLE void retryOnline();
     /// @brief Loads the next page of results.
     Q_INVOKABLE void loadMore();
+    /// @brief Finds playlists or channels for onlineQuery, unless already there.
+    /// @param kind "playlist" or "channel".
+    Q_INVOKABLE void loadCollections(const QString& kind);
 
 signals:
     void queryChanged();
     void onlineChanged();
+    void collectionsChanged();
     /// @brief QML should focus the search field.
     void focusRequested();
 
@@ -100,6 +118,8 @@ private:
     SearchViewModel();
 
     void Rebuild();
+    /// Runs the search of the Search location the navigation went to (back, forward, the snapshot at startup).
+    void FollowNavigation();
     void OnSearchFinished(const QString& searchQuery, const QList<OnlineEntry>& entries);
 
     /// Adds the entries as transient online tracks after the current results, skipping ones already there.
@@ -116,4 +136,12 @@ private:
     QList<int> resultIds;
     TrackListModel resultsModel;
     QStringList history;
+
+    void CancelCollections();
+
+    QVariantList collections;
+    OnlineState collectionsState = Idle;
+    QString collectionsError;
+    QString collectionsKind;
+    quint64 collectionsListing = 0;
 };

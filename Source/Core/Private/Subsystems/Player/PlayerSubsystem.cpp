@@ -4,22 +4,24 @@
 
 #include "Player/PlayerSubsystem.h"
 
-#include <QAudio>
-#include <QAudioDevice>
-#include <QAudioOutput>
 #include <QFileInfo>
-#include <QMediaDevices>
-#include <QMediaPlayer>
 #include <QRandomGenerator>
+#include <QStandardPaths>
 #include <QUrl>
+#include <QUrlQuery>
 
 #include <QTomlUtils/QTomlUtils.h>
 
 #include <cmath>
+#include <utility>
 
 #include "AppConfigs.h"
+#include "Downloads/DownloadSubsystem.h"
 #include "Library/LibrarySubsystem.h"
 #include "Online/OnlineSubsystem.h"
+#include "FfmpegBackend.h"
+#include "Player/AudioDevices.h"
+#include "StreamCapture.h"
 
 namespace
 {
@@ -49,14 +51,29 @@ namespace
             return PlayerSubsystem::RepeatMode::One;
         return PlayerSubsystem::RepeatMode::Off;
     }
+
+    /// The volume slider is perceptual, samples are multiplied by a linear gain.
+    float PerceptualToLinear(float value)
+    {
+        constexpr double Log100 = 4.60517018599;
+        return value >= 0.99f ? 1.0f : static_cast<float>(-std::log(1.0 - value) / Log100);
+    }
+
+    QString ExtensionOfStream(const QUrl& stream)
+    {
+        const QString mime = QUrlQuery(stream).queryItemValue(QStringLiteral("mime"), QUrl::FullyDecoded);
+        if (mime.contains(QStringLiteral("webm")))
+            return QStringLiteral("webm");
+        return QStringLiteral("m4a");
+    }
 }
 
 PlayerSubsystem::PlayerSubsystem()
-    : player(new QMediaPlayer(this))
-    , audioOutput(new QAudioOutput(this))
-    , devices(new QMediaDevices(this))
+    : player(new FfmpegBackend(this))
+    , devices(new AudioDevices(this))
+    , capture(std::make_unique<StreamCapture>())
 {
-    player->setAudioOutput(audioOutput);
+    ConnectBackend();
 
     volume = static_cast<float>(qBound(0.0, AppConfigs::GetDouble(AppConfigs::SettingsKeys::PlayerVolume, 0.8), 1.0));
     bShuffle = AppConfigs::GetBool(AppConfigs::SettingsKeys::PlayerShuffle);
@@ -70,20 +87,25 @@ PlayerSubsystem::PlayerSubsystem()
         QTomlUtils::SetPropertyValue(AppConfigs::Settings, AppConfigs::SettingsKeys::PlayerVolume, RoundedVolume(volume));
     });
 
-    connect(devices, &QMediaDevices::audioOutputsChanged, this, &PlayerSubsystem::ApplyOutputDevice);
+    connect(devices, &AudioDevices::changed, this, &PlayerSubsystem::ApplyOutputDevice);
+}
 
-    connect(player, &QMediaPlayer::playbackStateChanged, this, &PlayerSubsystem::playingChanged);
-    connect(player, &QMediaPlayer::positionChanged, this, &PlayerSubsystem::positionChanged);
-    connect(player, &QMediaPlayer::mediaStatusChanged, this,
-        [this](QMediaPlayer::MediaStatus status) { OnMediaStatusChanged(status); });
+PlayerSubsystem::~PlayerSubsystem() = default;
 
-    connect(player, &QMediaPlayer::durationChanged, this, [this](qint64 durationMs) {
-        LibrarySubsystem::Get().SetDuration(GetCurrentTrack(), durationMs);
+void PlayerSubsystem::ConnectBackend()
+{
+    connect(player, &AudioBackend::stateChanged, this, &PlayerSubsystem::playingChanged);
+    connect(player, &AudioBackend::positionChanged, this, &PlayerSubsystem::positionChanged);
+    connect(player, &AudioBackend::finished, this, &PlayerSubsystem::OnBackendFinished);
+    connect(player, &AudioBackend::loaded, this, &PlayerSubsystem::OnBackendLoaded);
+    connect(player, &AudioBackend::errorOccurred, this, &PlayerSubsystem::OnPlayerError);
+    connect(player, &AudioBackend::sourceDataReceived, this, &PlayerSubsystem::OnSourceData);
+    connect(player, &AudioBackend::sourceSizeKnown, this, [this](qint64 size) { capture->SetSize(size); });
+    connect(player, &AudioBackend::durationChanged, this, [this](qint64 durationMs) {
+        if (durationMs > 0)
+            LibrarySubsystem::Get().SetDuration(GetCurrentTrack(), durationMs);
         emit durationChanged(durationMs);
     });
-
-    connect(player, &QMediaPlayer::errorOccurred, this,
-        [this](QMediaPlayer::Error, const QString& message) { OnPlayerError(message); });
 }
 
 void PlayerSubsystem::Deinitialize()
@@ -94,37 +116,17 @@ void PlayerSubsystem::Deinitialize()
         QTomlUtils::SetPropertyValue(AppConfigs::Settings, AppConfigs::SettingsKeys::PlayerVolume, RoundedVolume(volume));
     }
 
-    player->stop();
-
     delete player;
     player = nullptr;
-    delete audioOutput;
-    audioOutput = nullptr;
+    capture->Abort();
     delete devices;
     devices = nullptr;
 }
 
 void PlayerSubsystem::ApplyOutputDevice()
 {
-    if (!audioOutput)
-        return;
-
-    const QByteArray wanted = AppConfigs::GetString(AppConfigs::SettingsKeys::OutputDevice).toUtf8();
-    QAudioDevice device = QMediaDevices::defaultAudioOutput();
-    if (!wanted.isEmpty())
-    {
-        for (const QAudioDevice& output : QMediaDevices::audioOutputs())
-        {
-            if (output.id() == wanted)
-                device = output;
-        }
-    }
-
-    if (audioOutput->device() != device)
-    {
-        qDebug() << "[Player] Output:" << device.description();
-        audioOutput->setDevice(device);
-    }
+    if (player)
+        player->SetOutputDevice(AppConfigs::GetString(AppConfigs::SettingsKeys::OutputDevice).toUtf8());
 }
 
 TrackId PlayerSubsystem::GetCurrentTrack() const
@@ -137,18 +139,18 @@ bool PlayerSubsystem::IsPlaying() const
     if (bLoading)
         return bPlayWhenLoaded;
 
-    return player && player->playbackState() == QMediaPlayer::PlayingState;
+    return player && player->GetState() == AudioBackend::State::Playing;
 }
 
 qint64 PlayerSubsystem::GetPosition() const
 {
-    return player ? player->position() : 0;
+    return player ? player->GetPosition() : 0;
 }
 
 qint64 PlayerSubsystem::GetDuration() const
 {
-    if (player && player->duration() > 0)
-        return player->duration();
+    if (player && player->GetDuration() > 0)
+        return player->GetDuration();
 
     const Track* track = LibrarySubsystem::Get().FindTrack(GetCurrentTrack());
     return track ? track->tags.durationMs : 0;
@@ -180,12 +182,14 @@ void PlayerSubsystem::PlayIndex(int index)
     ++loadRequest;
     bStreamRetried = false;
     pendingSeekMs = 0;
+    capture->Abort();
+    captureTrack = {};
 
     const bool bLocal = track->HasLocalFile() && QFileInfo::exists(track->file.path);
 
     if (!bLocal && track->IsOnline())
     {
-        player->setSource(QUrl());
+        player->SetSource(QUrl());
         bPlayWhenLoaded = true;
         SetLoading(true);
         LoadStream(track->stream.pageUrl, 0);
@@ -193,13 +197,13 @@ void PlayerSubsystem::PlayIndex(int index)
     else if (bLocal)
     {
         SetLoading(false);
-        player->setSource(QUrl::fromLocalFile(track->file.path));
-        player->play();
+        player->SetSource(QUrl::fromLocalFile(track->file.path));
+        player->Play();
     }
     else
     {
         SetLoading(false);
-        player->setSource(QUrl());
+        player->SetSource(QUrl());
         qWarning() << "[Player] The file is gone:" << track->file.path;
         emit errorOccurred(QStringLiteral("The file is gone: ") + track->file.path);
     }
@@ -225,9 +229,11 @@ void PlayerSubsystem::LoadStream(const QString& pageUrl, qint64 startMs)
         }
 
         pendingSeekMs = startMs;
-        player->setSource(stream);
+        if (const Track* track = LibrarySubsystem::Get().FindTrack(GetCurrentTrack()))
+            StartCapture(*track, stream);
+        player->SetSource(stream);
         if (bPlayWhenLoaded)
-            player->play();
+            player->Play();
         SetLoading(false);
     });
 }
@@ -251,8 +257,10 @@ void PlayerSubsystem::OnPlayerError(const QString& message)
         qWarning() << "[Player]" << message << "- resolving the stream again";
         bStreamRetried = true;
         ++loadRequest;
+        capture->Abort();
+        captureTrack = {};
 
-        const qint64 position = player->position();
+        const qint64 position = player->GetPosition();
         OnlineSubsystem::Get().ReportStreamFailed(track->stream.pageUrl);
         bPlayWhenLoaded = true;
         SetLoading(true);
@@ -275,7 +283,7 @@ void PlayerSubsystem::Play()
         emit playingChanged();
         return;
     }
-    player->play();
+    player->Play();
 }
 
 void PlayerSubsystem::Pause()
@@ -289,7 +297,7 @@ void PlayerSubsystem::Pause()
         emit playingChanged();
         return;
     }
-    player->pause();
+    player->Pause();
 }
 
 void PlayerSubsystem::TogglePlay()
@@ -328,7 +336,7 @@ void PlayerSubsystem::Next()
 
 void PlayerSubsystem::StopAtEnd()
 {
-    player->stop();
+    player->Stop();
     emit playingChanged();
     emit positionChanged(0);
 }
@@ -338,8 +346,8 @@ void PlayerSubsystem::Previous()
     if (!player || !GetCurrentTrack().IsValid())
         return;
 
-    if (player->position() > RestartThresholdMs || currentIndex == 0)
-        player->setPosition(0);
+    if (player->GetPosition() > RestartThresholdMs || currentIndex == 0)
+        player->Seek(0);
     else
         PlayIndex(currentIndex - 1);
 }
@@ -347,20 +355,70 @@ void PlayerSubsystem::Previous()
 void PlayerSubsystem::Seek(qint64 positionMs)
 {
     if (player)
-        player->setPosition(positionMs);
+        player->Seek(positionMs);
+}
+
+bool PlayerSubsystem::ReleaseFile(TrackId id)
+{
+    if (!player || !id.IsValid() || GetCurrentTrack() != id || bLoading)
+        return false;
+
+    const Track* track = LibrarySubsystem::Get().FindTrack(id);
+    if (!track || !track->HasLocalFile() || !QFileInfo::exists(track->file.path))
+        return false;
+
+    releasedTrack = id;
+    releasedPositionMs = player->GetPosition();
+    bReleasedPlaying = IsPlaying();
+    ++loadRequest;
+    player->SetSource(QUrl());
+    return true;
+}
+
+void PlayerSubsystem::RestoreFile()
+{
+    const TrackId id = std::exchange(releasedTrack, TrackId{});
+    if (!player || !id.IsValid() || GetCurrentTrack() != id)
+        return;
+
+    const Track* track = LibrarySubsystem::Get().FindTrack(id);
+    if (!track)
+        return;
+
+    if (track->HasLocalFile() && QFileInfo::exists(track->file.path))
+    {
+        pendingSeekMs = releasedPositionMs;
+        player->SetSource(QUrl::fromLocalFile(track->file.path));
+        if (bReleasedPlaying)
+            player->Play();
+    }
+    else if (track->IsOnline())
+    {
+        bPlayWhenLoaded = bReleasedPlaying;
+        SetLoading(true);
+        LoadStream(track->stream.pageUrl, releasedPositionMs);
+    }
+    else if (bReleasedPlaying)
+    {
+        Next();
+        return;
+    }
+
+    emit playingChanged();
 }
 
 void PlayerSubsystem::SetVolume(float value)
 {
     volume = qBound(0.0f, value, 1.0f);
-
-    if (audioOutput)
-    {
-        audioOutput->setVolume(
-            QtAudio::convertVolume(volume, QtAudio::LogarithmicVolumeScale, QtAudio::LinearVolumeScale));
-    }
+    ApplyVolume();
     volumeSaveTimer.start();
     emit volumeChanged();
+}
+
+void PlayerSubsystem::ApplyVolume()
+{
+    if (player)
+        player->SetVolume(PerceptualToLinear(volume));
 }
 
 void PlayerSubsystem::SetShuffle(bool bValue)
@@ -383,23 +441,54 @@ void PlayerSubsystem::SetRepeatMode(RepeatMode mode)
     emit repeatChanged();
 }
 
-void PlayerSubsystem::OnMediaStatusChanged(int status)
+void PlayerSubsystem::OnBackendFinished()
 {
-    if (status == QMediaPlayer::EndOfMedia)
+    if (repeatMode == RepeatMode::One)
     {
-        if (repeatMode == RepeatMode::One)
-        {
-            player->setPosition(0);
-            player->play();
-            return;
-        }
-        Next();
+        player->Seek(0);
+        player->Play();
         return;
     }
+    Next();
+}
 
-    if (pendingSeekMs > 0 && (status == QMediaPlayer::LoadedMedia || status == QMediaPlayer::BufferedMedia))
+void PlayerSubsystem::OnBackendLoaded()
+{
+    if (pendingSeekMs > 0)
     {
-        player->setPosition(pendingSeekMs);
+        player->Seek(pendingSeekMs);
         pendingSeekMs = 0;
     }
+}
+
+void PlayerSubsystem::StartCapture(const Track& track, const QUrl& stream)
+{
+    capture->Abort();
+    captureTrack = {};
+
+    const bool bWanted = AppConfigs::GetBool(AppConfigs::SettingsKeys::SaveWhileListening)
+                      && player->GetCapabilities().testFlag(AudioBackend::SourceData);
+    player->SetSourceDataEnabled(bWanted);
+    if (!bWanted)
+        return;
+
+    captureExtension = ExtensionOfStream(stream);
+    const QString path = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
+                       + QStringLiteral("/stream-capture/%1.part").arg(track.id.value);
+    if (capture->Start(path))
+        captureTrack = track.id;
+}
+
+void PlayerSubsystem::OnSourceData(qint64 offset, const QByteArray& bytes)
+{
+    if (!captureTrack.IsValid())
+        return;
+
+    capture->Add(offset, bytes);
+    if (!capture->IsComplete())
+        return;
+
+    const TrackId track = captureTrack;
+    captureTrack = {};
+    DownloadSubsystem::Get().AdoptFile(track, capture->Take(), captureExtension);
 }

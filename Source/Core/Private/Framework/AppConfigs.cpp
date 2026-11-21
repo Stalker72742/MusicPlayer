@@ -52,13 +52,12 @@ void AppConfigs::RegisterAppConfigs()
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::CloseToTray, true);
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::StartMinimized, false);
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::DiscordPresence, true);
-    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::Language, QStringLiteral("en"));
 
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::MusicScanFolders, musicFolders);
-    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::ScanOnStartup, true);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::ArtworkFolder,
+        QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/artwork");
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::FetchArtwork, true);
 
-    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::NormalizeVolume, false);
-    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::Crossfade, 0.0);
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::OutputDevice, QString());
 
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::PlayerVolume, 0.8);
@@ -67,6 +66,8 @@ void AppConfigs::RegisterAppConfigs()
 
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::AutoUpdateYtDlp, true);
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::AudioQuality, AudioQuality::High);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::DownloadFormat, DownloadFormat::Auto);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SaveWhileListening, false);
 
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::OnlineSearchSource, QStringLiteral("innertube"));
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::OnlineStreamSource, QStringLiteral("browser"));
@@ -74,4 +75,13 @@ void AppConfigs::RegisterAppConfigs()
 
     QTomlUtils::SetDefaultValue(Settings, SettingsKeys::DownloadFolder,
         (systemMusic.isEmpty() ? appRoot + "/Music" : systemMusic) + "/SoundLink");
+
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::CollapsedSettingsSections, QStringList{QStringLiteral("online.advanced")});
+
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncEnabled, false);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncDeviceName, QString());
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncPort, 47777);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncUpnp, true);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncConfirmRemote, false);
+    QTomlUtils::SetDefaultValue(Settings, SettingsKeys::SyncManualAddresses, QStringList());
 }

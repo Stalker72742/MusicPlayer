@@ -71,12 +71,16 @@ public:
 
     /// @brief Replaces the rows.
     ///
-    /// Updates in place when the rows are the same and inserts when rows were only appended,
-    /// so views keep their scroll position; anything else resets the model.
+    /// Rows that were only updated, removed or inserted are applied as such, so views keep their scroll position;
+    /// only a changed order of the remaining rows resets the model.
     void SetTracks(const QList<TrackData>& newTracks);
 
     /// @brief Row of a track, -1 if the track is not in the list.
     int RowOf(int trackId) const;
+    /// @brief Track ids of the rows from..to, both included, in either order.
+    Q_INVOKABLE QVariantList idsBetween(int from, int to) const;
+    /// @brief Track ids of every row.
+    Q_INVOKABLE QVariantList allIds() const;
 
     /// @brief "3:07", or "1:51:26" for an hour and more.
     static QString FormatDuration(int seconds);
@@ -85,5 +89,8 @@ signals:
     void countChanged();
 
 private:
+    /// Removes and inserts the changed rows; false, with nothing changed, if the remaining rows changed their order.
+    bool ApplyInPlace(const QList<TrackData>& newTracks);
+
     QList<TrackData> tracks;
 };

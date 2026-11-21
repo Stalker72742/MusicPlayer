@@ -51,14 +51,18 @@ Rectangle {
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: list.open() }
+    MouseArea {
+        anchors.fill: parent
+        onClicked: list.visible ? list.close() : list.open()
+    }
 
     Popup {
         id: list
         y: root.height + 4
         width: Math.max(root.width, 180)
         padding: 4
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        // Not CloseOnPressOutside: a press on the field would close the list and its release open it again.
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
         background: Rectangle {
             color: Theme.palette.fieldBg
@@ -71,6 +75,7 @@ Rectangle {
             implicitHeight: Math.min(contentHeight, 320)
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: AppScrollBar {}
             model: root.options
 
             delegate: Rectangle {

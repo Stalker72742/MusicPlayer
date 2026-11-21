@@ -27,6 +27,8 @@ Rectangle {
 
     Behavior on border.color { ColorAnimation { duration: Theme.motion.durationFast } }
 
+    ContextMenu { id: textMenu }
+
     TextInput {
         id: input
         anchors.fill: parent
@@ -39,6 +41,8 @@ Rectangle {
         font.pixelSize: Theme.typography.bodySize
         selectionColor: Theme.palette.borderStrong
         selectByMouse: true
+        // The menu takes the focus; the selection has to outlive that.
+        persistentSelection: true
 
         onAccepted: root.accepted()
         onTextEdited: root.textEdited()
@@ -51,6 +55,22 @@ Rectangle {
             color: Theme.palette.textTertiary
             font: input.font
             visible: input.text.length === 0
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            cursorShape: Qt.IBeamCursor
+            onClicked: (mouse) => {
+                input.forceActiveFocus();
+                textMenu.openAt(input.mapToItem(null, mouse.x, mouse.y), [
+                    { text: "Cut", icon: "close", action: () => input.cut() },
+                    { text: "Copy", icon: "link", action: () => input.copy() },
+                    { text: "Paste", icon: "plus", action: () => input.paste() },
+                    { separator: true },
+                    { text: "Select all", icon: "select", action: () => input.selectAll() }
+                ]);
+            }
         }
     }
 }

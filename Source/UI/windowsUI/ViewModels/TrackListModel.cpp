@@ -1,5 +1,9 @@
 #include "TrackListModel.h"
 
+#include <QSet>
+
+#include <algorithm>
+
 int TrackListModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : GetCount();
@@ -65,37 +69,105 @@ void TrackListModel::SetTracks(const QList<TrackData>& newTracks)
         return;
     }
 
-    bool bAppended = newTracks.size() > tracks.size();
-    for (qsizetype row = 0; bAppended && row < tracks.size(); ++row)
-        bAppended = tracks[row].id == newTracks[row].id;
-
-    if (bAppended)
-    {
-        const int oldCount = static_cast<int>(tracks.size());
-        if (oldCount > 0)
-        {
-            for (qsizetype row = 0; row < oldCount; ++row)
-                tracks[row] = newTracks[row];
-            emit dataChanged(index(0), index(oldCount - 1));
-        }
-
-        beginInsertRows({}, oldCount, static_cast<int>(newTracks.size()) - 1);
-        for (qsizetype row = oldCount; row < newTracks.size(); ++row)
-            tracks.append(newTracks[row]);
-        endInsertRows();
-
-        emit countChanged();
-        return;
-    }
-
     const bool bCountChanged = newTracks.size() != tracks.size();
 
-    beginResetModel();
-    tracks = newTracks;
-    endResetModel();
+    if (ApplyInPlace(newTracks))
+    {
+        if (!tracks.isEmpty())
+            emit dataChanged(index(0), index(static_cast<int>(tracks.size()) - 1));
+    }
+    else
+    {
+        beginResetModel();
+        tracks = newTracks;
+        endResetModel();
+    }
 
     if (bCountChanged)
         emit countChanged();
+}
+
+bool TrackListModel::ApplyInPlace(const QList<TrackData>& newTracks)
+{
+    QSet<int> newIds;
+    newIds.reserve(newTracks.size());
+    for (const TrackData& track : newTracks)
+        newIds.insert(track.id);
+
+    QSet<int> oldIds;
+    oldIds.reserve(tracks.size());
+    for (const TrackData& track : tracks)
+        oldIds.insert(track.id);
+
+    qsizetype oldRow = 0;
+    for (const TrackData& track : newTracks)
+    {
+        if (!oldIds.contains(track.id))
+            continue;
+
+        while (oldRow < tracks.size() && !newIds.contains(tracks[oldRow].id))
+            ++oldRow;
+        if (oldRow >= tracks.size() || tracks[oldRow].id != track.id)
+            return false;
+        ++oldRow;
+    }
+
+    for (qsizetype last = tracks.size() - 1; last >= 0;)
+    {
+        if (newIds.contains(tracks[last].id))
+        {
+            --last;
+            continue;
+        }
+
+        qsizetype first = last;
+        while (first > 0 && !newIds.contains(tracks[first - 1].id))
+            --first;
+
+        beginRemoveRows({}, static_cast<int>(first), static_cast<int>(last));
+        tracks.remove(first, last - first + 1);
+        endRemoveRows();
+        last = first - 1;
+    }
+
+    for (qsizetype row = 0; row < newTracks.size();)
+    {
+        if (oldIds.contains(newTracks[row].id))
+        {
+            ++row;
+            continue;
+        }
+
+        qsizetype end = row;
+        while (end < newTracks.size() && !oldIds.contains(newTracks[end].id))
+            ++end;
+
+        beginInsertRows({}, static_cast<int>(row), static_cast<int>(end) - 1);
+        tracks.insert(row, end - row, TrackData{});
+        for (qsizetype i = row; i < end; ++i)
+            tracks[i] = newTracks[i];
+        endInsertRows();
+        row = end;
+    }
+
+    tracks = newTracks;
+    return true;
+}
+
+QVariantList TrackListModel::idsBetween(int from, int to) const
+{
+    const qsizetype first = std::clamp<qsizetype>(std::min(from, to), 0, tracks.size());
+    const qsizetype last = std::clamp<qsizetype>(std::max(from, to), -1, tracks.size() - 1);
+
+    QVariantList ids;
+    for (qsizetype row = first; row <= last; ++row)
+        ids.append(tracks[row].id);
+    return ids;
+}
+
+QVariantList TrackListModel::allIds() const
+{
+    return idsBetween(0, static_cast<int>(tracks.size()) - 1);
 }
 
 int TrackListModel::RowOf(int trackId) const

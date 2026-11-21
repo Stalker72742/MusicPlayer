@@ -31,5 +31,5 @@ Rectangle {
     }
 
     HoverHandler { cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: root.toggled(!root.checked) }
+    MouseArea { anchors.fill: parent; onClicked: root.toggled(!root.checked) }
 }

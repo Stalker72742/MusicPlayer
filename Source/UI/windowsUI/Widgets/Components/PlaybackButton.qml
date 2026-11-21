@@ -24,8 +24,6 @@ Item {
         color: root.active ? Theme.palette.iconActive
              : root.hovered ? Theme.palette.iconActive
                             : Theme.palette.iconDefault
-
-        Behavior on color { ColorAnimation { duration: Theme.motion.durationFast } }
     }
 
     Text {
@@ -50,5 +48,5 @@ Item {
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: root.clicked() }
+    MouseArea { anchors.fill: parent; onClicked: root.clicked() }
 }

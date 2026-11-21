@@ -4,9 +4,13 @@
 
 #include "Downloads/DownloadSubsystem.h"
 
+#include <algorithm>
+#include <cstdlib>
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QImage>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -19,8 +23,8 @@
 #include "../Online/YtDlpBackend.h"
 #include "AppConfigs.h"
 #include "Library/LibrarySubsystem.h"
+#include "Player/PlayerSubsystem.h"
 #include "YtDlp/DenoSubsystem.h"
-#include "YtDlp/FfmpegSubsystem.h"
 #include "YtDlp/YtDlpSubsystem.h"
 
 namespace
@@ -30,6 +34,7 @@ namespace
     constexpr int SaveDelayMs = 1000;
 
     constexpr int StallTimeoutMs = 120'000;
+    constexpr int CoverTimeoutMs = 60'000;
 
 
     const QString ProgressMarker = QStringLiteral("SLPROGRESS");
@@ -42,6 +47,40 @@ namespace
         while (name.endsWith('.') || name.endsWith(' '))
             name.chop(1);
         return name.left(150);
+    }
+
+    QString FfmpegExecutable()
+    {
+        return AppConfigs::GetAppRoot() + QStringLiteral("/bin/ffmpeg.exe");
+    }
+
+    bool SaveCover(const QString& source, const QString& target)
+    {
+        QImage image(source);
+        if (image.isNull())
+            return false;
+
+        const auto isBlackRow = [&image](int y) {
+            for (int x = 0; x < image.width(); x += 4)
+            {
+                const QColor color = image.pixelColor(x, y);
+                if (std::max({color.red(), color.green(), color.blue()}) > 24)
+                    return false;
+            }
+            return true;
+        };
+
+        const int height = image.height();
+        int top = 0;
+        while (top < height / 4 && isBlackRow(top))
+            ++top;
+        int bottom = 0;
+        while (bottom < height / 4 && isBlackRow(height - 1 - bottom))
+            ++bottom;
+        if (top > 0 && bottom > 0 && std::abs(top - bottom) <= 4)
+            image = image.copy(0, top, image.width(), height - top - bottom);
+
+        return image.save(target, "JPG", 92);
     }
 }
 
@@ -213,14 +252,43 @@ void DownloadSubsystem::RemoveDownload(TrackId track)
         return;
 
     const QString path = found->file.path;
+    const bool bReleased = PlayerSubsystem::Get().ReleaseFile(track);
     LibrarySubsystem::Get().SetLocalFile(track, {});
     if (QFile::exists(path) && !QFile::remove(path))
         qWarning() << "[Downloads] Cannot delete" << path << "(in use?)";
+    if (bReleased)
+        PlayerSubsystem::Get().RestoreFile();
 
     const qsizetype before = jobs.size();
     jobs.removeIf([track](const Job& job) { return job.track == track && job.state == Job::State::Done; });
     if (jobs.size() != before)
         emit jobsChanged();
+}
+
+void DownloadSubsystem::AdoptFile(TrackId track, const QString& path, const QString& extension)
+{
+    const Track* found = LibrarySubsystem::Get().FindTrack(track);
+    const QString folder = GetFolder();
+    if (!found || !CanDownload(*found) || folder.isEmpty() || !QDir().mkpath(folder))
+    {
+        QFile::remove(path);
+        return;
+    }
+
+    const QString target = MakeTargetPath(*found, extension);
+    if (!QFile::rename(path, target))
+    {
+        const bool bCopied = QFile::copy(path, target);
+        QFile::remove(path);
+        if (!bCopied)
+        {
+            qWarning() << "[Downloads] Cannot move the listened track to" << folder;
+            return;
+        }
+    }
+
+    qDebug() << "[Downloads] Saved while listening:" << target;
+    LibrarySubsystem::Get().SetLocalFile(track, target);
 }
 
 void DownloadSubsystem::StartNext()
@@ -266,11 +334,12 @@ void DownloadSubsystem::Start(Job& job)
     RemoveTempFiles(track);
 
     QStringList args{
-        QStringLiteral("-f"), YtDlpBackend::GetAudioFormat(),
+        QStringLiteral("-f"), YtDlpBackend::GetDownloadFormat(),
         QStringLiteral("--no-playlist"),
         QStringLiteral("--no-warnings"),
         QStringLiteral("--no-mtime"),
         QStringLiteral("--newline"),
+    	QStringLiteral("--cookies-from-browser"), QStringLiteral("firefox"),
         QStringLiteral("--progress"),
         QStringLiteral("--progress-template"),
         QStringLiteral("download:%1 %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s")
@@ -279,9 +348,11 @@ void DownloadSubsystem::Start(Job& job)
         QStringLiteral("-o"), tempDir + QStringLiteral("/%1.%(ext)s").arg(track.value),
     };
 
-    const QString ffmpeg = FfmpegSubsystem::Get().GetLocation();
-    if (!ffmpeg.isEmpty())
-        args << QStringLiteral("--ffmpeg-location") << ffmpeg << QStringLiteral("--embed-metadata");
+    if (QFile::exists(FfmpegExecutable()))
+    {
+        args << QStringLiteral("--ffmpeg-location") << QFileInfo(FfmpegExecutable()).absolutePath()
+             << QStringLiteral("--embed-metadata") << QStringLiteral("--write-thumbnail");
+    }
 
     const QString deno = DenoSubsystem::Get().GetExecutablePath();
     if (!deno.isEmpty())
@@ -332,7 +403,7 @@ void DownloadSubsystem::Start(Job& job)
         }
 
         YtDlpSubsystem::Get().ReportRunSuccess();
-        Finish(track, path, {});
+        EmbedCover(track, path);
     });
     connect(process, &QProcess::errorOccurred, this, [this, track, process](QProcess::ProcessError error) {
         if (error != QProcess::FailedToStart)
@@ -379,6 +450,66 @@ void DownloadSubsystem::OnOutput(TrackId track, QProcess* process)
 
         process->setProperty("finalPath", line);
     }
+}
+
+void DownloadSubsystem::EmbedCover(TrackId track, const QString& audioPath)
+{
+    const QFileInfo audio(audioPath);
+    const QString suffix = audio.suffix().toLower();
+    const QString prefix = QString::number(track.value) + '.';
+    const QDir tempDir(GetTempDirectory());
+
+    QString thumbnail;
+    for (const QFileInfo& info : tempDir.entryInfoList({prefix + QStringLiteral("*")}, QDir::Files))
+    {
+        static const QStringList ImageSuffixes{QStringLiteral("jpg"), QStringLiteral("jpeg"), QStringLiteral("webp"),
+                                               QStringLiteral("png")};
+        if (ImageSuffixes.contains(info.suffix().toLower()))
+            thumbnail = info.absoluteFilePath();
+    }
+
+    const QString cover = tempDir.filePath(prefix + QStringLiteral("cover.jpg"));
+    if ((suffix != QStringLiteral("m4a") && suffix != QStringLiteral("mp4")) || thumbnail.isEmpty() ||
+        !QFile::exists(FfmpegExecutable()) || !SaveCover(thumbnail, cover))
+    {
+        Finish(track, audioPath, {});
+        return;
+    }
+
+    const QString output = tempDir.filePath(prefix + QStringLiteral("with-cover.") + suffix);
+    auto* process = new QProcess(this);
+    QTimer::singleShot(CoverTimeoutMs, process, [process] { process->kill(); });
+
+    connect(process, &QProcess::finished, this,
+            [this, track, process, audioPath, output](int exitCode, QProcess::ExitStatus status) {
+                const QString stderrText = QString::fromLocal8Bit(process->readAllStandardError()).trimmed();
+                process->deleteLater();
+                processes.remove(track.value);
+
+                const bool bEmbedded = status == QProcess::NormalExit && exitCode == 0 && QFileInfo(output).size() > 0;
+                if (!bEmbedded)
+                    qWarning() << "[Downloads] Cannot embed the cover:" << stderrText;
+                Finish(track, bEmbedded ? output : audioPath, {});
+            });
+    connect(process, &QProcess::errorOccurred, this, [this, track, process, audioPath](QProcess::ProcessError error) {
+        if (error != QProcess::FailedToStart)
+            return;
+        process->deleteLater();
+        processes.remove(track.value);
+        qWarning() << "[Downloads] Cannot start ffmpeg to embed the cover";
+        Finish(track, audioPath, {});
+    });
+
+    processes.insert(track.value, process);
+    process->start(FfmpegExecutable(), {
+        QStringLiteral("-v"), QStringLiteral("error"), QStringLiteral("-y"),
+        QStringLiteral("-i"), audioPath, QStringLiteral("-i"), cover,
+        QStringLiteral("-map"), QStringLiteral("0:a"), QStringLiteral("-map"), QStringLiteral("1:v"),
+        QStringLiteral("-c"), QStringLiteral("copy"), QStringLiteral("-map_metadata"), QStringLiteral("0"),
+        QStringLiteral("-disposition:v:0"), QStringLiteral("attached_pic"),
+        QStringLiteral("-movflags"), QStringLiteral("+faststart"),
+        output,
+    });
 }
 
 void DownloadSubsystem::Finish(TrackId track, const QString& downloadedPath, const QString& error)

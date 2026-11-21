@@ -21,6 +21,7 @@ source/CMakeUserPresets.json
 *.dll
 *.dylib
 
+
 # Qt-es
 object_script.*.Release
 object_script.*.Debug
@@ -64,3 +65,7 @@ compile_commands.json
 
 *_qmlcache.qrc
 docs/
+
+# Built by tools/build-ffmpeg.sh
+third_party/ffmpeg/
+!tools/build-ffmpeg.sh

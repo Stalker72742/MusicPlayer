@@ -6,6 +6,8 @@ Rectangle {
 
     property var window: null
     property bool maximized: false
+    // Width of the window buttons on the right; the window resize frame leaves them alone.
+    readonly property real buttonsWidth: windowButtons.width
 
     // Ctrl+K and SearchViewModel.focusSearch() land here.
     function focusSearch() {
@@ -38,8 +40,22 @@ Rectangle {
         id: dragHandler
         target: null
         onActiveChanged: {
-            if (active && root.window)
-                root.window.startSystemMove();
+            if (!active || !root.window)
+                return;
+
+            // A frameless window is not restored by Windows when dragged while maximized:
+            // restore it here, keeping the grab point under the cursor.
+            const w = root.window;
+            if (w.visibility === Window.Maximized) {
+                const press = centroid.scenePressPosition;
+                const ratio = press.x / w.width;
+                const cursorX = w.x + centroid.scenePosition.x;
+                const cursorY = w.y + centroid.scenePosition.y;
+                w.showNormal();
+                w.x = Math.round(cursorX - ratio * w.width);
+                w.y = Math.round(cursorY - press.y);
+            }
+            w.startSystemMove();
         }
     }
 
@@ -69,6 +85,32 @@ Rectangle {
         }
     }
 
+    // Back and forward through the history, in the left corner like a browser. The margin keeps them clear of
+    // the window resize edge (6 px).
+    Row {
+        anchors.left: parent.left
+        anchors.leftMargin: 12
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 2
+
+        IconButton {
+            implicitWidth: 28; implicitHeight: 28
+            iconName: "chevron-left"
+            iconSize: 16
+            enabled: Navigation.canGoBack
+            opacity: enabled ? 1 : 0.35
+            onClicked: Navigation.goBack()
+        }
+        IconButton {
+            implicitWidth: 28; implicitHeight: 28
+            iconName: "chevron-right"
+            iconSize: 16
+            enabled: Navigation.canGoForward
+            opacity: enabled ? 1 : 0.35
+            onClicked: Navigation.goForward()
+        }
+    }
+
     SearchSuggestions {
         id: suggestions
         parent: search
@@ -89,6 +131,7 @@ Rectangle {
     }
 
     Row {
+        id: windowButtons
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -102,10 +145,26 @@ Rectangle {
             iconName: root.maximized ? "restore" : "maximize"
             onClicked: {
                 if (!root.window) return;
-                if (root.window.visibility === Window.Maximized)
-                    root.window.showNormal();
-                else
+
+                const win = root.window;
+
+                if (root.window.visibility === Window.Maximized) {
+                    win.showNormal();
+
+                    const screen = win.screen;
+                    const screenWidth = screen.width;
+                    const screenHeight = screen.height;
+
+                    if (win.width > screenWidth || win.height > screenHeight) {
+                        win.width = Math.round(screenWidth * 0.75);
+                        win.height = Math.round(screenHeight * 0.75);
+
+                        win.x = Math.round((screenWidth - win.width) / 2);
+                        win.y = Math.round((screenHeight - win.height) / 2);
+                    }
+                } else {
                     root.window.showMaximized();
+                }
             }
         }
         TitleBarButton {

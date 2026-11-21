@@ -15,6 +15,7 @@ LibraryView {
     model: PlaylistsViewModel.currentTracks
     contextPlaylistId: PlaylistsViewModel.currentId
     contextSmart: smart
+    clickToPlay: true
 
     // A smart playlist's order comes from its sort.
     reorderable: !smart

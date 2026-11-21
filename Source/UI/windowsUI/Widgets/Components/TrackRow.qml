@@ -35,10 +35,12 @@ Rectangle {
     property real durationColWidth: 100
     property real actionsColWidth: 90
 
-    signal clicked
-    signal doubleClicked
+    // modifiers: Qt.KeyboardModifiers of the click (Ctrl and Shift select).
+    signal clicked(int modifiers)
+    signal doubleClicked(int modifiers)
     signal likeClicked
     signal moreClicked(Item anchor)
+    signal contextRequested(point scenePosition)
     signal dragStarted
     signal dragMoved(point scenePosition)
     signal dragEnded
@@ -53,6 +55,22 @@ Rectangle {
 
     Behavior on color { ColorAnimation { duration: Theme.motion.durationFast } }
 
+    // First child, so the row's buttons stay above it. Not a TapHandler: those fire through popups.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: (mouse) => {
+            if (mouse.button === Qt.RightButton)
+                root.contextRequested(root.mapToItem(null, mouse.x, mouse.y));
+            else
+                root.clicked(mouse.modifiers);
+        }
+        onDoubleClicked: (mouse) => {
+            if (mouse.button === Qt.LeftButton)
+                root.doubleClicked(mouse.modifiers);
+        }
+    }
+
     // Index / playing indicator
     Item {
         id: indexCell
@@ -65,23 +83,18 @@ Rectangle {
 
         AppIcon {
             anchors.centerIn: parent
-            visible: indexCell.gripShown
+            visible: name !== ""
             width: 16; height: 16
-            name: "grip"
-            color: Theme.palette.iconActive
-        }
-
-        AppIcon {
-            anchors.centerIn: parent
-            visible: root.playing && !indexCell.gripShown
-            width: 16; height: 16
-            name: "playing"
+            name: root.selected ? "check"
+                : indexCell.gripShown ? "grip"
+                : root.playing ? "playing"
+                : ""
             color: Theme.palette.iconActive
         }
 
         Text {
             anchors.centerIn: parent
-            visible: !root.playing && !indexCell.gripShown
+            visible: !root.playing && !indexCell.gripShown && !root.selected
             text: root.number
             color: Theme.palette.textTertiary
             font.family: Theme.typography.family
@@ -147,10 +160,10 @@ Rectangle {
                     id: onlineMark
                     visible: root.online
                     anchors.verticalCenter: parent.verticalCenter
-                    width: visible ? 11 : 0
+                    width: root.online ? 11 : 0
                     height: 11
                     // Streamed, or played from its downloaded copy.
-                    name: root.downloaded ? "download" : "globe"
+                    name: !root.online ? "" : root.downloaded ? "download" : "globe"
                     color: Theme.palette.textTertiary
                 }
                 Text {
@@ -231,8 +244,4 @@ Rectangle {
     }
 
     HoverHandler { id: hover }
-    TapHandler {
-        onTapped: root.clicked()
-        onDoubleTapped: root.doubleClicked()
-    }
 }

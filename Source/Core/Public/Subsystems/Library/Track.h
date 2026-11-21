@@ -6,6 +6,7 @@
 
 #include <QDateTime>
 #include <QHashFunctions>
+#include <QMap>
 #include <QMetaType>
 #include <QString>
 #include <QStringList>
@@ -43,9 +44,12 @@ Q_DECLARE_METATYPE(TrackId)
 /// @brief A local audio file: a scanned one, or the downloaded copy of an online track.
 struct FileComponent
 {
-    QString path;       ///< Absolute path.
-    qint64 size = 0;    ///< Size in bytes at the last scan.
-    QDateTime modified; ///< Modification time at the last scan.
+    QString path;          ///< Absolute path. Stays when the file goes missing, so it is recognized when it returns.
+    qint64 size = 0;       ///< Size in bytes at the last scan.
+    qint64 modifiedMs = 0; ///< Modification time at the last scan, ms since the epoch.
+    quint64 fileId = 0;    ///< File id on its volume, follows the file through renames and moves. 0 if unknown.
+    quint32 volumeId = 0;  ///< Serial number of the volume of fileId.
+    bool bMissing = false; ///< Not found by the last look at the disk: the folder may be gone or the drive unplugged.
 };
 
 /// @brief Tags and duration, read from the file or given by the online source.
@@ -72,10 +76,13 @@ struct StatsComponent
     bool bLiked = false;
 };
 
-/// @brief What the user curates: free-form tags for smart playlists.
+/// @brief What the user curates: free-form tags for smart playlists and their own values of the track's tags.
 struct UserComponent
 {
     QStringList labels;
+    /// Tag values set in the app, by `title`, `artist`, `album`, `genre`, `year`, `track`. They win over what the
+    /// file or the online source says, and the audio file itself is not changed.
+    QMap<QString, QString> tagEdits;
 };
 
 /// @brief Source page of an online track.
@@ -88,6 +95,7 @@ struct StreamComponent
     QString pageUrl;      ///< Page the track was found on; empty for local tracks.
     QString thumbnailUrl; ///< Cover image.
     bool bSaved = false;  ///< In the library rather than transient.
+    QString channelUrl;   ///< Channel page of the author; empty if not known yet.
 };
 
 /// @brief A library track: its id and all of its components.
@@ -103,11 +111,15 @@ struct Track
     /// @brief Came from a web page (it may still have a local copy).
     bool IsOnline() const { return !stream.pageUrl.isEmpty(); }
 
-    /// @brief A scanned file or the downloaded copy of an online track. It may have gone missing since.
-    bool HasLocalFile() const { return !file.path.isEmpty(); }
+    /// @brief A scanned file or the downloaded copy of an online track that was there at the last look at the disk.
+    bool HasLocalFile() const { return !file.path.isEmpty() && !file.bMissing; }
 
-    /// @brief Local, or a saved online track.
+    /// @brief An online track nobody saved: exists only for playback and search results, not listed, not stored.
+    bool IsTransient() const { return IsOnline() && !stream.bSaved; }
+
+    /// @brief What the user sees in the lists: a local track whose file is there, or a saved online track.
     ///
-    /// Transient online tracks exist only for playback and search results: not listed, not cached.
-    bool IsInLibrary() const { return !IsOnline() || stream.bSaved; }
+    /// A local track whose file went missing stays registered with its likes, tags and playlist places,
+    /// but is hidden everywhere until the file returns.
+    bool IsInLibrary() const { return IsOnline() ? stream.bSaved : !file.bMissing; }
 };

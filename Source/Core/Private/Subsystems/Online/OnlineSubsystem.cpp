@@ -7,7 +7,9 @@
 #include <QDir>
 #include <QRegularExpression>
 #include <QStandardPaths>
+#include <QProcess>
 #include <QTimer>
+#include <QUrl>
 #include <QUrlQuery>
 
 #include <QTomlUtils/QTomlUtils.h>
@@ -27,7 +29,7 @@ namespace
 
 OnlineSubsystem::OnlineSubsystem()
 {
-    auto* ytDlp = new YtDlpBackend(this);
+    ytDlp = new YtDlpBackend(this);
 
     backends = {
         new BrowserAssistedBackend(ytDlp, this),
@@ -98,6 +100,80 @@ QList<OnlineSubsystem::BackendInfo> OnlineSubsystem::GetBackends() const
         infos.append(info);
     }
     return infos;
+}
+
+void OnlineSubsystem::FetchVideo(const QString& pageUrl, QObject* context, VideoCallback callback)
+{
+    QList<OnlineBackend*> order;
+    for (OnlineBackend* backend : backends)
+    {
+        if (backend->CanFetchVideo())
+            order.append(backend);
+    }
+    TryFetchVideo(pageUrl, order, context, std::move(callback), context != nullptr);
+}
+
+void OnlineSubsystem::TryFetchVideo(const QString& pageUrl, QList<OnlineBackend*> remaining, QPointer<QObject> context,
+    VideoCallback callback, bool bHasContext)
+{
+    OnlineBackend* backend = remaining.takeFirst();
+    backend->FetchVideo(pageUrl, [this, pageUrl, remaining, context, callback, bHasContext](const OnlineEntry& entry, const OnlineError& error) {
+        if (bHasContext && !context)
+            return;
+
+        if (error.IsOk())
+        {
+            callback(entry, {});
+            return;
+        }
+
+        if (error.kind == OnlineError::NotFound || remaining.isEmpty())
+        {
+            callback({}, error.message);
+            return;
+        }
+        TryFetchVideo(pageUrl, remaining, context, callback, bHasContext);
+    });
+}
+
+quint64 OnlineSubsystem::StartListing(const QString& url, int limit, QObject* context, ListItemCallback onItem, ListDoneCallback onDone)
+{
+    const quint64 listing = nextListing++;
+    const QPointer<QObject> guard(context);
+    const bool bHasContext = context != nullptr;
+
+    QProcess* process = ytDlp->StartListing(url, limit,
+        [guard, bHasContext, onItem](const OnlineListItem& item) {
+            if (!bHasContext || guard)
+                onItem(item);
+        },
+        [this, listing, guard, bHasContext, onDone](const OnlineError& error) {
+            listings.remove(listing);
+            if (!bHasContext || guard)
+                onDone(error.message);
+        });
+
+    if (process)
+        listings.insert(listing, process);
+    return listing;
+}
+
+void OnlineSubsystem::CancelListing(quint64 listing)
+{
+    if (const QPointer<QProcess> process = listings.take(listing))
+        ytDlp->StopListing(process);
+}
+
+QString OnlineSubsystem::MakeSearchListUrl(const QString& query, OnlineListItem::Kind kind)
+{
+    QUrlQuery items;
+    items.addQueryItem(QStringLiteral("search_query"), QString::fromLatin1(QUrl::toPercentEncoding(query)));
+    items.addQueryItem(QStringLiteral("sp"),
+        kind == OnlineListItem::Kind::Playlist ? QStringLiteral("EgIQAw%3D%3D") : QStringLiteral("EgIQAg%3D%3D"));
+
+    QUrl url(QStringLiteral("https://www.youtube.com/results"));
+    url.setQuery(items);
+    return url.toString(QUrl::FullyEncoded);
 }
 
 void OnlineSubsystem::Search(const QString& query, int count)

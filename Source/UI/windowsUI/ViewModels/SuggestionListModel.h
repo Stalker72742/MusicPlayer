@@ -16,6 +16,7 @@ struct Suggestion
         Setting,          ///< Points the settings screen at a setting.
         Track,            ///< Plays a library track.
         YouTube,          ///< Searches YouTube for text.
+        Link,             ///< Opens the YouTube link in `text`.
         Playlist          ///< Opens a playlist.
     };
 
@@ -24,7 +25,7 @@ struct Suggestion
     QString subtitle;
     QString icon;
 
-    /// Short tag form shown on the right, e.g. "s:audio;crossfade".
+    /// Short tag form shown on the right, e.g. "s:general;outputDevice".
     QString tag;
 
     /// Query that Tab puts into the search field.

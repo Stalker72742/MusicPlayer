@@ -81,6 +81,7 @@ public:
     /// @brief Looks for a newer release. Uses the source from updater.json, like the updater itself.
     Q_INVOKABLE void checkForUpdates();
 
+
     /// @brief Starts the updater without a window: it downloads, closes this app, installs and restarts it.
     Q_INVOKABLE void installUpdate();
     /// @brief Opens the updater window.
@@ -88,6 +89,8 @@ public:
 
     /// @brief Installs a deployed folder or a package zip, even if it is not newer (the user picked it).
     Q_INVOKABLE void installFromPath(const QUrl& path);
+    /// @brief Asks for a package zip or a deployed folder in one dialog (LocalBuildPicker) and installs it.
+    Q_INVOKABLE void chooseLocalBuild();
 
 signals:
     void updateStateChanged();

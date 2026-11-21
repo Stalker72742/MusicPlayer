@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import SoundLink 1.0
 
@@ -176,13 +175,19 @@ Item {
             border.width: 1
             border.color: Theme.palette.fieldBorder
 
-            ScrollView {
+            Flickable {
+                id: notes
                 anchors.fill: parent
                 anchors.margins: 16
+                contentWidth: width
+                contentHeight: notesText.implicitHeight
                 clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: AppScrollBar {}
 
                 Text {
-                    width: parent.width
+                    id: notesText
+                    width: notes.width - 14
                     wrapMode: Text.WordWrap
                     textFormat: Text.MarkdownText
                     text: AppInfoViewModel.releaseNotes
@@ -213,38 +218,16 @@ Item {
                 font.weight: Font.DemiBold
             }
             Text {
-                text: "A deployed folder (with package.json) or a " + AppInfoViewModel.name + "-<version>-win64.zip package."
+                text: "A " + AppInfoViewModel.name + "-<version>-win64.zip package, or a deployed folder: open it and press Use this folder."
                 color: Theme.palette.textSecondary
                 font.family: Theme.typography.family
                 font.pixelSize: Theme.typography.smallSize
             }
-            Row {
-                spacing: 8
-
-                TextButton {
-                    enabled: !root.installing
-                    text: "Choose folder…"
-                    onClicked: folderDialog.open()
-                }
-                TextButton {
-                    enabled: !root.installing
-                    text: "Choose archive…"
-                    onClicked: archiveDialog.open()
-                }
+            TextButton {
+                enabled: !root.installing
+                text: "Choose package or folder…"
+                onClicked: AppInfoViewModel.chooseLocalBuild()
             }
         }
-    }
-
-    FolderDialog {
-        id: folderDialog
-        title: "Choose a deployed " + AppInfoViewModel.name + " folder"
-        onAccepted: AppInfoViewModel.installFromPath(selectedFolder)
-    }
-
-    FileDialog {
-        id: archiveDialog
-        title: "Choose a " + AppInfoViewModel.name + " package"
-        nameFilters: [AppInfoViewModel.name + " package (" + AppInfoViewModel.name + "-*.zip)", "Zip archives (*.zip)"]
-        onAccepted: AppInfoViewModel.installFromPath(selectedFile)
     }
 }

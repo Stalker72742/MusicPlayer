@@ -6,13 +6,14 @@
 
 #include <QList>
 #include <QObject>
-#include <QTimer>
+#include <QSet>
+#include <QThreadPool>
 
 #include "Library/Track.h"
 
-class QMediaPlayer;
-
-/// @brief Reads tags and duration of queued files one at a time through QMediaPlayer (no extra dependencies).
+/// @brief Reads tags and duration of queued files through libavformat, a few at a time on background threads.
+///
+/// A file stays open only while it is being read.
 class MetadataReader : public QObject
 {
     Q_OBJECT
@@ -21,13 +22,13 @@ public:
     explicit MetadataReader(QObject* parent = nullptr);
     ~MetadataReader() override;
 
-    /// @brief Queues a file; tagsRead() reports the result.
+    /// @brief Queues a file unless it is already waiting; tagsRead() reports the result.
     void Enqueue(TrackId id, const QString& path);
-    /// @brief Drops all queued files.
+    /// @brief Drops all queued files; those being read still report.
     void Clear();
 
     /// @brief Files queued or being read.
-    int GetPendingCount() const { return static_cast<int>(queue.size()) + (current.IsValid() ? 1 : 0); }
+    int GetPendingCount() const { return static_cast<int>(queue.size()) + running; }
 
 signals:
     /// @brief A file has been read.
@@ -44,10 +45,10 @@ private:
     };
 
     void StartNext();
-    void Finish(bool bSuccess);
+    void OnRead(TrackId id, const TagsComponent& tags, bool bSuccess);
 
-    QMediaPlayer* player = nullptr;
-    QTimer timeout;
+    QThreadPool pool;
     QList<Request> queue;
-    TrackId current;
+    QSet<TrackId> queued;
+    int running = 0;
 };

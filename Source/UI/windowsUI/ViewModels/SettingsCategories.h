@@ -3,6 +3,13 @@
 #include <QList>
 #include <QString>
 
+/// @brief A titled group of settings inside a category; the settings screen can collapse it.
+struct SettingsSection
+{
+    QString id; ///< Unique across categories: `<category>.<name>`.
+    QString title;
+};
+
 /// @brief A settings category.
 ///
 /// GetSettingsCategories() is the single list of settings categories: the sidebar, the settings screen tabs,
@@ -12,17 +19,34 @@ struct SettingsCategory
     QString id;
     QString title;
     QString icon;
+    QList<SettingsSection> sections; ///< In display order.
 };
 
-/// @brief Every settings category in display order. A new category is added only here.
+/// @brief Every settings category in display order. A new category or section is added only here.
 inline const QList<SettingsCategory>& GetSettingsCategories()
 {
     static const QList<SettingsCategory> categories{
-        {QStringLiteral("general"), QStringLiteral("General"), QStringLiteral("settings")},
-        {QStringLiteral("library"), QStringLiteral("Library"), QStringLiteral("library")},
-        {QStringLiteral("audio"), QStringLiteral("Audio"), QStringLiteral("audio")},
-        {QStringLiteral("online"), QStringLiteral("Online"), QStringLiteral("globe")},
-        {QStringLiteral("downloads"), QStringLiteral("Downloads"), QStringLiteral("download")},
+        {QStringLiteral("general"), QStringLiteral("General"), QStringLiteral("settings"),
+            {
+                {QStringLiteral("general.app"), QStringLiteral("Application")},
+                {QStringLiteral("general.playback"), QStringLiteral("Playback")},
+            }},
+        {QStringLiteral("library"), QStringLiteral("Library"), QStringLiteral("library"),
+            {
+                {QStringLiteral("library.folders"), QStringLiteral("Music folders")},
+                {QStringLiteral("library.artwork"), QStringLiteral("Artwork")},
+                {QStringLiteral("library.downloads"), QStringLiteral("Downloads")},
+            }},
+        {QStringLiteral("online"), QStringLiteral("Online"), QStringLiteral("globe"),
+            {
+                {QStringLiteral("online.extension"), QStringLiteral("Browser extension")},
+                {QStringLiteral("online.advanced"), QStringLiteral("Advanced")},
+            }},
+        {QStringLiteral("sync"), QStringLiteral("Sync"), QStringLiteral("devices"),
+            {
+                {QStringLiteral("sync.devices"), QStringLiteral("Devices")},
+                {QStringLiteral("sync.network"), QStringLiteral("Network")},
+            }},
     };
     return categories;
 }
@@ -36,4 +60,32 @@ inline bool IsSettingsCategory(const QString& id)
             return true;
     }
     return false;
+}
+
+/// @brief The category holding a section, nullptr if there is no such section.
+inline const SettingsCategory* FindCategoryOfSection(const QString& sectionId)
+{
+    for (const SettingsCategory& category : GetSettingsCategories())
+    {
+        for (const SettingsSection& section : category.sections)
+        {
+            if (section.id == sectionId)
+                return &category;
+        }
+    }
+    return nullptr;
+}
+
+/// @brief Title of a section by id, empty if there is no such section.
+inline QString GetSettingsSectionTitle(const QString& sectionId)
+{
+    if (const SettingsCategory* category = FindCategoryOfSection(sectionId))
+    {
+        for (const SettingsSection& section : category->sections)
+        {
+            if (section.id == sectionId)
+                return section.title;
+        }
+    }
+    return {};
 }

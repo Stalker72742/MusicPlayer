@@ -12,14 +12,41 @@
 #include <QUrl>
 
 #include <algorithm>
+#include <vector>
 
 #include "Downloads/DownloadSubsystem.h"
 #include "Library/LibrarySubsystem.h"
+#include "Player/PlayerSubsystem.h"
 #include "Playlists/PlaylistSubsystem.h"
 
 namespace
 {
     constexpr int MaxRecent = 50;
+
+    TrackId ToId(const QVariant& value)
+    {
+        return TrackId{static_cast<quint32>(value.toInt())};
+    }
+
+    bool HasFile(const Track& track)
+    {
+        return track.HasLocalFile() && !track.file.path.isEmpty();
+    }
+
+    QString CheckFileName(const QString& name)
+    {
+        static const QString Forbidden = QStringLiteral("\\/:*?\"<>|");
+        if (name.isEmpty())
+            return QStringLiteral("The name is empty.");
+        for (const QChar ch : name)
+        {
+            if (Forbidden.contains(ch) || ch.unicode() < 32)
+                return QStringLiteral("A file name cannot contain \\ / : * ? \" < > |");
+        }
+        if (name.endsWith('.') || name.endsWith(' '))
+            return QStringLiteral("A file name cannot end with a dot or a space.");
+        return {};
+    }
 
     QColor AlbumTint(const QString& album)
     {
@@ -120,6 +147,236 @@ void LibraryViewModel::copyLink(int trackId)
         QGuiApplication::clipboard()->setText(track->IsOnline() ? track->stream.pageUrl : track->file.path);
 }
 
+void LibraryViewModel::showInFolder(int trackId)
+{
+    const Track* track = LibrarySubsystem::Get().FindTrack(TrackId{static_cast<quint32>(trackId)});
+    if (!track || !HasFile(*track))
+        return;
+
+#ifdef Q_OS_WIN
+    QProcess::startDetached(QStringLiteral("explorer.exe"),
+        {QStringLiteral("/select,"), QDir::toNativeSeparators(track->file.path)});
+#else
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(track->file.path).absolutePath()));
+#endif
+}
+
+void LibraryViewModel::copyFilePath(int trackId)
+{
+    const Track* track = LibrarySubsystem::Get().FindTrack(TrackId{static_cast<quint32>(trackId)});
+    if (track && HasFile(*track))
+        QGuiApplication::clipboard()->setText(QDir::toNativeSeparators(track->file.path));
+}
+
+QString LibraryViewModel::fileBaseName(int trackId) const
+{
+    const Track* track = LibrarySubsystem::Get().FindTrack(TrackId{static_cast<quint32>(trackId)});
+    return track && HasFile(*track) ? QFileInfo(track->file.path).completeBaseName() : QString();
+}
+
+QString LibraryViewModel::renameFile(int trackId, const QString& baseName)
+{
+    const TrackId id{static_cast<quint32>(trackId)};
+    const Track* track = LibrarySubsystem::Get().FindTrack(id);
+    if (!track || !HasFile(*track))
+        return QStringLiteral("This track has no file.");
+
+    const QString name = baseName.trimmed();
+    if (const QString problem = CheckFileName(name); !problem.isEmpty())
+        return problem;
+
+    const QFileInfo info(track->file.path);
+    const QString suffix = info.suffix();
+    const QString target = info.dir().filePath(suffix.isEmpty() ? name : name + '.' + suffix);
+    if (target == info.filePath())
+        return {};
+
+    const bool bOnlyCase = target.compare(info.filePath(), Qt::CaseInsensitive) == 0;
+    if (!bOnlyCase && QFileInfo::exists(target))
+        return QStringLiteral("A file with this name is already there.");
+
+    PlayerSubsystem& player = PlayerSubsystem::Get();
+    const bool bReleased = player.ReleaseFile(id);
+
+    QFile file(info.filePath());
+    const bool bRenamed = file.rename(target);
+    if (bRenamed)
+    {
+        LibrarySubsystem::Get().SetFilePath(id, target);
+        LibrarySubsystem::Get().TakeTagsFromFileName(id);
+    }
+
+    if (bReleased)
+        player.RestoreFile();
+
+    if (!bRenamed)
+        return QStringLiteral("Cannot rename the file: ") + file.errorString();
+    return {};
+}
+
+void LibraryViewModel::openProperties(const QVariantList& trackIds)
+{
+    if (!trackIds.isEmpty())
+        emit propertiesRequested(trackIds);
+}
+
+QVariantMap LibraryViewModel::trackProperties(int trackId) const
+{
+    const Track* track = LibrarySubsystem::Get().FindTrack(TrackId{static_cast<quint32>(trackId)});
+    if (!track)
+        return {{QStringLiteral("id"), 0}};
+
+    const bool bHasFile = HasFile(*track);
+    const qint64 seconds = track->tags.durationMs / 1000;
+    return {
+        {QStringLiteral("id"), trackId},
+        {QStringLiteral("title"), track->tags.title},
+        {QStringLiteral("artist"), track->tags.artist},
+        {QStringLiteral("album"), track->tags.album},
+        {QStringLiteral("genre"), track->tags.genre},
+        {QStringLiteral("year"), track->tags.year > 0 ? QString::number(track->tags.year) : QString()},
+        {QStringLiteral("track"), track->tags.trackNumber > 0 ? QString::number(track->tags.trackNumber) : QString()},
+        {QStringLiteral("tags"), track->user.labels.join(QStringLiteral(", "))},
+        {QStringLiteral("fileName"), bHasFile ? QFileInfo(track->file.path).completeBaseName() : QString()},
+        {QStringLiteral("path"), bHasFile ? QDir::toNativeSeparators(track->file.path) : track->stream.pageUrl},
+        {QStringLiteral("hasFile"), bHasFile},
+        {QStringLiteral("duration"), QStringLiteral("%1:%2").arg(seconds / 60).arg(seconds % 60, 2, 10, QLatin1Char('0'))},
+        {QStringLiteral("artUrl"), track->stream.thumbnailUrl},
+        {QStringLiteral("liked"), track->stats.bLiked},
+        {QStringLiteral("online"), track->IsOnline()},
+        {QStringLiteral("inLibrary"), track->IsInLibrary()},
+        {QStringLiteral("downloaded"), track->IsOnline() && track->HasLocalFile()},
+    };
+}
+
+void LibraryViewModel::setTrackTags(int trackId, const QVariantMap& tags)
+{
+    QMap<QString, QString> edits;
+    for (auto it = tags.cbegin(); it != tags.cend(); ++it)
+        edits.insert(it.key(), it.value().toString());
+    LibrarySubsystem::Get().SetTagEdits(TrackId{static_cast<quint32>(trackId)}, edits);
+}
+
+void LibraryViewModel::copyText(const QString& text)
+{
+    QGuiApplication::clipboard()->setText(text);
+}
+
+QVariantMap LibraryViewModel::describeTracks(const QVariantList& trackIds) const
+{
+    int files = 0;
+    int downloads = 0;
+    int saved = 0;
+    int downloadable = 0;
+    int total = 0;
+    bool bAllLiked = true;
+    for (const QVariant& value : trackIds)
+    {
+        const Track* track = LibrarySubsystem::Get().FindTrack(ToId(value));
+        if (!track)
+            continue;
+
+        ++total;
+        bAllLiked = bAllLiked && track->stats.bLiked;
+        if (!track->IsOnline())
+        {
+            ++files;
+        }
+        else if (HasFile(*track))
+        {
+            ++downloads;
+        }
+        else
+        {
+            ++downloadable;
+            if (track->IsInLibrary())
+                ++saved;
+        }
+    }
+
+    return {
+        {QStringLiteral("files"), files},
+        {QStringLiteral("downloads"), downloads},
+        {QStringLiteral("saved"), saved},
+        {QStringLiteral("downloadable"), downloadable},
+        {QStringLiteral("liked"), total > 0 && bAllLiked},
+        {QStringLiteral("total"), total},
+    };
+}
+
+QVariantMap LibraryViewModel::removeTracks(const QVariantList& trackIds)
+{
+    LibrarySubsystem& library = LibrarySubsystem::Get();
+    PlayerSubsystem& player = PlayerSubsystem::Get();
+
+    int removed = 0;
+    int failed = 0;
+    QString error;
+
+    for (const QVariant& value : trackIds)
+    {
+        const TrackId id = ToId(value);
+        const Track* track = library.FindTrack(id);
+        if (!track)
+            continue;
+
+        if (track->IsOnline())
+        {
+            if (HasFile(*track))
+                DownloadSubsystem::Get().RemoveDownload(id);
+            else if (track->IsInLibrary())
+                setInLibrary(static_cast<int>(id.value), false);
+            else
+                continue;
+            ++removed;
+            continue;
+        }
+
+        const QString path = track->file.path;
+        const bool bReleased = player.ReleaseFile(id);
+
+        QFile file(path);
+        const bool bTrashed = !file.exists() || file.moveToTrash();
+        if (bTrashed)
+            library.MarkFileGone(id);
+
+        if (bReleased)
+            player.RestoreFile();
+
+        if (bTrashed)
+        {
+            ++removed;
+            continue;
+        }
+
+        ++failed;
+        if (error.isEmpty())
+            error = QFileInfo(path).fileName() + QStringLiteral(": ") + file.errorString();
+        qWarning() << "[Library] Cannot move to the Recycle Bin:" << path << file.errorString();
+    }
+
+    return {
+        {QStringLiteral("removed"), removed},
+        {QStringLiteral("failed"), failed},
+        {QStringLiteral("error"), error},
+    };
+}
+
+void LibraryViewModel::toggleLikedTracks(const QVariantList& trackIds)
+{
+    LibrarySubsystem& library = LibrarySubsystem::Get();
+
+    bool bAllLiked = true;
+    for (const QVariant& value : trackIds)
+    {
+        if (const Track* track = library.FindTrack(ToId(value)); track && !track->stats.bLiked)
+            bAllLiked = false;
+    }
+
+    for (const QVariant& value : trackIds)
+        library.SetLiked(ToId(value), !bAllLiked);
+}
+
 TrackData LibraryViewModel::ToTrackData(const Track& track)
 {
     TrackData data;
@@ -138,28 +395,60 @@ TrackData LibraryViewModel::ToTrackData(const Track& track)
     return data;
 }
 
-void LibraryViewModel::Rebuild()
+void LibraryViewModel::SortTracks()
 {
-    const QList<Track>& library = LibrarySubsystem::Get().GetTracks();
-
-    QList<const Track*> sorted;
-    sorted.reserve(library.size());
-    for (const Track& track : library)
-    {
-        if (track.IsInLibrary())
-            sorted.append(&track);
-    }
-
     QCollator collator;
     collator.setNumericMode(true);
     collator.setCaseSensitivity(Qt::CaseInsensitive);
-    std::sort(sorted.begin(), sorted.end(), [&collator](const Track* a, const Track* b) {
-        if (a->IsOnline() != b->IsOnline())
-            return b->IsOnline();
-        if (a->IsOnline())
-            return a->stats.dateAdded < b->stats.dateAdded;
-        return collator.compare(a->file.path, b->file.path) < 0;
-    });
+
+    struct Row
+    {
+        const Track* track;
+        QCollatorSortKey key;
+    };
+
+    std::vector<Row> local;
+    std::vector<const Track*> online;
+    for (const Track& track : LibrarySubsystem::Get().GetTracks())
+    {
+        if (!track.IsInLibrary())
+            continue;
+
+        if (track.IsOnline())
+            online.push_back(&track);
+        else
+            local.push_back({&track, collator.sortKey(track.file.path)});
+    }
+
+    std::sort(local.begin(), local.end(), [](const Row& a, const Row& b) { return a.key < b.key; });
+    std::sort(online.begin(), online.end(),
+        [](const Track* a, const Track* b) { return a->stats.dateAdded < b->stats.dateAdded; });
+
+    sortedIds.clear();
+    sortedIds.reserve(static_cast<qsizetype>(local.size() + online.size()));
+    for (const Row& row : local)
+        sortedIds.append(row.track->id);
+    for (const Track* track : online)
+        sortedIds.append(track->id);
+}
+
+void LibraryViewModel::Rebuild()
+{
+    const LibrarySubsystem& subsystem = LibrarySubsystem::Get();
+
+    if (sortedRevision != subsystem.GetStructureRevision())
+    {
+        sortedRevision = subsystem.GetStructureRevision();
+        SortTracks();
+    }
+
+    QList<const Track*> sorted;
+    sorted.reserve(sortedIds.size());
+    for (TrackId id : sortedIds)
+    {
+        if (const Track* track = subsystem.FindTrack(id))
+            sorted.append(track);
+    }
 
     QList<TrackData> all;
     QList<TrackData> favorites;

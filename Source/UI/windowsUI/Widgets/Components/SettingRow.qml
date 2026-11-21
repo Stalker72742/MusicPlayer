@@ -82,6 +82,12 @@ Item {
                 case SettingsModel.Folder:     return folderControl;
                 case SettingsModel.BrowserBridge: return bridgeControl;
                 case SettingsModel.OnlineBackends: return backendsControl;
+                case SettingsModel.SyncThisDevice:
+                case SettingsModel.SyncFiles:
+                case SettingsModel.SyncPairing:
+                case SettingsModel.SyncDevices:
+                case SettingsModel.SyncServer:
+                case SettingsModel.SyncAddresses:  return syncControl;
                 }
                 return null;
             }
@@ -226,6 +232,14 @@ Item {
                     onClicked: OnlineViewModel.openExtensionFolder()
                 }
             }
+        }
+    }
+
+    Component {
+        id: syncControl
+
+        SyncSettingControl {
+            kind: root.type
         }
     }
 

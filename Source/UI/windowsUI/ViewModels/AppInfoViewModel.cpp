@@ -6,12 +6,14 @@
 #include <QDir>
 #include <QJSEngine>
 #include <QLocale>
+#include <QQuickWindow>
 
 #include <QAppUpdater/AppControlServer.h>
 #include <QAppUpdater/InstallLayout.h>
 #include <QAppUpdater/UpdaterConfig.h>
 
 #include "AppInstance.h"
+#include "LocalBuildPicker.h"
 
 using namespace QAppUpdater;
 
@@ -151,6 +153,19 @@ void AppInfoViewModel::installFromPath(const QUrl& path)
 
     StartInstall({QStringLiteral("--path"), QDir::toNativeSeparators(path.toLocalFile()), QStringLiteral("--update"),
         QStringLiteral("--force"), QStringLiteral("--report")});
+}
+
+void AppInfoViewModel::chooseLocalBuild()
+{
+    if (updateState == Installing)
+        return;
+
+    QTimer::singleShot(0, this, [this] {
+        AppInstance* app = AppInstance::getInstance();
+        const QString path = LocalBuildPicker::Pick(app ? app->getMainWindow() : nullptr, GetName());
+        if (!path.isEmpty())
+            installFromPath(QUrl::fromLocalFile(path));
+    });
 }
 
 void AppInfoViewModel::StartInstall(const QStringList& arguments)

@@ -8,6 +8,8 @@
 #include "Library/LibrarySubsystem.h"
 #include "LibraryViewModel.h"
 #include "Navigation.h"
+#include "OnlinePageViewModel.h"
+#include "Online/OnlineLink.h"
 #include "Online/OnlineSubsystem.h"
 #include "Player/PlayerSubsystem.h"
 #include "Playlists/PlaylistSubsystem.h"
@@ -25,6 +27,7 @@ namespace
     constexpr int SearchResultCount = 20;
 
     constexpr int MaxResults = 300;
+    constexpr int MaxCollections = 30;
 
     enum class Scope
     {
@@ -252,6 +255,30 @@ namespace
         return suggestion;
     }
 
+    Suggestion MakeLink(OnlineLink::Kind kind, const QString& url, const QString& text)
+    {
+        Suggestion suggestion;
+        suggestion.kind = Suggestion::Link;
+        suggestion.title = kind == OnlineLink::Kind::Video      ? QStringLiteral("Open this video")
+                         : kind == OnlineLink::Kind::Playlist ? QStringLiteral("Open this playlist")
+                                                              : QStringLiteral("Open this channel");
+        suggestion.subtitle = url;
+        suggestion.icon = QStringLiteral("link");
+        suggestion.tag = QStringLiteral("link");
+        suggestion.completion = url;
+        suggestion.text = text;
+        return suggestion;
+    }
+
+    QString FormatFollowers(qint64 followers)
+    {
+        if (followers >= 1'000'000)
+            return QStringLiteral("%1M subscribers").arg(followers / 1'000'000.0, 0, 'f', 1);
+        if (followers >= 1'000)
+            return QStringLiteral("%1K subscribers").arg(followers / 1'000);
+        return followers > 0 ? QStringLiteral("%1 subscribers").arg(followers) : QString();
+    }
+
     QList<Suggestion> MatchTracks(const QString& text, int max)
     {
         const QStringList words = text.toLower().split(' ', Qt::SkipEmptyParts);
@@ -324,6 +351,11 @@ SearchViewModel::SearchViewModel()
     OnlineSubsystem& online = OnlineSubsystem::Get();
     connect(&online, &OnlineSubsystem::searchStarted, this, [this](const QString& searchQuery) {
         onlineQuery = searchQuery;
+        CancelCollections();
+        collections.clear();
+        collectionsKind.clear();
+        collectionsState = Idle;
+        emit collectionsChanged();
         resultIds.clear();
         RebuildResults();
         SetOnlineState(Searching);
@@ -350,8 +382,18 @@ SearchViewModel::SearchViewModel()
 
     connect(&Navigation::Get(), &Navigation::pageChanged, this, &SearchViewModel::Rebuild);
     connect(&Navigation::Get(), &Navigation::settingsCategoryChanged, this, &SearchViewModel::Rebuild);
+    connect(&Navigation::Get(), &Navigation::searchQueryChanged, this, &SearchViewModel::FollowNavigation);
 
     Rebuild();
+    FollowNavigation();
+}
+
+void SearchViewModel::FollowNavigation()
+{
+    const Navigation& navigation = Navigation::Get();
+    const QString wanted = navigation.GetSearchQuery();
+    if (navigation.GetPage() == Navigation::Search && !wanted.isEmpty() && wanted != onlineQuery)
+        OnlineSubsystem::Get().Search(wanted, SearchResultCount);
 }
 
 SearchViewModel& SearchViewModel::Get()
@@ -396,7 +438,15 @@ void SearchViewModel::Rebuild()
 
     QList<Suggestion> result;
 
-    if (query.trimmed().isEmpty())
+    const OnlineLink link = parsed.scope == Scope::Any || parsed.scope == Scope::YouTube ? OnlineLink::Parse(parsed.current) : OnlineLink{};
+
+    if (link.IsValid())
+    {
+        result.append(MakeLink(link.kind, link.url, parsed.current));
+        if (!link.playlistUrl.isEmpty())
+            result.append(MakeLink(OnlineLink::Kind::Playlist, link.playlistUrl, link.playlistUrl));
+    }
+    else if (query.trimmed().isEmpty())
     {
         if (bOnSettings)
         {
@@ -412,7 +462,7 @@ void SearchViewModel::Rebuild()
 
         result.append(MakeHint(QStringLiteral("yt:"), QStringLiteral("Search YouTube"), QStringLiteral("yt:daft punk")));
         result.append(MakeHint(QStringLiteral("lib:"), QStringLiteral("Search your library"), QStringLiteral("lib:homework")));
-        result.append(MakeHint(QStringLiteral("s:"), QStringLiteral("Open settings"), QStringLiteral("s:audio;crossfade")));
+        result.append(MakeHint(QStringLiteral("s:"), QStringLiteral("Open settings"), QStringLiteral("s:general;outputDevice")));
         result.append(MakeHint(QStringLiteral("go:"), QStringLiteral("Go to a page"), QStringLiteral("go:favorites")));
         result.append(MakeHint(QStringLiteral("pl:"), QStringLiteral("Open a playlist"), QStringLiteral("pl:road trip")));
     }
@@ -588,6 +638,10 @@ bool SearchViewModel::activate(int row)
             searchOnline(suggestion.text);
             break;
 
+        case Suggestion::Link:
+            OnlinePageViewModel::Get().openLink(suggestion.text);
+            break;
+
         case Suggestion::Playlist:
             Navigation::Get().openPlaylist(suggestion.playlistId);
             break;
@@ -606,7 +660,7 @@ void SearchViewModel::complete(int row)
 void SearchViewModel::searchOnline(const QString& text)
 {
     const QString trimmed = text.simplified();
-    if (trimmed.isEmpty())
+    if (trimmed.isEmpty() || OnlinePageViewModel::Get().openLink(trimmed))
         return;
 
     history.removeAll(trimmed);
@@ -614,8 +668,11 @@ void SearchViewModel::searchOnline(const QString& text)
     while (history.size() > MaxHistory)
         history.removeLast();
 
-    Navigation::Get().navigate(Navigation::Search);
-    OnlineSubsystem::Get().Search(trimmed, SearchResultCount);
+    Navigation& navigation = Navigation::Get();
+    const bool bAlreadyThere = navigation.GetPage() == Navigation::Search && navigation.GetSearchQuery() == trimmed;
+    navigation.openSearch(trimmed);
+    if (bAlreadyThere || onlineQuery != trimmed)
+        OnlineSubsystem::Get().Search(trimmed, SearchResultCount);
 }
 
 void SearchViewModel::retryOnline()
@@ -643,14 +700,65 @@ void SearchViewModel::loadMore()
     emit onlineChanged();
 }
 
+QSet<TrackId> SearchViewModel::GetResultTracks() const
+{
+    QSet<TrackId> ids;
+    for (int id : resultIds)
+        ids.insert(TrackId{static_cast<quint32>(id)});
+    return ids;
+}
+
+void SearchViewModel::CancelCollections()
+{
+    if (collectionsListing != 0)
+        OnlineSubsystem::Get().CancelListing(collectionsListing);
+    collectionsListing = 0;
+}
+
+void SearchViewModel::loadCollections(const QString& kind)
+{
+    if (onlineQuery.isEmpty() || (kind == collectionsKind && collectionsState != Failed))
+        return;
+
+    const OnlineListItem::Kind wanted = kind == QStringLiteral("channel") ? OnlineListItem::Kind::Channel : OnlineListItem::Kind::Playlist;
+
+    CancelCollections();
+    collections.clear();
+    collectionsKind = kind;
+    collectionsError.clear();
+    collectionsState = Searching;
+    emit collectionsChanged();
+
+    collectionsListing = OnlineSubsystem::Get().StartListing(OnlineSubsystem::MakeSearchListUrl(onlineQuery, wanted), MaxCollections, this,
+        [this, wanted](const OnlineListItem& item) {
+            if (item.kind != wanted)
+                return;
+
+            const QString subtitle = wanted == OnlineListItem::Kind::Channel ? FormatFollowers(item.followers) : item.entry.channel;
+            collections.append(QVariantMap{
+                {QStringLiteral("url"), item.entry.pageUrl},
+                {QStringLiteral("title"), item.entry.title},
+                {QStringLiteral("subtitle"), subtitle},
+                {QStringLiteral("thumbnail"), item.entry.thumbnailUrl},
+            });
+            emit collectionsChanged();
+        },
+        [this](const QString& error) {
+            collectionsListing = 0;
+            collectionsError = error;
+            collectionsState = error.isEmpty() ? Done : Failed;
+            emit collectionsChanged();
+        });
+}
+
 void SearchViewModel::OnSearchFinished(const QString& searchQuery, const QList<OnlineEntry>& entries)
 {
     if (searchQuery != onlineQuery)
         return;
 
-    LibrarySubsystem::Get().RemoveTransientTracks({PlayerSubsystem::Get().GetCurrentTrack()});
-
     resultIds.clear();
+    OnlinePageViewModel::DropUnusedTransientTracks();
+
     AppendResults(entries);
     SetOnlineState(Done);
 }
@@ -665,7 +773,7 @@ void SearchViewModel::AppendResults(const QList<OnlineEntry>& entries)
         tags.album = entry.channel;
         tags.durationMs = entry.durationMs;
 
-        const TrackId id = library.AddOnlineTrack(entry.pageUrl, tags, entry.thumbnailUrl);
+        const TrackId id = library.AddOnlineTrack(entry.pageUrl, tags, entry.thumbnailUrl, entry.channelUrl);
         if (id.IsValid() && !resultIds.contains(static_cast<int>(id.value)) && resultIds.size() < MaxResults)
             resultIds.append(static_cast<int>(id.value));
     }

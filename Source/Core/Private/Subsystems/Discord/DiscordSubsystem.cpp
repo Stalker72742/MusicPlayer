@@ -26,6 +26,8 @@ namespace
 
     constexpr qint64 SeekThresholdMs = 2'000;
 
+    constexpr int PauseTimeoutMs = 5 * 60'000;
+
     constexpr int ActivityTypeListening = 2;
     constexpr int StatusDisplayDetails = 2;
 
@@ -59,6 +61,13 @@ DiscordSubsystem::DiscordSubsystem()
     updateTimer.setSingleShot(true);
     connect(&updateTimer, &QTimer::timeout, this, &DiscordSubsystem::SendActivity);
 
+    pauseTimer.setSingleShot(true);
+    pauseTimer.setInterval(PauseTimeoutMs);
+    connect(&pauseTimer, &QTimer::timeout, this, [this] {
+        bPauseExpired = true;
+        ScheduleUpdate();
+    });
+
     connect(&socket, &QLocalSocket::connected, this, &DiscordSubsystem::OnConnected);
     connect(&socket, &QLocalSocket::disconnected, this, &DiscordSubsystem::OnDisconnected);
     connect(&socket, &QLocalSocket::readyRead, this, &DiscordSubsystem::OnReadyRead);
@@ -72,6 +81,7 @@ void DiscordSubsystem::Deinitialize()
 {
     reconnectTimer.stop();
     updateTimer.stop();
+    pauseTimer.stop();
 
     if (bReady)
     {
@@ -100,7 +110,9 @@ void DiscordSubsystem::Start()
 
     PlayerSubsystem& player = PlayerSubsystem::Get();
     connect(&player, &PlayerSubsystem::currentTrackChanged, this, &DiscordSubsystem::ScheduleUpdate);
+    connect(&player, &PlayerSubsystem::playingChanged, this, &DiscordSubsystem::UpdatePauseTimeout);
     connect(&player, &PlayerSubsystem::playingChanged, this, &DiscordSubsystem::ScheduleUpdate);
+    connect(&player, &PlayerSubsystem::loadingChanged, this, &DiscordSubsystem::UpdatePauseTimeout);
     connect(&player, &PlayerSubsystem::loadingChanged, this, &DiscordSubsystem::ScheduleUpdate);
     connect(&player, &PlayerSubsystem::durationChanged, this, &DiscordSubsystem::ScheduleUpdate);
     connect(&player, &PlayerSubsystem::positionChanged, this, [this](qint64 positionMs) {
@@ -110,7 +122,22 @@ void DiscordSubsystem::Start()
     });
     connect(&LibrarySubsystem::Get(), &LibrarySubsystem::tracksChanged, this, &DiscordSubsystem::ScheduleUpdate);
 
+    UpdatePauseTimeout();
     Connect();
+}
+
+void DiscordSubsystem::UpdatePauseTimeout()
+{
+    const PlayerSubsystem& player = PlayerSubsystem::Get();
+    if (player.IsPlaying() || player.IsLoading())
+    {
+        pauseTimer.stop();
+        bPauseExpired = false;
+    }
+    else if (!pauseTimer.isActive() && !bPauseExpired)
+    {
+        pauseTimer.start();
+    }
 }
 
 void DiscordSubsystem::ApplySetting()
@@ -241,6 +268,9 @@ void DiscordSubsystem::ScheduleUpdate()
 
 QJsonObject DiscordSubsystem::BuildActivity() const
 {
+    if (bPauseExpired)
+        return {};
+
     PlayerSubsystem& player = PlayerSubsystem::Get();
     const Track* track = LibrarySubsystem::Get().FindTrack(player.GetCurrentTrack());
     if (!track)

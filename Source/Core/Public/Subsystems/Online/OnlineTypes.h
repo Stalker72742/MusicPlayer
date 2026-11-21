@@ -14,8 +14,29 @@ struct OnlineEntry
     QString pageUrl;       ///< Page of the video; becomes StreamComponent::pageUrl.
     QString title;         ///< Video title.
     QString channel;       ///< Channel name.
+    QString channelUrl;    ///< Channel page; may be empty.
     QString thumbnailUrl;  ///< Thumbnail image.
     qint64 durationMs = 0; ///< 0 if unknown (live streams, premieres).
+};
+
+/// @brief One line of a listing: a playlist, a channel or a results page, as it arrives.
+struct OnlineListItem
+{
+    /// @brief What the line is.
+    enum class Kind
+    {
+        Video,
+        Playlist,
+        Channel
+    };
+
+    Kind kind = Kind::Video;
+    OnlineEntry entry;    ///< pageUrl is the page of the video, playlist or channel.
+    qint64 followers = 0; ///< Subscribers of a channel in the results; 0 if unknown.
+
+    QString listTitle;      ///< Title of the list this line belongs to.
+    QString listChannel;    ///< Owner of the list.
+    QString listChannelUrl; ///< Channel page of the owner; may be empty.
 };
 
 /// @brief Why an online backend failed; decides whether the next backend is tried.

@@ -1,0 +1,228 @@
+// SoundLink device sync protocol, version 1.
+//
+// This file must stay byte-identical in both apps:
+//   MusicPlayer/Source/Core/Private/Subsystems/Sync/proto/sync.proto
+//   SoundLink_Kotlin/app/src/main/proto/sync.proto
+// The full design (merge rules, transfers, placement, pairing) is described in
+// MusicPlayer/Source/Core/Private/Subsystems/Sync/DESIGN.md; the comments here
+// are the short version.
+//
+// Transport: gRPC over plaintext HTTP/2 (h2c, prior knowledge). One RPC, a
+// long-lived bidirectional stream. Confidentiality and authentication live in
+// the protocol itself: every message after the two Hello messages is sealed with
+// AES-256-GCM under keys derived from an ephemeral P-256 ECDH exchange mixed
+// with the pairing secret.
+//
+// Handshake (C = the side that opened the TCP connection, S = the listener):
+//   C -> S  Envelope{hello}   mode = SYNC (already paired) or PAIR (C types the code S shows)
+//   S -> C  Envelope{hello}   or the call ends with a gRPC error status:
+//                             UNAUTHENTICATED "not_paired" | "bad_code",
+//                             FAILED_PRECONDITION "pairing_closed" | "protocol"
+//   th     = SHA-256("SoundLink sync v1" || u8(mode) ||
+//                    lp(C.device_id) || lp(C.ecdh_public) || lp(C.nonce) ||
+//                    lp(S.device_id) || lp(S.ecdh_public) || lp(S.nonce))
+//            lp(x) = u32 big-endian length || x; device ids as UTF-8.
+//   shared = ECDH x-coordinate, 32 bytes big-endian.
+//   SYNC:  prk = HMAC-SHA256(key = psk, shared || th)
+//   PAIR:  prk = HMAC-SHA256(key = SHA-256("SoundLink pair v1" || code), shared || th)
+//   k_c2s  = HMAC-SHA256(prk, "c2s" || 0x01)
+//   k_s2c  = HMAC-SHA256(prk, "s2c" || 0x01)
+//   psk    = HMAC-SHA256(prk, "psk" || 0x01)       (PAIR only: the new long-term secret)
+//   Sealed message n (n = 0, 1, 2, ... per direction):
+//     nonce  = 4 zero bytes || u64 big-endian n
+//     sealed = AES-256-GCM(key, nonce, Frame bytes, no AAD) = ciphertext || 16-byte tag
+//   The first sealed frame of each side is Welcome. A frame that fails to open
+//   ends the session (in PAIR mode S answers UNAUTHENTICATED "bad_code").
+//
+// After Welcome both sides send their index delta (IndexBatch..., IndexDone),
+// then keep streaming live changes, block requests and block data.
+
+syntax = "proto3";
+
+package soundlink.sync.v1;
+
+option java_package = "com.stalker7274.soundlink.sync.proto";
+option java_multiple_files = true;
+
+service SyncService {
+  rpc Session(stream Envelope) returns (stream Envelope);
+}
+
+enum Platform {
+  PLATFORM_UNKNOWN = 0;
+  PLATFORM_WINDOWS = 1;
+  PLATFORM_ANDROID = 2;
+}
+
+enum SessionMode {
+  MODE_SYNC = 0;
+  MODE_PAIR = 1;
+}
+
+// The first message of each side, sent in the clear.
+message Hello {
+  uint32 protocol = 1;      // 1
+  string device_id = 2;     // 32 lowercase hex chars, random per install
+  string device_name = 3;
+  Platform platform = 4;
+  SessionMode mode = 5;     // chosen by C, echoed by S
+  bytes ecdh_public = 6;    // ephemeral P-256 public key, uncompressed: 0x04 || X || Y (65 bytes)
+  bytes nonce = 7;          // 16 random bytes
+  uint32 listen_port = 8;   // the sender's sync port, 0 when it does not listen
+}
+
+message Envelope {
+  oneof payload {
+    Hello hello = 1;
+    bytes sealed = 2;       // an encrypted Frame
+  }
+}
+
+// Everything after the handshake.
+message Frame {
+  oneof payload {
+    Welcome welcome = 1;
+    IndexBatch index = 2;
+    IndexDone index_done = 3;
+    BlockRequest block_request = 4;
+    BlockData block_data = 5;
+    Ping ping = 6;
+    Pong pong = 7;
+    Endpoints endpoints = 8;
+    Bye bye = 9;
+  }
+}
+
+// The first sealed frame of each side; opening it proves both sides hold the key.
+message Welcome {
+  string device_name = 1;
+  uint64 epoch = 2;         // the sender's database epoch (random, changes when its database is reset)
+  uint64 your_epoch = 3;    // the receiver's epoch as the sender last saw it, 0 = never
+  uint64 your_seq = 4;      // the receiver's last seq the sender has applied under your_epoch
+}
+
+// Records whose local seq is above what the peer has applied, in seq order.
+message IndexBatch {
+  repeated SyncRecord records = 1;
+}
+
+// Everything up to `seq` has been sent; the receiver stores it as applied once
+// it has merged the preceding batches.
+message IndexDone {
+  uint64 seq = 1;
+}
+
+enum RecordKind {
+  KIND_UNSPECIFIED = 0;
+  KIND_FILE = 1;            // an audio file; uid = hex(first 16 bytes of the SHA-256 it was first indexed with)
+  KIND_ONLINE = 2;          // a saved or playlisted online track; uid = hex(first 16 bytes of SHA-256(page_url))
+  KIND_META = 3;            // user labels and tag edits of a FILE or ONLINE item; uid = that item's uid
+  KIND_PLAYLIST = 4;        // uid = playlist UUID
+}
+
+// One replicated item. Identity is (kind, uid), never a path.
+message SyncRecord {
+  RecordKind kind = 1;
+  string uid = 2;
+  map<string, uint64> vv = 3;  // version vector: device id -> number of changes made there
+  bool deleted = 4;            // tombstone; the body keeps the last known state
+  uint64 hlc = 5;              // hybrid logical clock of the last change: (ms << 16) | counter
+  string changed_by = 6;       // device id that made the last change
+  bool have = 7;               // FILE: the sender has exactly this content on disk and serves it
+  oneof body {
+    FileBody file = 10;
+    OnlineBody online = 11;
+    MetaBody meta = 12;
+    PlaylistBody playlist = 13;
+  }
+}
+
+message TrackInfo {
+  string title = 1;
+  string artist = 2;
+  string album = 3;
+  int64 duration_ms = 4;
+}
+
+message FileBody {
+  bytes sha256 = 1;            // current content, 32 bytes
+  uint64 size = 2;
+  string rel_path = 3;         // placement hint: path relative to the deepest library root that holds
+                               // the file on the device that last changed it, '/'-separated
+  int64 mtime_ms = 4;
+  repeated bytes history = 5;  // earlier contents of this item, newest first, at most 16
+  TrackInfo info = 6;
+  string online_uid = 7;       // the file is the downloaded copy of this ONLINE item (desktop), else empty
+}
+
+message OnlineBody {
+  string page_url = 1;
+  TrackInfo info = 2;
+  string thumbnail_url = 3;
+  string channel_url = 4;
+  bool saved = 5;
+}
+
+message MetaBody {
+  repeated string labels = 1;
+  map<string, string> tag_edits = 2;
+}
+
+enum PlaylistKind {
+  PLAYLIST_STATIC = 0;
+  PLAYLIST_SMART = 1;
+}
+
+message PlaylistBody {
+  string name = 1;
+  PlaylistKind kind = 2;
+  int64 created_ms = 3;
+  repeated string tracks = 4;      // FILE / ONLINE uids in order (static playlists)
+  string smart = 5;                // smart playlist definition, JSON written by the desktop app
+  map<string, string> extras = 6;  // platform-specific settings, e.g. "android.color"
+}
+
+// Pull-based transfer: the receiver asks for byte ranges of a content hash.
+message BlockRequest {
+  uint32 id = 1;
+  bytes sha256 = 2;
+  uint64 offset = 3;
+  uint32 length = 4;           // at most 1 MiB
+}
+
+message BlockData {
+  uint32 id = 1;
+  uint64 offset = 2;
+  bytes data = 3;
+  bool eof = 4;                // this block reaches the end of the file
+  string error = 5;            // "not_found" | "changed" | "io" | "busy" (retry soon): the block cannot be served, data is empty
+}
+
+message Ping {
+  uint64 time_ms = 1;
+}
+
+message Pong {
+  uint64 time_ms = 1;
+}
+
+// Addresses where the sender accepts sessions ("host:port", IPv6 in brackets),
+// so paired devices can reach it outside the local network.
+message Endpoints {
+  repeated string addresses = 1;
+}
+
+message Bye {
+  string reason = 1;           // "unpaired": the receiver forgets the pairing too
+}
+
+// UDP discovery beacon: datagram = "SLB1" || Beacon bytes, sent to 239.255.77.77:47777
+// and to the broadcast address of every IPv4 interface.
+message Beacon {
+  uint32 protocol = 1;
+  string device_id = 2;
+  string device_name = 3;
+  Platform platform = 4;
+  uint32 port = 5;             // the sync port
+  bool pairing = 6;            // the device currently shows a pairing code
+}

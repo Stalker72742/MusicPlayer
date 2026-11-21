@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(SoundLink VERSION 0.2 LANGUAGES CXX)
+project(SoundLink VERSION 0.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Concurrent Gui Widgets Multimedia Network Qml Quick QuickControls2 WebSockets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Concurrent Gui Widgets Network Qml Quick QuickControls2 WebSockets)
+# Sync between devices: QtProtobuf messages (module qtgrpc) over HTTP/2 from the private QHttp2Connection (6.7+).
+# The generated code is checked in, so only the library is needed: protoc (Qt's ProtobufTools) may be missing.
+set(QT_ALLOW_MISSING_TOOLS_PACKAGES TRUE)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Protobuf)
+unset(QT_ALLOW_MISSING_TOOLS_PACKAGES)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -30,6 +35,8 @@ qt_add_executable(SoundLink
         core/public/framework/SystemMediaControls.h
         core/private/framework/SystemMediaControls.cpp
         core/private/framework/SmtcInterfaces.h
+        core/public/framework/AppModule.h
+        core/private/framework/AppModule.cpp
 
         # Library
         core/public/subsystems/Library/Track.h
@@ -37,6 +44,12 @@ qt_add_executable(SoundLink
         core/private/subsystems/Library/LibrarySubsystem.cpp
         core/private/subsystems/Library/MetadataReader.h
         core/private/subsystems/Library/MetadataReader.cpp
+        core/private/subsystems/Library/FileScanner.h
+        core/private/subsystems/Library/FileScanner.cpp
+        core/private/subsystems/Library/FolderWatcher.h
+        core/private/subsystems/Library/FolderWatcher.cpp
+        core/private/subsystems/Library/LibraryStorage.h
+        core/private/subsystems/Library/LibraryStorage.cpp
 
         # Discord Rich Presence
         core/public/subsystems/Discord/DiscordSubsystem.h
@@ -49,13 +62,29 @@ qt_add_executable(SoundLink
         # Playlists
         core/public/subsystems/Playlists/PlaylistSubsystem.h
         core/private/subsystems/Playlists/PlaylistSubsystem.cpp
+        core/public/subsystems/Catalog/CatalogSubsystem.h
+        core/private/subsystems/Catalog/CatalogSubsystem.cpp
+        core/public/subsystems/Catalog/ArtworkSubsystem.h
+        core/private/subsystems/Catalog/ArtworkSubsystem.cpp
 
         # Player
         core/public/subsystems/Player/PlayerSubsystem.h
         core/private/subsystems/Player/PlayerSubsystem.cpp
+        core/public/subsystems/Player/AudioBackend.h
+        core/public/subsystems/Player/AudioDevices.h
+        core/private/subsystems/Player/AudioDevices.cpp
+        core/private/subsystems/Player/FfmpegBackend.h
+        core/private/subsystems/Player/FfmpegBackend.cpp
+        core/private/subsystems/Player/PcmRing.h
+        core/private/subsystems/Player/WasapiOutput.h
+        core/private/subsystems/Player/WasapiOutput.cpp
+        core/private/subsystems/Player/StreamCapture.h
+        core/private/subsystems/Player/StreamCapture.cpp
 
         # Online (yt-dlp search and streams)
         core/public/subsystems/Online/OnlineTypes.h
+        core/public/subsystems/Online/OnlineLink.h
+        core/private/subsystems/Online/OnlineLink.cpp
         core/public/subsystems/Online/OnlineSubsystem.h
         core/private/subsystems/Online/OnlineSubsystem.cpp
         core/private/subsystems/Online/OnlineBackend.h
@@ -72,12 +101,32 @@ qt_add_executable(SoundLink
         # yt-dlp
         core/public/subsystems/YtDlp/YtDlpSubsystem.h
         core/private/subsystems/YtDlp/YtDlpSubsystem.cpp
-        core/public/subsystems/YtDlp/FfmpegSubsystem.h
-        core/private/subsystems/YtDlp/FfmpegSubsystem.cpp
         core/public/subsystems/YtDlp/DenoSubsystem.h
         core/private/subsystems/YtDlp/DenoSubsystem.cpp
         core/private/subsystems/YtDlp/ReleaseAssetDownload.h
         core/private/subsystems/YtDlp/ReleaseAssetDownload.cpp
+
+        # Sync between devices
+        core/public/subsystems/Sync/SyncSubsystem.h
+        core/private/subsystems/Sync/SyncSubsystem.cpp
+        core/private/subsystems/Sync/SyncData.h
+        core/private/subsystems/Sync/SyncData.cpp
+        core/private/subsystems/Sync/SyncEngine.h
+        core/private/subsystems/Sync/SyncEngine.cpp
+        core/private/subsystems/Sync/SyncEngineFiles.cpp
+        core/private/subsystems/Sync/SyncEngineLibrary.cpp
+        core/private/subsystems/Sync/SyncEngineTransfers.cpp
+        core/private/subsystems/Sync/SyncSession.h
+        core/private/subsystems/Sync/SyncSession.cpp
+        core/private/subsystems/Sync/SyncCrypto.h
+        core/private/subsystems/Sync/SyncCrypto.cpp
+        core/private/subsystems/Sync/SyncNetwork.h
+        core/private/subsystems/Sync/SyncNetwork.cpp
+        core/private/subsystems/Sync/GrpcTransport.h
+        core/private/subsystems/Sync/GrpcTransport.cpp
+        core/private/subsystems/Sync/proto/generated/sync.qpb.h
+        core/private/subsystems/Sync/proto/generated/sync.qpb.cpp
+        core/private/subsystems/Sync/proto/generated/sync_qtprotoreg.cpp
 
         # UI
         ui/tray/TrayIcon.h
@@ -94,6 +143,7 @@ target_include_directories(SoundLink PRIVATE
         core/public/subsystems
         ui/tray
         ui/windowsUI/ViewModels
+        core/private/subsystems/Sync/proto/generated
 )
 
 target_link_libraries(SoundLink PRIVATE
@@ -101,18 +151,72 @@ target_link_libraries(SoundLink PRIVATE
         Qt6::Concurrent
         Qt6::Gui
         Qt6::Widgets
-        Qt6::Multimedia
         Qt6::Network
+        Qt6::NetworkPrivate
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::WebSockets
+        Qt6::Protobuf
         QTomlUtils::QTomlUtils
 )
 
 if(WIN32)
-    target_link_libraries(SoundLink PRIVATE winmm ole32 user32 advapi32 runtimeobject)
+    target_link_libraries(SoundLink PRIVATE winmm ole32 user32 advapi32 runtimeobject uuid bcrypt)
 endif()
+
+# The sync protocol: the QtProtobuf code generated from sync.proto is checked in. sync.proto must stay identical to
+# SoundLink_Kotlin/app/src/main/proto/sync.proto; after changing both, build SoundLink_regenerate_proto
+# (needs protoc on PATH or -DPROTOC_EXECUTABLE=<path>).
+set(SYNC_PROTO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/private/subsystems/Sync/proto")
+if(MINGW)
+    # The generated messages exceed the 32k sections of a plain COFF object in unoptimized builds.
+    set_source_files_properties(${SYNC_PROTO_DIR}/generated/sync.qpb.cpp PROPERTIES COMPILE_OPTIONS "-Wa,-mbig-obj")
+endif()
+find_program(PROTOC_EXECUTABLE protoc)
+find_program(QTPROTOBUFGEN_EXECUTABLE qtprotobufgen HINTS "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}" NO_DEFAULT_PATH)
+if(PROTOC_EXECUTABLE AND QTPROTOBUFGEN_EXECUTABLE)
+    add_custom_target(SoundLink_regenerate_proto
+            COMMAND "${PROTOC_EXECUTABLE}" "--plugin=protoc-gen-qtprotobuf=${QTPROTOBUFGEN_EXECUTABLE}"
+                    "--qtprotobuf_out=${SYNC_PROTO_DIR}/generated" "-I${SYNC_PROTO_DIR}" "${SYNC_PROTO_DIR}/sync.proto"
+            WORKING_DIRECTORY "${SYNC_PROTO_DIR}"
+            COMMENT "Generating the sync protocol code from sync.proto"
+            VERBATIM)
+endif()
+
+# Optional modules (see AppModule): each option adds a module's sources, which register the module themselves;
+# the core does not know them. Developer tools are on by default everywhere but release builds
+# (Release, RelWithDebInfo, MinSizeRel); -D<option>=ON/OFF overrides it.
+if(NOT CMAKE_BUILD_TYPE MATCHES "^(Release|RelWithDebInfo|MinSizeRel)$")
+    set(SOUNDLINK_DEV_MODULES_DEFAULT ON)
+else()
+    set(SOUNDLINK_DEV_MODULES_DEFAULT OFF)
+endif()
+
+option(SOUNDLINK_MODULE_MEMORY_DUMP "Memory report for hunting leaks: tray item and Ctrl+Shift+M" ${SOUNDLINK_DEV_MODULES_DEFAULT})
+if(SOUNDLINK_MODULE_MEMORY_DUMP)
+    target_sources(SoundLink PRIVATE
+            modules/MemoryDump/MemoryDump.h
+            modules/MemoryDump/MemoryDump.cpp
+            modules/MemoryDump/MemoryDumpModule.cpp
+    )
+    target_include_directories(SoundLink PRIVATE modules/MemoryDump)
+    target_link_libraries(SoundLink PRIVATE Qt6::QmlPrivate)
+    if(WIN32)
+        target_link_libraries(SoundLink PRIVATE psapi)
+    endif()
+endif()
+message(STATUS "SoundLink modules: memory dump = ${SOUNDLINK_MODULE_MEMORY_DUMP}")
+
+# FFmpeg: built from source by tools/build-ffmpeg.sh (LGPL, audio only), used for playback, tags and by yt-dlp.
+set(FFMPEG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ffmpeg")
+if(NOT EXISTS "${FFMPEG_DIR}/include/libavcodec/avcodec.h")
+    message(FATAL_ERROR "FFmpeg not found in ${FFMPEG_DIR}. Run in Git Bash, with MinGW on PATH: tools/build-ffmpeg.sh")
+endif()
+target_include_directories(SoundLink PRIVATE "${FFMPEG_DIR}/include")
+target_link_directories(SoundLink PRIVATE "${FFMPEG_DIR}/lib")
+target_link_libraries(SoundLink PRIVATE avformat avcodec avutil swresample)
+file(GLOB FFMPEG_RUNTIME "${FFMPEG_DIR}/bin/*.dll" "${FFMPEG_DIR}/bin/ffmpeg.exe" "${FFMPEG_DIR}/bin/FFmpeg-LICENSE.txt")
 
 # QML module "SoundLink": every file is a type of the module, Theme is its singleton
 set(QML_DIR ui/windowsUI/Widgets)
@@ -129,20 +233,27 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Theme.qml
         ${QML_DIR}/Screens/HomeScreen.qml
         ${QML_DIR}/Screens/SearchScreen.qml
+        ${QML_DIR}/Screens/OnlinePageScreen.qml
         ${QML_DIR}/Screens/PlaylistsScreen.qml
         ${QML_DIR}/Screens/PlaylistScreen.qml
         ${QML_DIR}/Screens/DownloadsScreen.qml
         ${QML_DIR}/Screens/SettingsScreen.qml
         ${QML_DIR}/Screens/AboutScreen.qml
         ${QML_DIR}/Screens/UpdatesScreen.qml
+        ${QML_DIR}/Screens/CollectionScreen.qml
         ${QML_DIR}/Sections/AppTitleBar.qml
+        ${QML_DIR}/Sections/LinkDropOverlay.qml
         ${QML_DIR}/Sections/LibraryView.qml
         ${QML_DIR}/Sections/PlayerBar.qml
         ${QML_DIR}/Sections/ResizeHandle.qml
+        ${QML_DIR}/Sections/WindowResizeFrame.qml
         ${QML_DIR}/Sections/SideBar.qml
         ${QML_DIR}/Sections/SearchSuggestions.qml
         ${QML_DIR}/Sections/TrackShelf.qml
+        ${QML_DIR}/Sections/CatalogGrid.qml
         ${QML_DIR}/Components/AlbumArt.qml
+        ${QML_DIR}/Components/OnlineCollectionList.qml
+        ${QML_DIR}/Components/CatalogArt.qml
         ${QML_DIR}/Components/AppIcon.qml
         ${QML_DIR}/Components/IconButton.qml
         ${QML_DIR}/Components/NavItem.qml
@@ -156,6 +267,13 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Components/TrackRow.qml
         ${QML_DIR}/Components/TrackCard.qml
         ${QML_DIR}/Components/TrackMenu.qml
+        ${QML_DIR}/Components/AppScrollBar.qml
+        ${QML_DIR}/Components/MenuEntry.qml
+        ${QML_DIR}/Components/MenuDivider.qml
+        ${QML_DIR}/Components/ContextMenu.qml
+        ${QML_DIR}/Components/PlaylistMenu.qml
+        ${QML_DIR}/Components/CatalogMenu.qml
+        ${QML_DIR}/Dialogs/TrackPropertiesWindow.qml
         ${QML_DIR}/Components/InputField.qml
         ${QML_DIR}/Components/Dropdown.qml
         ${QML_DIR}/Dialogs/ModalDialog.qml
@@ -167,7 +285,11 @@ qt_add_qml_module(SoundLink
         ${QML_DIR}/Components/TextButton.qml
         ${QML_DIR}/Components/ToggleSwitch.qml
         ${QML_DIR}/Components/SettingRow.qml
+        ${QML_DIR}/Components/SyncPanel.qml
+        ${QML_DIR}/Components/SyncSettingControl.qml
         SOURCES
+        ui/windowsUI/ViewModels/IconImageProvider.h
+        ui/windowsUI/ViewModels/IconImageProvider.cpp
         ui/windowsUI/ViewModels/Navigation.h
         ui/windowsUI/ViewModels/Navigation.cpp
         ui/windowsUI/ViewModels/SettingsCategories.h
@@ -183,16 +305,24 @@ qt_add_qml_module(SoundLink
         ui/windowsUI/ViewModels/PlayerViewModel.cpp
         ui/windowsUI/ViewModels/AppInfoViewModel.h
         ui/windowsUI/ViewModels/AppInfoViewModel.cpp
+        ui/windowsUI/ViewModels/LocalBuildPicker.h
+        ui/windowsUI/ViewModels/LocalBuildPicker.cpp
+        ui/windowsUI/ViewModels/CatalogViewModel.h
+        ui/windowsUI/ViewModels/CatalogViewModel.cpp
         ui/windowsUI/ViewModels/SuggestionListModel.h
         ui/windowsUI/ViewModels/SuggestionListModel.cpp
         ui/windowsUI/ViewModels/SearchViewModel.h
         ui/windowsUI/ViewModels/SearchViewModel.cpp
+        ui/windowsUI/ViewModels/OnlinePageViewModel.h
+        ui/windowsUI/ViewModels/OnlinePageViewModel.cpp
         ui/windowsUI/ViewModels/OnlineViewModel.h
         ui/windowsUI/ViewModels/OnlineViewModel.cpp
         ui/windowsUI/ViewModels/PlaylistsViewModel.h
         ui/windowsUI/ViewModels/PlaylistsViewModel.cpp
         ui/windowsUI/ViewModels/DownloadsViewModel.h
         ui/windowsUI/ViewModels/DownloadsViewModel.cpp
+        ui/windowsUI/ViewModels/SyncViewModel.h
+        ui/windowsUI/ViewModels/SyncViewModel.cpp
 )
 
 qt_add_resources(SoundLink "icons"
@@ -242,6 +372,7 @@ qau_setup(SoundLink
         ACCENT_COLOR "#ECECEC"
         DESCRIPTION "SoundLink music player"
         PROTECTED_PATHS Saved
+        RUNTIME_FILES ${FFMPEG_RUNTIME}
         QML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${QML_DIR}"
         DIST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../dist"
         PACKAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../packages"

@@ -6,6 +6,9 @@ QtObject {
 
     property string name: "dark"
 
+    // Pixels per logical pixel on the window's screen, kept current by the main window.
+    property real pixelRatio: 1
+
     readonly property QtObject palette: QtObject {
         readonly property color windowTop:     "#0E0E10"
         readonly property color windowBottom:  "#131316"

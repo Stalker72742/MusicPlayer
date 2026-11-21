@@ -21,6 +21,10 @@
 /// A finished file goes to the download folder (AppConfigs::SettingsKeys::DownloadFolder) and becomes the track's
 /// local copy (LibrarySubsystem::SetLocalFile): the track stays the same, the player just stops streaming it.
 ///
+/// An m4a gets the video thumbnail as its cover, so other players (phones too) show it: yt-dlp saves the thumbnail,
+/// black letterbox bars are cut off, and the bundled ffmpeg.exe puts it into the file without re-encoding.
+/// Without the thumbnail or ffmpeg the file is kept as it is.
+///
 /// yt-dlp writes into `<AppLocalData>/downloads-tmp` first, so cancelled and failed runs leave nothing behind
 /// in the music folders. Queued jobs survive a restart (`<AppLocalData>/downloads.json`).
 class DownloadSubsystem : public Subsystem<DownloadSubsystem>
@@ -72,6 +76,12 @@ public:
     /// @brief Deletes the downloaded file; the track goes back to streaming.
     void RemoveDownload(TrackId track);
 
+    /// @brief Makes a file got some other way the downloaded copy of a track, unless it already has one.
+    /// @param track An online track.
+    /// @param path The file, moved to the download folder; deleted if not needed.
+    /// @param extension Extension of the final name.
+    void AdoptFile(TrackId track, const QString& path, const QString& extension);
+
     /// @brief Every job in queue order.
     const QList<Job>& GetJobs() const { return jobs; }
     /// @brief The job of a track, or nullptr.
@@ -99,6 +109,8 @@ private:
     Job* FindMutable(TrackId track);
     void StartNext();
     void Start(Job& job);
+    /// Puts the thumbnail yt-dlp saved next to the file into an m4a as its cover, then calls Finish either way.
+    void EmbedCover(TrackId track, const QString& audioPath);
     void Finish(TrackId track, const QString& downloadedPath, const QString& error);
     void OnOutput(TrackId track, QProcess* process);
 

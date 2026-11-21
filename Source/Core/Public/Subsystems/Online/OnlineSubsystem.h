@@ -18,6 +18,8 @@
 #include "Online/OnlineTypes.h"
 
 class OnlineBackend;
+class QProcess;
+class YtDlpBackend;
 
 /// @brief Online music: search and the direct audio stream of a page, through interchangeable backends.
 ///
@@ -67,6 +69,36 @@ public:
     /// Drops the cached stream and rests the backend that resolved it for a while, so the next attempt goes elsewhere.
     void ReportStreamFailed(const QString& pageUrl);
 
+    /// @brief Result of FetchVideo(): `error` is empty on success.
+    using VideoCallback = std::function<void(const OnlineEntry& entry, const QString& error)>;
+
+    /// @brief Finds the title, channel and duration of one video: InnerTube, then yt-dlp.
+    /// @param pageUrl Canonical page of the video.
+    /// @param context The callback is dropped if this object is destroyed first.
+    /// @param callback Called once, on the main thread.
+    void FetchVideo(const QString& pageUrl, QObject* context, VideoCallback callback);
+
+    /// @brief Called for each line of a listing as it arrives.
+    using ListItemCallback = std::function<void(const OnlineListItem& item)>;
+    /// @brief Called once at the end of a listing, `error` is empty on success.
+    using ListDoneCallback = std::function<void(const QString& error)>;
+
+    /// @brief Lists a public playlist, a channel or a results page through yt-dlp, line by line.
+    /// @param url Page to list.
+    /// @param limit Most lines to take.
+    /// @param context The callbacks are dropped if this object is destroyed first.
+    /// @param onItem Receives the lines.
+    /// @param onDone Receives the outcome; not called after CancelListing().
+    /// @return Id for CancelListing().
+    quint64 StartListing(const QString& url, int limit, QObject* context, ListItemCallback onItem, ListDoneCallback onDone);
+    /// @brief Stops a listing; ids of finished ones are ignored.
+    void CancelListing(quint64 listing);
+
+    /// @brief The results page of a search for playlists or channels, for StartListing().
+    /// @param query Search text.
+    /// @param kind OnlineListItem::Kind::Playlist or Channel.
+    static QString MakeSearchListUrl(const QString& query, OnlineListItem::Kind kind);
+
     /// @brief Tags for an online track: "Artist - Title" titles are split, otherwise the channel is the artist.
     /// @param entry A search result.
     /// @param[out] artist Guessed artist.
@@ -114,6 +146,8 @@ private:
     void TrySearch(quint64 generation, const QString& query, int count, QList<OnlineBackend*> remaining, QString errors);
     void TryResolve(const QString& pageUrl, QList<OnlineBackend*> remaining, QString errors);
     void FinishResolve(const QString& pageUrl, const QUrl& stream, const QString& error);
+    void TryFetchVideo(const QString& pageUrl, QList<OnlineBackend*> remaining, QPointer<QObject> context,
+        VideoCallback callback, bool bHasContext);
 
     /// Rests a backend after a failure so the next requests do not wait for it.
     void Penalize(OnlineBackend* backend, const OnlineError& error);
@@ -122,6 +156,10 @@ private:
     static QDateTime ParseStreamExpiry(const QUrl& stream);
 
     QList<OnlineBackend*> backends;
+    YtDlpBackend* ytDlp = nullptr;
+
+    QHash<quint64, QPointer<QProcess>> listings;
+    quint64 nextListing = 1;
     QHash<QString, QDateTime> restingUntil;
 
     quint64 searchGeneration = 0;

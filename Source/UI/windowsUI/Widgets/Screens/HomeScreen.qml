@@ -1,12 +1,24 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import SoundLink 1.0
 
 // The start screen: a way into search and shelves of what was played, liked and saved.
 Item {
     id: root
+
+    // Navigation keeps this with the location while the screen is gone; see WindowsMainWindow.
+    function saveState() {
+        return { scroll: scroller.contentY - scroller.originY };
+    }
+
+    Component.onCompleted: {
+        const y = Navigation.pageState.scroll || 0;
+        if (y > 0)
+            Qt.callLater(() => scroller.contentY = scroller.originY + Math.min(y, Math.max(0, scroller.contentHeight - scroller.height)));
+    }
 
     readonly property bool hasShelves: LibraryViewModel.recent.count > 0
                                        || LibraryViewModel.favorites.count > 0
@@ -27,6 +39,7 @@ Item {
         contentHeight: column.implicitHeight + 64
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar {}
 
         ColumnLayout {
             id: column

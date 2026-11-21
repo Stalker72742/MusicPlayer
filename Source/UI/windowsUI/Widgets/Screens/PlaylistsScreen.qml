@@ -1,12 +1,24 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import SoundLink 1.0
 
 // All playlists as cards; new ones are made here.
 Item {
     id: root
+
+    // Navigation keeps this with the location while the screen is gone; see WindowsMainWindow.
+    function saveState() {
+        return { scroll: grid.contentY - grid.originY };
+    }
+
+    Component.onCompleted: {
+        const y = Navigation.pageState.scroll || 0;
+        if (y > 0)
+            Qt.callLater(() => grid.contentY = grid.originY + Math.min(y, Math.max(0, grid.contentHeight - grid.height)));
+    }
 
     readonly property PlaylistListModel playlists: PlaylistsViewModel.playlists
 
@@ -47,6 +59,7 @@ Item {
             cellWidth: 196
             cellHeight: 248
             boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: AppScrollBar {}
             model: root.playlists
 
             delegate: Item {
@@ -123,7 +136,16 @@ Item {
                     }
 
                     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-                    TapHandler { onTapped: PlaylistsViewModel.open(card.playlistId) }
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onClicked: (mouse) => {
+                            if (mouse.button === Qt.RightButton)
+                                playlistMenu.openAt(card.mapToItem(null, mouse.x, mouse.y), card.playlistId);
+                            else
+                                PlaylistsViewModel.open(card.playlistId);
+                        }
+                    }
                 }
             }
         }
@@ -138,6 +160,7 @@ Item {
         }
     }
 
+    PlaylistMenu { id: playlistMenu }
     SmartPlaylistDialog { id: smartDialog }
     TextPromptDialog {
         id: newDialog

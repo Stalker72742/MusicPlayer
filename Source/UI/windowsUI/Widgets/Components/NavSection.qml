@@ -23,6 +23,7 @@ Item {
     default property alias content: itemsLayout.children
 
     signal clicked
+    signal contextRequested(point scenePosition)
 
     readonly property bool hasItems: itemsLayout.children.length > 0
     readonly property bool itemsShown: hasItems && (compact || expanded)
@@ -116,10 +117,16 @@ Item {
         }
 
         HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-        TapHandler {
-            onTapped: (eventPoint) => {
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onClicked: (mouse) => {
+                if (mouse.button === Qt.RightButton) {
+                    root.contextRequested(header.mapToItem(null, mouse.x, mouse.y));
+                    return;
+                }
                 const canCollapse = root.collapsible && root.hasItems && !root.compact;
-                if (canCollapse && eventPoint.position.x < chevron.x + chevron.width + 4) {
+                if (canCollapse && mouse.x < chevron.x + chevron.width + 4) {
                     root.expanded = !root.expanded;
                     return;
                 }
